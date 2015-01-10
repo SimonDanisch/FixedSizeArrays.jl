@@ -4,35 +4,13 @@ importall Base
 export AbstractFixedArray
 export AbstractFixedVector
 export AbstractFixedMatrix
-export cross
-export norm
-export unit
-export row
-export column
+
 
 abstract AbstractFixedArray{T,N,SZ}
 typealias AbstractFixedVector{T, C} AbstractFixedArray{T, 1, (C,)}
 typealias AbstractFixedMatrix{T, Row, Column} AbstractFixedArray{T, 2, (Row, Column)}
 importall Base
 
-function show{T <: AbstractFixedVector}(io::IO, F::T)
-    print(io, T, "[")
-    for elem in F
-        print(io, elem, " ")
-    end
-    println(io, "]")
-end
-function show{T <: AbstractFixedMatrix}(io::IO, F::T)
-    println(io, T, "[")
-    for i=1:size(F, 1)
-        tmp = row(F, i)
-        for j=1:length(tmp)
-            print(io, tmp[j], " ")
-        end
-        println(io, "")
-    end
-    println(io, "]")
-end
 eltype{T,N,SZ}(A::AbstractFixedArray{T,N,SZ})           = T
 length{T,N,SZ}(A::AbstractFixedArray{T,N,SZ})           = prod(SZ)
 ndims{T,N,SZ}(A::AbstractFixedArray{T,N,SZ})            = N
@@ -54,19 +32,8 @@ size{T <: AbstractFixedVector}(A::Type{T}, d::Integer)      = (length(A),) # sho
 size{T <: AbstractFixedMatrix}(A::Type{T})                  = (length(A.types), length(A.types[1]))
 size{T <: AbstractFixedMatrix}(A::Type{T}, d::Integer)      = size(A)[d] 
 
-# Iterator 
-start(A::AbstractFixedArray)            = 1
-next(A::AbstractFixedArray, state::Int) = (A[state], state+1)
-done(A::AbstractFixedArray, state::Int) = length(A) < state
-
-function getindex{T,C}(A::AbstractFixedVector{T, C}, i::Integer)    
-    if i > C
-        error("Out of Bounds. Type: ", typeof(A), " index: ", i)
-    end
-    getfield(A, i)
-end
+getindex{T,C}(A::AbstractFixedVector{T, C}, i::Integer)                 = getfield(A, i)
 getindex{T,M,N}(A::AbstractFixedMatrix{T, M,N}, i::Integer, j::Integer) = getfield(getfield(A, i),j)
-getindex{T,M,N}(A::AbstractFixedMatrix{T, M,N}, i::Integer) = A[i/M, i%M]
 
 columntype{T,N,SZ}(x::AbstractFixedMatrix{T,N,SZ}) = typeof(x[1])
 columntype{T <: AbstractFixedMatrix}(x::Type{T})   = first(x.types)
@@ -77,7 +44,13 @@ cross{T}(a::AbstractFixedVector{T, 3}, b::AbstractFixedVector{T, 3}) = typeof(a)
                                                      a[3]*b[1]-a[1]*b[3], 
                                                      a[1]*b[2]-a[2]*b[1])
 
-
+stagedfunction zero{T <: AbstractFixedArray}(::Type{T}) 
+    ttypes = T.types
+    if !all(isleaftype, ttypes)
+        error("please provide concrete type. Types given: ", accessors)
+    end
+    :($T($(map(x->:(zero($x)), ttypes)...)))
+end
 
 dot{T,C}(v1::AbstractFixedVector{T,C}, v2::AbstractFixedVector{T,C}) = sum(v1.*conj(v2))
 norm{T,C}(v::AbstractFixedVector{T,C}) = sqrt(dot(v,v))
@@ -93,13 +66,6 @@ function norm{T,C}(v::AbstractFixedVector{T,C}, p::Number)
     end
 end
 
-stagedfunction zero{T <: AbstractFixedArray}(::Type{T}) 
-    ttypes = T.types
-    if !all(isleaftype, ttypes)
-        error("please provide concrete type. Types given: ", accessors)
-    end
-    :($T($(map(x->:(zero($x)), ttypes)...)))
-end
 column{T, Cardinality}(v::AbstractFixedVector{T, Cardinality}) = v
 column{T, Column, Row}(v::AbstractFixedMatrix{T, Row, Column}, i::Integer) = v[i]
 row{T, Cardinality}(v::AbstractFixedVector{T, Cardinality}, i::Integer) = v[i]
@@ -116,7 +82,7 @@ end
 
 abstract Func{N}
 
-accessor_expr(variable, accessor_symbol) = parse("getfield($(variable), :$(accessor_symbol))") # Am I silly, or is there no other way to integrate a symbol?
+accessor_expr(variable, accessor_symbol) = parse("getfield($(variable), :$(accessor_symbol))")
 
 reduce{T}(f::Func{2}, a::AbstractFixedVector{T, 1}) = a
 stagedfunction reduce(f::Func{2}, a::AbstractFixedVector)
@@ -126,7 +92,7 @@ stagedfunction reduce(f::Func{2}, a::AbstractFixedVector)
     gfb = accessor_expr("a", accessors[2])
     push!(expr, :(s = call(f, $gfa, $gfb)))
     for i=3:length(accessors)
-        gfa = accessor_expr("a" , accessors[i]) 
+        gfa = parse("getfield(a, :$(accessors[i]))") # Am I silly, or is there no other way to integrate a symbol?
         push!(expr, :(s = call(f, s, $gfa)))
     end
     Expr(:block, expr...)
@@ -137,7 +103,7 @@ stagedfunction reduce(f::Func{2}, a::AbstractFixedMatrix)
     gfa = accessor_expr("a", accessors[1])
     push!(expr, :(s = reduce(f, $gfa)))
     for i=3:length(accessors)
-        gfa = accessor_expr("a" , accessors[i]) 
+        gfa = parse("getfield(a, :$(accessors[i]))") # Am I silly, or is there no other way to integrate a symbol?
         push!(expr, :(s = reduce(f, $gfa)))
     end
     Expr(:block, expr...)
@@ -147,7 +113,7 @@ stagedfunction map(f::Func{1}, a::AbstractFixedVector)
     accessors = names(a)
     expr = Any[]
     for elem in accessors
-        gfa = accessor_expr("a", elem) 
+        gfa = accessor_expr("a", elem) # Am I silly, or is there no other way to integrate a symbol?
         push!(expr, :(call(f, $gfa)))
     end
     :($a($(expr...)))
@@ -156,8 +122,8 @@ stagedfunction map{T <: AbstractFixedVector}(f::Func{2}, a::T, b::T)
     accessors = names(a)
     expr = Any[]
     for elem in accessors
-        gfa = accessor_expr("a", elem)
-        gfb = accessor_expr("b", elem) 
+        gfa = accessor_expr("a", elem) # Am I silly, or is there no other way to integrate a symbol?
+        gfb = accessor_expr("b", elem) # Am I silly, or is there no other way to integrate a symbol?
         push!(expr, :(call(f, $gfa, $gfb)))
     end
     :($a($(expr...)))
@@ -196,24 +162,6 @@ stagedfunction map{T <: AbstractFixedMatrix}(f::Func{2}, a::T, b::T)
         gfa = accessor_expr("a", elem) # Am I silly, or is there no other way to integrate a symbol?
         gfb = accessor_expr("b", elem) # Am I silly, or is there no other way to integrate a symbol?
         push!(expr, :(map(f, $gfa, $gfb)))
-    end
-    :($a($(expr...)))
-end
-stagedfunction map{T <: AbstractFixedMatrix}(f::Func{2}, a::Real, b::T)
-    accessors = names(a)
-    expr = Any[]
-    for elem in accessors
-        gfb = accessor_expr("b", elem) # Am I silly, or is there no other way to integrate a symbol?
-        push!(expr, :(map(f, a, $gfb)))
-    end
-    :($a($(expr...)))
-end
-stagedfunction map{T <: AbstractFixedMatrix}(f::Func{2}, a::T, b::Real)
-    accessors = names(a)
-    expr = Any[]
-    for elem in accessors
-        gfa = accessor_expr("a", elem) # Am I silly, or is there no other way to integrate a symbol?
-        push!(expr, :(map(f, $gfa, b)))
     end
     :($a($(expr...)))
 end
@@ -272,7 +220,7 @@ for elem in unaryOps
     end
 end
 for elem in binaryOps2
-    const unicsymb = gensym()
+    unicsymb = gensym()
     @eval begin 
         immutable $unicsymb <: Func{2} end
         call(::$unicsymb, x, y) = $elem(x, y)
@@ -289,6 +237,4 @@ for elem in binaryOps
         $elem{T, N, SZ}(x::AbstractFixedArray{T, N, SZ}, y::Real) = map($unicsymb(), x, y)
     end
 end
-
-
 end
