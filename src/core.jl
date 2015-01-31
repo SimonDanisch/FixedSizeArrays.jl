@@ -40,7 +40,7 @@ done (A::AbstractFixedArray, state::Integer) 				= length(A) < state
 
 
 getindex        (A::AbstractFixedArray,           i::Real)   			                    = A.(i)
-getindex{T,M,N} (A::AbstractFixedArray{T, M, N},  i::Real, j::Real)                         = A.(sub2ind((M,N), i, j))
+getindex{T,SZ}  (A::AbstractFixedArray{T, 2, SZ}, i::Real, j::Real)                         = A.(sub2ind(SZ, i, j))
 getindex{T,SZ}  (A::AbstractFixedArray{T, 3, SZ}, i::Real, j::Real, k::Real)                = A.(sub2ind(SZ, i, j, k))
 getindex{T,N,SZ}(A::AbstractFixedArray{T, N, SZ}, i::Real, j::Real, k::Real, inds::Real...) = A.(sub2ind(SZ, i, j, k, inds...))
 
@@ -63,7 +63,7 @@ function show{T <: AbstractFixedVector}(io::IO, F::T)
     end)
     println(io, "]")
 end
-function show{T <: AbstractFixedMatrix}(io::IO, F::T)
+#=function show{T <: AbstractFixedMatrix}(io::IO, F::T)
     println(io, T, "[")
     for i=1:size(F, 1)
         tmp = row(F, i)
@@ -73,7 +73,32 @@ function show{T <: AbstractFixedMatrix}(io::IO, F::T)
         println(io, "")
     end
     println(io, "]")
+end=#
+
+#=
+
+stagedfunction call{T <: FixedSizeVector, N, ET}(t::Type{T}, data::ET...)
+    Tsuper, Nsuper = super(T).parameters
+    @assert Nsuper == N "not the right dimension"
+    typename = gen_fixedsizevector_type(T, Tsuper.name, N)
+    :($typename(data...))
+end
+gen_fixedsizevector_type(name::DataType, T::Symbol, N::Int) = gen_fixedsizevector_type(symbol(string(name.name.name)), T, N)
+function gen_fixedsizevector_type(name::Symbol, T::Symbol, N::Int)
+    fields = [Expr(:(::), symbol("I_$i"), T) for i = 1:N]
+    typename = symbol("FS$name")
+    eval(quote
+        immutable $(typename){$T} <: $(name){$T}
+            $(fields...)
+        end
+    end)
+    typename
 end
 
+Base.call{FS <: AbstractFixedSizeArray, T, N}(::Type{FS}, a::Array{T, N}) = AbstractFixedSizeArray{T, N, size(a)}(a...) 
+Base.call{FS <: AbstractFixedSizeArray, T, N}(::Type{FS}, a::Array{T, N}) = AbstractFixedSizeArray{T, N, size(a)}(a...) 
 
 
+
+nvec{T, N}(x::Array{T,N}) = AbstractFixedSizeArray(x)
+=#
