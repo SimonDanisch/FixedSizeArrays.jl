@@ -48,14 +48,13 @@ call(f::IndexFunctor, i) = getfield(f.args1, i)
 getindex(A::AbstractFixedArray, i::AbstractFixedArray) = map(IndexFunctor(A), i)
 
 
-
 #Constructor:
 
-tuple_to_string(t::(), sep) = ""
-tuple_to_string(t::(Any,), sep) = "$(t[1])"
+tuple_to_string(t::(), sep)            = ""
+tuple_to_string(t::(Any,), sep)        = "$(t[1])"
 tuple_to_string(t::(Any, Any...), sep) = "$(t[1])$sep" * tuple_to_string(Base.tail(t), sep)
-vec_name(sz::(Integer, Integer...)) = symbol("NVec" * tuple_to_string(sz, 'x'))
-vec_name(sz::(Integer,)) = symbol("NVec" * string(first(sz)))
+vec_name(sz::(Integer, Integer...))    = symbol("NVec" * tuple_to_string(sz, 'x'))
+vec_name(sz::(Integer,))               = symbol("NVec" * string(first(sz)))
 
 gen_fixedsizevector_type(name::DataType, T::Symbol, N::Int) = gen_fixedsizevector_type(symbol(string(name.name.name)), T, N)
 function gen_fixedsizevector_type(SIZE::(Integer...))
@@ -70,12 +69,8 @@ function gen_fixedsizevector_type(SIZE::(Integer...))
     typename
 end
 
-stagedfunction call{T, NDim, SIZE}(t::Type{AbstractFixedArray{T, NDim, SIZE}}, data::T...)
-    N = length(data)
-    @assert prod(SIZE) == N "not the right dimension"
-    typename = gen_fixedsizevector_type(SIZE)
-    :($typename(data...))
-end
+
+call{T, NDim, SIZE}(t::Type{AbstractFixedArray{T, NDim, SIZE}}, data::T...) = t(data)
 stagedfunction call{T, NDim, SIZE}(t::Type{AbstractFixedArray{T, NDim, SIZE}}, data::(T...,))
     N = length(data)
     @assert prod(SIZE) == N "not the right dimension"
@@ -88,4 +83,4 @@ nvec{T, N}(x::Array{T,N})             = AbstractFixedArray(x)
 nvec{T}(x::T...)                      = AbstractFixedArray{T, 1, (length(x),)}(x)
 nvec{T}(SIZE::(Integer...,), x::T...) = AbstractFixedArray{T, length(SIZE), SIZE}(x)
 
-@show nvec((2,2,2), 1f0,1f0,1f0,1f0, 1f0,1f0,1f0,1f0)
+#a = nvec((2,2,2), 1f0,1f0,1f0,1f0, 1f0,1f0,1f0,1f0)
