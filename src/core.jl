@@ -6,13 +6,12 @@ const TYPE_PARAM_POSITION = 1
 const NDIM_PARAM_POSITION = 2
 const SIZE_PARAM_POSITION = 3
 
-abstract AbstractFixedArray{T, NDIM, SIZE}
+abstract AbstractFixedArray{T, NDim, SIZE} <: DenseArray{T, NDim}
 
-abstract AbstractFixedVector{T, CARDINALITY} <: AbstractFixedArray{T, 1, (CARDINALITY,)}
-abstract AbstractFixedMatrix{T, M, N} 		 <: AbstractFixedArray{T, 2, (M, N)}
+typealias AbstractFixedVector{T, CARDINALITY} AbstractFixedArray{T, 1, (CARDINALITY,)}
+typealias AbstractFixedMatrix{T, M, N} 		  AbstractFixedArray{T, 2, (M, N)}
 
-# Wrapper type, for types that have an immutable as an
-abstract WrappedFixedArray{T <: AbstractFixedArray} 			 
+	 
 
 
 eltype{T,N,SZ}(A::AbstractFixedArray{T,N,SZ}) 				= T
@@ -39,12 +38,8 @@ next (A::AbstractFixedArray, state::Integer) 				= (A[state], state+1)
 done (A::AbstractFixedArray, state::Integer) 				= length(A) < state
 
 
-getindex        (A::AbstractFixedArray,           i::Real)   			                    = A.(i)
-getindex{T,SZ}  (A::AbstractFixedArray{T, 2, SZ}, i::Real, j::Real)                         = A.(sub2ind(SZ, i, j))
-getindex{T,SZ}  (A::AbstractFixedArray{T, 3, SZ}, i::Real, j::Real, k::Real)                = A.(sub2ind(SZ, i, j, k))
-getindex{T,N,SZ}(A::AbstractFixedArray{T, N, SZ}, i::Real, j::Real, k::Real, inds::Real...) = A.(sub2ind(SZ, i, j, k, inds...))
+getindex{T,N,SZ}(A::AbstractFixedArray{T, N, SZ}, inds::Real...) = A.(sub2ind(SZ, inds...))
 
-getindex        (A::WrappedFixedArray,            inds::Real...)                            = A.(1)[inds...]
 
 immutable IndexFunctor{T} <: Func{1}
     args1::T
@@ -54,51 +49,43 @@ getindex(A::AbstractFixedArray, i::AbstractFixedArray) = map(IndexFunctor(A), i)
 
 
 
+#Constructor:
 
+tuple_to_string(t::(), sep) = ""
+tuple_to_string(t::(Any,), sep) = "$(t[1])"
+tuple_to_string(t::(Any, Any...), sep) = "$(t[1])$sep" * tuple_to_string(Base.tail(t), sep)
+vec_name(sz::(Integer, Integer...)) = symbol("NVec" * tuple_to_string(sz, 'x'))
+vec_name(sz::(Integer,)) = symbol("NVec" * string(first(sz)))
 
-function show{T <: AbstractFixedVector}(io::IO, F::T)
-    print(io, T, "[")
-    print(io, foldl(F) do v0, elem
-          string(v0)*" "*string(elem)
-    end)
-    println(io, "]")
-end
-#=function show{T <: AbstractFixedMatrix}(io::IO, F::T)
-    println(io, T, "[")
-    for i=1:size(F, 1)
-        tmp = row(F, i)
-        print(io, foldl(tmp) do v0, elem
-          string(v0)*" "*string(elem)
-        end)
-        println(io, "")
-    end
-    println(io, "]")
-end=#
-
-#=
-
-stagedfunction call{T <: FixedSizeVector, N, ET}(t::Type{T}, data::ET...)
-    Tsuper, Nsuper = super(T).parameters
-    @assert Nsuper == N "not the right dimension"
-    typename = gen_fixedsizevector_type(T, Tsuper.name, N)
-    :($typename(data...))
-end
 gen_fixedsizevector_type(name::DataType, T::Symbol, N::Int) = gen_fixedsizevector_type(symbol(string(name.name.name)), T, N)
-function gen_fixedsizevector_type(name::Symbol, T::Symbol, N::Int)
-    fields = [Expr(:(::), symbol("I_$i"), T) for i = 1:N]
-    typename = symbol("FS$name")
+function gen_fixedsizevector_type(SIZE::(Integer...))
+    fields      = [Expr(:(::), symbol("I_$i"), :T) for i = 1:prod(SIZE)]
+    NDim        = length(SIZE)
+    typename    = vec_name(SIZE)
     eval(quote
-        immutable $(typename){$T} <: $(name){$T}
+        immutable $(typename){T} <: AbstractFixedArray{T, $NDim, $SIZE}
             $(fields...)
         end
     end)
     typename
 end
 
-Base.call{FS <: AbstractFixedSizeArray, T, N}(::Type{FS}, a::Array{T, N}) = AbstractFixedSizeArray{T, N, size(a)}(a...) 
-Base.call{FS <: AbstractFixedSizeArray, T, N}(::Type{FS}, a::Array{T, N}) = AbstractFixedSizeArray{T, N, size(a)}(a...) 
+stagedfunction call{T, NDim, SIZE}(t::Type{AbstractFixedArray{T, NDim, SIZE}}, data::T...)
+    N = length(data)
+    @assert prod(SIZE) == N "not the right dimension"
+    typename = gen_fixedsizevector_type(SIZE)
+    :($typename(data...))
+end
+stagedfunction call{T, NDim, SIZE}(t::Type{AbstractFixedArray{T, NDim, SIZE}}, data::(T...,))
+    N = length(data)
+    @assert prod(SIZE) == N "not the right dimension"
+    typename = gen_fixedsizevector_type(SIZE)
+    :($typename(data...))
+end
 
+Base.call{FS <: AbstractFixedArray, T, N}(::Type{FS}, a::Array{T, N}) = AbstractFixedArray{T, N, size(a)}(a...) 
+nvec{T, N}(x::Array{T,N})             = AbstractFixedArray(x)
+nvec{T}(x::T...)                      = AbstractFixedArray{T, 1, (length(x),)}(x)
+nvec{T}(SIZE::(Integer...,), x::T...) = AbstractFixedArray{T, length(SIZE), SIZE}(x)
 
-
-nvec{T, N}(x::Array{T,N}) = AbstractFixedSizeArray(x)
-=#
+@show nvec((2,2,2), 1f0,1f0,1f0,1f0, 1f0,1f0,1f0,1f0)

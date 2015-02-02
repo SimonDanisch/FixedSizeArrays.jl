@@ -81,7 +81,6 @@ function convert{T1 <: AbstractFixedArray, T2 <: AbstractFixedArray}(a::Type{T1}
 end
 
 
-
 # Matrix
 stagedfunction (*){T, M, N, K}(a::AbstractFixedMatrix{T, M, N}, b::AbstractFixedMatrix{T, N, K})
     :(AbstractFixedMatrix{$T, $M, $K}( 
