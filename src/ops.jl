@@ -60,6 +60,7 @@ for op in binaryOps
         $op{T, N, SZ}(x::AbstractFixedArray{T, N, SZ}, y::Real)                         = map($functor_name(), x, y)
     end)
 end
+dot(a::AbstractFixedArray, b::AbstractFixedArray) = sum(a.*b)
 
 immutable RandFunc <: Func{1} end
 call(::Type{RandFunc}, x) = rand(x)
@@ -67,16 +68,15 @@ rand{T <: AbstractFixedArray}(x::Type{T}) =  T([rand(eltype(x)) for i=1:length(x
 
 function convert{T1 <: AbstractFixedArray, T2 <: AbstractFixedArray}(a::Type{T1}, b::T2)
     @assert sizeof(a) == sizeof(b) "Type $a ($(sizeof(a))) doesn't have the same bit size as type $b ($(sizeof(b)))"
-    reinterpret(a, [b])[1] # why is this work like reinterpret(Float32, Int32)
+    reinterpret(a, [b])[1] # why doesn't this work like reinterpret(Float32, Int32)
 end
-
-
-dot(a::AbstractFixedArray, b::AbstractFixedArray) = sum(a.*b)
-
 function convert{T1 <: AbstractFixedArray, T2 <: AbstractFixedArray}(a::Type{T1}, b::Array{T2})
     @assert sizeof(b) % sizeof(a) == 0 "Type $a, with size: ($(sizeof(a))) doesn't fit into the array b: $(length(b)) x $(sizeof(eltype(b)))"
     reinterpret(a, b, (div(sizeof(b), sizeof(a)),))
 end
+
+
+
 
 
 
