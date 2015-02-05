@@ -24,3 +24,17 @@
 	- [x] Abstract Wrapper type (for types that wrap other FSAs)
 	- [x] Indexing
 	- [ ] Map/Reduce (-> so no other functions yet)
+	
+usage:
+```Julia
+
+immutable RGB{T} <: FixedSizeVector{T, 3}
+r::T
+g::T
+b::T
+end
+
+immutable FSMatrix{T <: FixedSizeMatrix} <: FixedSizeWrapper{T} 
+data::T
+end
+```
