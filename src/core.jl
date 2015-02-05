@@ -68,6 +68,7 @@ vec_name(sz::(Integer,))               = symbol("NVec" * string(first(sz)))
 
 gen_fixedsizevector_type(name::DataType, T::Symbol, N::Int) = gen_fixedsizevector_type(symbol(string(name.name.name)), T, N)
 function gen_fixedsizevector_type(SIZE::(Integer...))
+    # Make sure, that vectors (1,x) OR (x,1) have the same type => (x,)
     if length(SIZE) == 2
         if SIZE[1] == 1 
             SIZE = (SIZE[2],)
@@ -78,7 +79,7 @@ function gen_fixedsizevector_type(SIZE::(Integer...))
     fields      = [Expr(:(::), symbol("I_$i"), :T) for i = 1:prod(SIZE)]
     NDim        = length(SIZE)
     typename    = vec_name(SIZE)
-
+    #only eval if not already defined
     !isdefined(Main, typename) && eval(Main, quote
         immutable $(typename){T} <: AbstractFixedArray{T, $NDim, $SIZE}
             $(fields...)
