@@ -67,25 +67,17 @@ rand{T <: AbstractFixedArray}(x::Type{T}) =  T([rand(eltype(x)) for i=1:length(x
 
 function convert{T1 <: AbstractFixedArray, T2 <: AbstractFixedArray}(a::Type{T1}, b::T2)
     @assert sizeof(a) == sizeof(b) "Type $a ($(sizeof(a))) doesn't have the same bit size as type $b ($(sizeof(b)))"
-    reinterpret(a, [b])[1]
+    reinterpret(a, [b])[1] # why is this work like reinterpret(Float32, Int32)
 end
 
 
 dot(a::AbstractFixedArray, b::AbstractFixedArray) = sum(a.*b)
 
 function convert{T1 <: AbstractFixedArray, T2 <: AbstractFixedArray}(a::Type{T1}, b::Array{T2})
-    @assert sizeof(b) % sizeof(a) == 0 "Type $a ($(sizeof(a))) doesn't have the same bit size as type $b ($(sizeof(b)))"
+    @assert sizeof(b) % sizeof(a) == 0 "Type $a, with size: ($(sizeof(a))) doesn't fit into the array b: $(length(b)) x $(sizeof(eltype(b)))"
     reinterpret(a, b, (div(sizeof(b), sizeof(a)),))
 end
-stagedfunction row{T, M, N}(A::AbstractFixedMatrix{T, M, N}, i)
-  return :(AbstractFixedVector{T, M}($(ntuple(j->:(A[i,$j]), M)...)))
-end
-stagedfunction col{T, M, N}(A::AbstractFixedMatrix{T, M, N}, i)
-  return :(AbstractFixedVector{T, N}($(ntuple(j->:(A[$j, i]), N)...)))
-end
-# Matrix
-stagedfunction (*){T, M, N, K}(a::AbstractFixedMatrix{T, M, N}, b::AbstractFixedMatrix{T, N, K})
-    :(AbstractFixedMatrix{$T, $M, $K}( 
-         $([foldl((v0, prod_expr) -> :($v0 + $prod_expr), [:(a.($(sub2ind((M,N),i,k)))*b.($(sub2ind((N,K),k,j)))) for k=1:N]) for i=1:M, j=1:K]...)
-    ))
-end
+
+
+
+
