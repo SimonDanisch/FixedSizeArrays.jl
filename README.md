@@ -39,6 +39,6 @@ data::T
 end
 ```
 #### Acknowledgements
-[ImmutableArrays](https://github.com/twadleigh/ImmutableArrays.jl) by @twadleigh was the package that got me going and gave the initial inspirations.
-There has been quite a few discussions on JuliaLang/julia#7568 shaping the implementation.
-Also, @aaalexandrov supplied some code and inspirations.
+[ImmutableArrays](https://github.com/twadleigh/ImmutableArrays.jl) by [twadleigh](https://github.com/twadleigh) was the package that got me going and gave the initial inspirations.
+There has been quite a few discussions on [JuliaLang/julia#7568](https://github.com/JuliaLang/julia/pull/7568) shaping the implementation.
+Also, [aaalexandrov](https://github.com/aaalexandrov) supplied some code and inspirations.
