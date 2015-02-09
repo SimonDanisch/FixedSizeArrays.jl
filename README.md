@@ -38,3 +38,7 @@ immutable FSMatrix{T <: FixedSizeMatrix} <: FixedSizeWrapper{T}
 data::T
 end
 ```
+#### Acknowledgements
+[ImmutableArrays](https://github.com/twadleigh/ImmutableArrays.jl) by @twadleigh was the package that got me going and gave the initial inspirations.
+There has been quite a few discussions on JuliaLang/julia#7568 shaping the implementation.
+Also, @aaalexandrov supplied some code and inspirations.
