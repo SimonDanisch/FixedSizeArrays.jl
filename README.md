@@ -1,5 +1,7 @@
 # FixedSizeArrays
 
+[![Join the chat at https://gitter.im/SimonDanisch/FixedSizeArrays.jl](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/SimonDanisch/FixedSizeArrays.jl?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 [![Build Status](https://travis-ci.org/SimonDanisch/FixedSizeArrays.jl.svg?branch=master)](https://travis-ci.org/SimonDanisch/FixedSizeArrays.jl)
 
 - [ ] Core Array
@@ -38,3 +40,7 @@ immutable FSMatrix{T <: FixedSizeMatrix} <: FixedSizeWrapper{T}
 data::T
 end
 ```
+#### Acknowledgements
+[ImmutableArrays](https://github.com/twadleigh/ImmutableArrays.jl) by [twadleigh](https://github.com/twadleigh) was the package that got me going and gave the initial inspirations.
+There has been quite a few discussions on [JuliaLang/julia#7568](https://github.com/JuliaLang/julia/pull/7568) shaping the implementation.
+Also, [aaalexandrov](https://github.com/aaalexandrov) supplied some code and inspirations.
