@@ -103,12 +103,3 @@ Base.call{FS <: AbstractFixedArray, T, N}(::Type{FS}, a::Array{T, N}) = Abstract
 nvec{T, N}(x::Array{T,N})             = AbstractFixedArray(x)
 nvec{T}(x::T...)                      = AbstractFixedArray{T, 1, (length(x),)}(x)
 nvec{T}(SIZE::(Integer...,), x::T...) = AbstractFixedArray{T, length(SIZE), SIZE}(x)
-
-#a = nvec((2,2,2), 1f0,1f0,1f0,1f0, 1f0,1f0,1f0,1f0)
-
-
-abstract AbstractFixedArrayWrapper{T <: AbstractFixedArray}
-
-immutable Vec{T} <: AbstractFixedArrayWrapper{FS}
-    val::FS{T, N}
-end
