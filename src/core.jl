@@ -8,7 +8,7 @@ const SIZE_PARAM_POSITION = 3
 
 abstract AbstractFixedArray{T, NDim, SIZE}
 
-typealias AbstractFixedVector{T, CARDINALITY} AbstractFixedArray{T, 1, (1, CARDINALITY)}
+typealias AbstractFixedVector{T, CARDINALITY} AbstractFixedArray{T, 1, (CARDINALITY,)}
 typealias AbstractFixedMatrix{T, M, N} 		  AbstractFixedArray{T, 2, (M, N)}
 
 	 
@@ -19,6 +19,7 @@ eltype{T <: AbstractFixedArray}(A::Type{T})                 = first(T.types)
 
 length{T,N,SZ}(A::AbstractFixedArray{T,N,SZ})           	= prod(SZ)
 length{T <: AbstractFixedArray}(A::Type{T})                 = prod(super(T).parameters[SIZE_PARAM_POSITION])
+length{T,N,SZ}(A::Type{AbstractFixedArray{T,N,SZ}})         = prod(SZ)
 
 endof{T,N,SZ}(A::AbstractFixedArray{T,N,SZ})                = length(A)
 
@@ -59,6 +60,7 @@ getindex(A::AbstractFixedArray, i::AbstractFixedArray) = map(IndexFunctor(A), i)
 
 
 #Constructor:
+fieldname(i::Integer) = symbol("i_$i")
 
 tuple_to_string(t::(), sep)            = ""
 tuple_to_string(t::(Any,), sep)        = "$(t[1])"
@@ -76,7 +78,7 @@ function gen_fixedsizevector_type(SIZE::(Integer...))
             SIZE = (SIZE[1],)
         end
     end
-    fields      = [Expr(:(::), symbol("I_$i"), :T) for i = 1:prod(SIZE)]
+    fields      = [Expr(:(::), fieldname(i), :T) for i = 1:prod(SIZE)]
     NDim        = length(SIZE)
     typename    = vec_name(SIZE)
     #only eval if not already defined
@@ -93,15 +95,20 @@ call{T, NDim, SIZE}(t::Type{AbstractFixedArray{T, NDim, SIZE}}, data::T...) = t(
 stagedfunction call{T, NDim, SIZE}(t::Type{AbstractFixedArray{T, NDim, SIZE}}, data)
     N = length(data)
     @assert prod(SIZE) == N "not the right dimension"
-    println(T)
-    println(SIZE)
     typename = gen_fixedsizevector_type(SIZE)
     :($(typename)(data...))
 end
 
 Base.call{FS <: AbstractFixedArray, T, N}(::Type{FS}, a::Array{T, N}) = AbstractFixedArray{T, N, size(a)}(a...) 
 nvec{T, N}(x::Array{T,N})             = AbstractFixedArray(x)
-nvec{T}(x::T...)                      = AbstractFixedArray{T, 1, (1, length(x))}(x)
+nvec{T}(x::T...)                      = AbstractFixedArray{T, 1, (length(x),)}(x)
 nvec{T}(SIZE::(Integer...,), x::T...) = AbstractFixedArray{T, length(SIZE), SIZE}(x)
 
 #a = nvec((2,2,2), 1f0,1f0,1f0,1f0, 1f0,1f0,1f0,1f0)
+
+
+abstract AbstractFixedArrayWrapper{T <: AbstractFixedArray}
+
+immutable Vec{T} <: AbstractFixedArrayWrapper{FS}
+    val::FS{T, N}
+end

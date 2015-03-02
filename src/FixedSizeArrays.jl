@@ -10,6 +10,6 @@ export AbstractFixedArray
 export AbstractFixedVector
 export AbstractFixedMatrix
 export nvec
-
+export normalize
 
 end
