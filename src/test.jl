@@ -94,7 +94,7 @@ end
 @show a = Vec3[Vec3(1,3,4), Vec3(1,2,3)] # Vec3[[1,3,4],[1,2,3]]
 @show a = Vec3[Vec3(1,3,4)  Vec3(1,2,3)] # error has no method matching convert(::Type{Vec3{T}}, ::Int64)
 
-stagedfunction map{T <: AbstractFixedArray}(f, A::Type{T})
+stagedfunction map{T <: FixedArray}(f, A::Type{T})
 	quote
 		A($([:(f($i)) for i=1:length(T)]...))
 	end
@@ -122,5 +122,5 @@ end
 call(f::IndexFunctor2, i) = f.A[inds[i]]
 
 
-@show map(IndexFunctor2(rand(5,5), ), AbstractFixedArray{Float64, 2, (5,5)})
+@show map(IndexFunctor2(rand(5,5), ), FixedArray{Float64, 2, (5,5)})
 =#

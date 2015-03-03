@@ -7,30 +7,30 @@ using Base.Test
 @test 1 == 1
 
 
-immutable RGB{T} <: AbstractFixedVector{T, 3}
+immutable RGB{T} <: FixedVector{T, 3}
     r::T
     g::T
     b::T
 end
 #Base.call{T <: RGB}(::Type{T}, a,b,c) = RGB(a,b,c)
 
-immutable Vec3{T} <: AbstractFixedVector{T, 3}
+immutable Vec3{T} <: FixedVector{T, 3}
     x::T
     y::T
     z::T
 end
-immutable Vec4{T} <: AbstractFixedVector{T, 4}
+immutable Vec4{T} <: FixedVector{T, 4}
     x::T
     y::T
     z::T
     w::T
 end
-immutable Vec2{T} <: AbstractFixedVector{T, 2}
+immutable Vec2{T} <: FixedVector{T, 2}
     x::T
     y::T
 end
 
-immutable Mat4x4{T} <: AbstractFixedMatrix{T, 4,4}
+immutable Mat4x4{T} <: FixedMatrix{T, 4,4}
     c1::T
     c2::T
     c3::T

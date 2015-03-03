@@ -106,7 +106,7 @@ stagedfunction getindex{V <: FixedSizeWrapper, D <: Dimension}(x::Array{V}, key:
     :(reinterpret($typ, reshape([elem[D] for elem in x], size(x))))
 end
 #=
-function Base.setindex!{T <: AbstractFixedVector, ElType}(a::Vector{T}, x::ElType, i::Integer, accessor::Integer)
+function Base.setindex!{T <: FixedVector, ElType}(a::Vector{T}, x::ElType, i::Integer, accessor::Integer)
   @assert eltype(T) == ElType # ugly workaround for not having triangular dispatch
   @assert length(a) >= i
   cardinality = length(T)
@@ -114,7 +114,7 @@ function Base.setindex!{T <: AbstractFixedVector, ElType}(a::Vector{T}, x::ElTyp
   ptr = convert(Ptr{ElType}, pointer(a))
   unsafe_store!(ptr, x, ((i-1)*cardinality)+accessor)
 end
-function Base.setindex!{T <: AbstractFixedVector, ElType}(a::Vector{T}, x::Vector{ElType}, i::Integer, accessor::UnitRange)
+function Base.setindex!{T <: FixedVector, ElType}(a::Vector{T}, x::Vector{ElType}, i::Integer, accessor::UnitRange)
   @assert eltype(T) == ElType
   @assert length(a) >= i
   cardinality = length(T)
@@ -122,7 +122,7 @@ function Base.setindex!{T <: AbstractFixedVector, ElType}(a::Vector{T}, x::Vecto
   ptr = convert(Ptr{ElType}, pointer(a))
   unsafe_copy!(ptr + (sizeof(ElType)*((i-1)*cardinality)), pointer(x), length(accessor))
 end
-function setindex1D!{T <: AbstractFixedVector, ElType}(a::Union(Matrix{T}, Vector{T}), x::ElType, i::Integer, accessor::Integer)
+function setindex1D!{T <: FixedVector, ElType}(a::Union(Matrix{T}, Vector{T}), x::ElType, i::Integer, accessor::Integer)
     @assert length(a) >= i "Out of Bounds. 1D index: $i, Matrix: , $(typeof(a)), $length: $(length(a)) size: $(size(a))"
 
     cardinality = length(T)
@@ -133,7 +133,7 @@ function setindex1D!{T <: AbstractFixedVector, ElType}(a::Union(Matrix{T}, Vecto
   ptr = convert(Ptr{eltype(T)}, pointer(a))
   unsafe_store!(ptr, convert(eltype(T), x), ((i-1)*cardinality)+accessor)
 end
-function setindex1D!{T <: AbstractFixedVector, ElType}(a::Union(Matrix{T}, Vector{T}), x::Vector{ElType}, i::Integer, accessor::UnitRange)
+function setindex1D!{T <: FixedVector, ElType}(a::Union(Matrix{T}, Vector{T}), x::Vector{ElType}, i::Integer, accessor::UnitRange)
    if length(a) < i
      error("Out of Bounds. 1D index: ", i, " Matrix: ", typeof(a), " length: ", length(a), " size: ", size(a))
    end

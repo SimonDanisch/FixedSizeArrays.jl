@@ -1,50 +1,50 @@
 module FixedSizeArrays
 importall Base
 
-export AbstractFixedArray
-export AbstractFixedVector
-export AbstractFixedMatrix
+export FixedArray
+export FixedVector
+export FixedMatrix
 
 
-abstract AbstractFixedArray{T,N,SZ}
-typealias AbstractFixedVector{T, C} AbstractFixedArray{T, 1, (C,)}
-typealias AbstractFixedMatrix{T, Row, Column} AbstractFixedArray{T, 2, (Row, Column)}
+abstract FixedArray{T,N,SZ}
+typealias FixedVector{T, C} FixedArray{T, 1, (C,)}
+typealias FixedMatrix{T, Row, Column} FixedArray{T, 2, (Row, Column)}
 importall Base
 
-eltype{T,N,SZ}(A::AbstractFixedArray{T,N,SZ})           = T
-length{T,N,SZ}(A::AbstractFixedArray{T,N,SZ})           = prod(SZ)
-ndims{T,N,SZ}(A::AbstractFixedArray{T,N,SZ})            = N
-size{T,N,SZ}(A::AbstractFixedArray{T,N,SZ})             = SZ
-size{T,N,SZ}(A::AbstractFixedArray{T,N,SZ}, d::Integer) = SZ[d]
+eltype{T,N,SZ}(A::FixedArray{T,N,SZ})           = T
+length{T,N,SZ}(A::FixedArray{T,N,SZ})           = prod(SZ)
+ndims{T,N,SZ}(A::FixedArray{T,N,SZ})            = N
+size{T,N,SZ}(A::FixedArray{T,N,SZ})             = SZ
+size{T,N,SZ}(A::FixedArray{T,N,SZ}, d::Integer) = SZ[d]
 
 # Ugly workaround for not having triangular dispatch:
-eltype{T <: AbstractFixedVector}(A::Type{T})                = A.types[1]
-eltype{T <: AbstractFixedMatrix}(A::Type{T})                = eltype(A.types[1])
+eltype{T <: FixedVector}(A::Type{T})                = A.types[1]
+eltype{T <: FixedMatrix}(A::Type{T})                = eltype(A.types[1])
 
-length{T <: AbstractFixedVector}(A::Type{T})                = length(A.types)
-length{T <: AbstractFixedMatrix}(A::Type{T})                = prod(size(A))
+length{T <: FixedVector}(A::Type{T})                = length(A.types)
+length{T <: FixedMatrix}(A::Type{T})                = prod(size(A))
 
-ndims{T <: AbstractFixedVector}(A::Type{T})                 = 1
-ndims{T <: AbstractFixedMatrix}(A::Type{T})                 = 2
+ndims{T <: FixedVector}(A::Type{T})                 = 1
+ndims{T <: FixedMatrix}(A::Type{T})                 = 2
 
-size{T <: AbstractFixedVector}(A::Type{T})                  = (length(A),)
-size{T <: AbstractFixedVector}(A::Type{T}, d::Integer)      = (length(A),) # should throw an error!?
-size{T <: AbstractFixedMatrix}(A::Type{T})                  = (length(A.types), length(A.types[1]))
-size{T <: AbstractFixedMatrix}(A::Type{T}, d::Integer)      = size(A)[d] 
+size{T <: FixedVector}(A::Type{T})                  = (length(A),)
+size{T <: FixedVector}(A::Type{T}, d::Integer)      = (length(A),) # should throw an error!?
+size{T <: FixedMatrix}(A::Type{T})                  = (length(A.types), length(A.types[1]))
+size{T <: FixedMatrix}(A::Type{T}, d::Integer)      = size(A)[d] 
 
-getindex{T,C}(A::AbstractFixedVector{T, C}, i::Integer)                 = getfield(A, i)
-getindex{T,M,N}(A::AbstractFixedMatrix{T, M,N}, i::Integer, j::Integer) = getfield(getfield(A, i),j)
+getindex{T,C}(A::FixedVector{T, C}, i::Integer)                 = getfield(A, i)
+getindex{T,M,N}(A::FixedMatrix{T, M,N}, i::Integer, j::Integer) = getfield(getfield(A, i),j)
 
-columntype{T,N,SZ}(x::AbstractFixedMatrix{T,N,SZ}) = typeof(x[1])
-columntype{T <: AbstractFixedMatrix}(x::Type{T})   = first(x.types)
-unit{T,C}(v::AbstractFixedVector{T,C}) = v/norm(v)
-cross{T}(a::AbstractFixedVector{T, 2}, b::AbstractFixedVector{T, 2}) = a[1]*b[2]-a[2]*b[1]
+columntype{T,N,SZ}(x::FixedMatrix{T,N,SZ}) = typeof(x[1])
+columntype{T <: FixedMatrix}(x::Type{T})   = first(x.types)
+unit{T,C}(v::FixedVector{T,C}) = v/norm(v)
+cross{T}(a::FixedVector{T, 2}, b::FixedVector{T, 2}) = a[1]*b[2]-a[2]*b[1]
 
-cross{T}(a::AbstractFixedVector{T, 3}, b::AbstractFixedVector{T, 3}) = typeof(a)(a[2]*b[3]-a[3]*b[2], 
+cross{T}(a::FixedVector{T, 3}, b::FixedVector{T, 3}) = typeof(a)(a[2]*b[3]-a[3]*b[2], 
                                                      a[3]*b[1]-a[1]*b[3], 
                                                      a[1]*b[2]-a[2]*b[1])
 
-stagedfunction zero{T <: AbstractFixedArray}(::Type{T}) 
+stagedfunction zero{T <: FixedArray}(::Type{T}) 
     ttypes = T.types
     if !all(isleaftype, ttypes)
         error("please provide concrete type. Types given: ", accessors)
@@ -52,9 +52,9 @@ stagedfunction zero{T <: AbstractFixedArray}(::Type{T})
     :($T($(map(x->:(zero($x)), ttypes)...)))
 end
 
-dot{T,C}(v1::AbstractFixedVector{T,C}, v2::AbstractFixedVector{T,C}) = sum(v1.*conj(v2))
-norm{T,C}(v::AbstractFixedVector{T,C}) = sqrt(dot(v,v))
-function norm{T,C}(v::AbstractFixedVector{T,C}, p::Number)
+dot{T,C}(v1::FixedVector{T,C}, v2::FixedVector{T,C}) = sum(v1.*conj(v2))
+norm{T,C}(v::FixedVector{T,C}) = sqrt(dot(v,v))
+function norm{T,C}(v::FixedVector{T,C}, p::Number)
     if p == 1
         sum(abs(v))
     elseif p == 2
@@ -66,10 +66,10 @@ function norm{T,C}(v::AbstractFixedVector{T,C}, p::Number)
     end
 end
 
-column{T, Cardinality}(v::AbstractFixedVector{T, Cardinality}) = v
-column{T, Column, Row}(v::AbstractFixedMatrix{T, Row, Column}, i::Integer) = v[i]
-row{T, Cardinality}(v::AbstractFixedVector{T, Cardinality}, i::Integer) = v[i]
-stagedfunction row{T, Column, Row}(v::AbstractFixedMatrix{T, Row, Column}, i::Integer)
+column{T, Cardinality}(v::FixedVector{T, Cardinality}) = v
+column{T, Column, Row}(v::FixedMatrix{T, Row, Column}, i::Integer) = v[i]
+row{T, Cardinality}(v::FixedVector{T, Cardinality}, i::Integer) = v[i]
+stagedfunction row{T, Column, Row}(v::FixedMatrix{T, Row, Column}, i::Integer)
     ctype       = columntype(v)
     columnaccs  = names(v)
     expr = Any[]
@@ -84,8 +84,8 @@ abstract Func{N}
 
 accessor_expr(variable, accessor_symbol) = parse("getfield($(variable), :$(accessor_symbol))")
 
-reduce{T}(f::Func{2}, a::AbstractFixedVector{T, 1}) = a
-stagedfunction reduce(f::Func{2}, a::AbstractFixedVector)
+reduce{T}(f::Func{2}, a::FixedVector{T, 1}) = a
+stagedfunction reduce(f::Func{2}, a::FixedVector)
     accessors = names(a)
     expr = Any[]
     gfa = accessor_expr("a", accessors[1])
@@ -97,7 +97,7 @@ stagedfunction reduce(f::Func{2}, a::AbstractFixedVector)
     end
     Expr(:block, expr...)
 end
-stagedfunction reduce(f::Func{2}, a::AbstractFixedMatrix)
+stagedfunction reduce(f::Func{2}, a::FixedMatrix)
     accessors = names(a)
     expr = Any[]
     gfa = accessor_expr("a", accessors[1])
@@ -109,7 +109,7 @@ stagedfunction reduce(f::Func{2}, a::AbstractFixedMatrix)
     Expr(:block, expr...)
 end
 
-stagedfunction map(f::Func{1}, a::AbstractFixedVector)
+stagedfunction map(f::Func{1}, a::FixedVector)
     accessors = names(a)
     expr = Any[]
     for elem in accessors
@@ -118,7 +118,7 @@ stagedfunction map(f::Func{1}, a::AbstractFixedVector)
     end
     :($a($(expr...)))
 end
-stagedfunction map{T <: AbstractFixedVector}(f::Func{2}, a::T, b::T)
+stagedfunction map{T <: FixedVector}(f::Func{2}, a::T, b::T)
     accessors = names(a)
     expr = Any[]
     for elem in accessors
@@ -128,7 +128,7 @@ stagedfunction map{T <: AbstractFixedVector}(f::Func{2}, a::T, b::T)
     end
     :($a($(expr...)))
 end
-stagedfunction map(f::Func{2}, a::Real, b::AbstractFixedVector)
+stagedfunction map(f::Func{2}, a::Real, b::FixedVector)
     accessors = names(b)
     expr = Any[]
     for elem in accessors
@@ -137,7 +137,7 @@ stagedfunction map(f::Func{2}, a::Real, b::AbstractFixedVector)
     end
     :($b($(expr...)))
 end
-stagedfunction map(f::Func{2}, a::AbstractFixedVector, b::Real)
+stagedfunction map(f::Func{2}, a::FixedVector, b::Real)
     accessors = names(a)
     expr = Any[]
     for elem in accessors
@@ -146,7 +146,7 @@ stagedfunction map(f::Func{2}, a::AbstractFixedVector, b::Real)
     end
     :($a($(expr...)))
 end
-stagedfunction map(f::Func{1}, a::AbstractFixedMatrix)
+stagedfunction map(f::Func{1}, a::FixedMatrix)
     accessors = names(a)
     expr = Any[]
     for elem in accessors
@@ -155,7 +155,7 @@ stagedfunction map(f::Func{1}, a::AbstractFixedMatrix)
     end
     :($a($(expr...)))
 end
-stagedfunction map{T <: AbstractFixedMatrix}(f::Func{2}, a::T, b::T)
+stagedfunction map{T <: FixedMatrix}(f::Func{2}, a::T, b::T)
     accessors = names(a)
     expr = Any[]
     for elem in accessors
@@ -165,7 +165,7 @@ stagedfunction map{T <: AbstractFixedMatrix}(f::Func{2}, a::T, b::T)
     end
     :($a($(expr...)))
 end
-stagedfunction map(f::Func{2}, a::Real, b::AbstractFixedMatrix)
+stagedfunction map(f::Func{2}, a::Real, b::FixedMatrix)
     accessors = names(b)
     expr = Any[]
     for elem in accessors
@@ -208,7 +208,7 @@ for (callfun, reducefun) in reductions
     @eval begin 
         immutable $unicsymb <: Func{2} end
         call(::$unicsymb, x, y) = $reducefun(x, y)
-        $(callfun){T, N, SZ}(x::AbstractFixedArray{T, N, SZ}) = reduce($unicsymb(), x)
+        $(callfun){T, N, SZ}(x::FixedArray{T, N, SZ}) = reduce($unicsymb(), x)
     end
 end
 for elem in unaryOps
@@ -216,7 +216,7 @@ for elem in unaryOps
     @eval begin 
         immutable $unicsymb <: Func{1} end
         call(::$unicsymb, x) = $elem(x)
-        $(elem){T, N, SZ}(x::AbstractFixedArray{T, N, SZ}) = map($unicsymb(), x)
+        $(elem){T, N, SZ}(x::FixedArray{T, N, SZ}) = map($unicsymb(), x)
     end
 end
 for elem in binaryOps2
@@ -224,7 +224,7 @@ for elem in binaryOps2
     @eval begin 
         immutable $unicsymb <: Func{2} end
         call(::$unicsymb, x, y) = $elem(x, y)
-        $elem{T, N, SZ}(x::AbstractFixedArray{T, N, SZ}, y::AbstractFixedArray{T, N, SZ}) = map($unicsymb(), x, y)
+        $elem{T, N, SZ}(x::FixedArray{T, N, SZ}, y::FixedArray{T, N, SZ}) = map($unicsymb(), x, y)
     end
 end
 for elem in binaryOps
@@ -232,9 +232,9 @@ for elem in binaryOps
     @eval begin 
         immutable $unicsymb <: Func{2} end
         call(::$unicsymb, x, y) = $elem(x, y)
-        $elem{T, N, SZ}(x::AbstractFixedArray{T, N, SZ}, y::AbstractFixedArray{T, N, SZ}) = map($unicsymb(), x, y)
-        $elem{T, N, SZ}(x::Real, y::AbstractFixedArray{T, N, SZ}) = map($unicsymb(), x, y)
-        $elem{T, N, SZ}(x::AbstractFixedArray{T, N, SZ}, y::Real) = map($unicsymb(), x, y)
+        $elem{T, N, SZ}(x::FixedArray{T, N, SZ}, y::FixedArray{T, N, SZ}) = map($unicsymb(), x, y)
+        $elem{T, N, SZ}(x::Real, y::FixedArray{T, N, SZ}) = map($unicsymb(), x, y)
+        $elem{T, N, SZ}(x::FixedArray{T, N, SZ}, y::Real) = map($unicsymb(), x, y)
     end
 end
 end

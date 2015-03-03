@@ -61,7 +61,7 @@ function generate_arrays(maxSz::Integer, result)
         local TypT = vecTypT(sz)
 
         # the body of the type definition
-        local defn = :(immutable $TypT <: AbstractFixedVector{T, $sz} end)
+        local defn = :(immutable $TypT <: FixedVector{T, $sz} end)
 
         # the members of the type
         for i = 1:sz
@@ -224,7 +224,7 @@ function generate_arrays(maxSz::Integer, result)
         local RowTypT = vecTypT(cSz)
 
         # the body of the type definition
-        local defn = :(immutable $TypT <: AbstractFixedMatrix{T, $rSz, $cSz} end)
+        local defn = :(immutable $TypT <: FixedMatrix{T, $rSz, $cSz} end)
 
         # the members of the type
         for i = 1:cSz

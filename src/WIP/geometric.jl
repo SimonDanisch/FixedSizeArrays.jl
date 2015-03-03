@@ -1,9 +1,9 @@
 include("core.jl")
-immutable Matrix{T <: AbstractFixedArray} <: WrappedFixedArray{T}
+immutable Matrix{T <: FixedArray} <: WrappedFixedArray{T}
 	data::T
 end
 
-immutable F3{T} <: AbstractFixedArray{T, 1, (3,)}
+immutable F3{T} <: FixedArray{T, 1, (3,)}
 	x::T
 	y::T
 	z::T

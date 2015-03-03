@@ -1,14 +1,16 @@
 module FixedSizeArrays
 
-export RGB
 include("core.jl")
-include("staged.jl")
+include("constructors.jl")
+include("mapreduce.jl")
+include("indexing.jl")
 include("ops.jl")
 include("array_of_fixedsize.jl")
 
-export AbstractFixedArray
-export AbstractFixedVector
-export AbstractFixedMatrix
+export FixedArray
+export FixedArrayWrapper
+export FixedVector
+export FixedMatrix
 export nvec
 export normalize
 

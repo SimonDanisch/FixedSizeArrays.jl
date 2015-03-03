@@ -1,8 +1,8 @@
 abstract Func{T}
 
-abstract AbstractFixedArray{T,N,SZ}
+abstract FixedArray{T,N,SZ}
 
-immutable Vec3{T} <: AbstractFixedArray{T, 1, (3,)}
+immutable Vec3{T} <: FixedArray{T, 1, (3,)}
     x::T 
     y::T
     z::T
@@ -19,7 +19,7 @@ stagedfunction map(f::Func{2}, a::Vec3, b::Vec3)
     end
     :($a($(expr...)))
 end
-function map2(f::Func{2}, a::AbstractFixedArray, b::AbstractFixedArray)
+function map2(f::Func{2}, a::FixedArray, b::FixedArray)
 
     Vec3(ntuple(x-> call(f, a[x], b[x]), 3)...)
 end
