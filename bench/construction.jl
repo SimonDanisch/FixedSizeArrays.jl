@@ -23,7 +23,7 @@ macro timing(expr)
 		gctms 	= Base.gc_time_ns() # line 61:
 		gcps 	= Base.gc_num_pause() # line 62:
 		gcswps 	= Base.gc_num_full_sweep() # line 63:
-		
+
 		tms 	= Base.time_ns() # line 60:
 		val 	= $(expr)
 		tms1 	= Base.time_ns() # line 68:
@@ -35,7 +35,7 @@ macro timing(expr)
 		BenchData(bts1-bts, tms1-tms, gctms1-gctms, gcps1-gcps, gcswps1-gcswps)
 	end)
 end
-immutable LolVec{T} <: FixedVector{T, 4}
+type LolVec{T} <: FixedVector{T, 4}
 	x::T
 	y::T
 	z::T
@@ -80,25 +80,33 @@ function test(N)
 	end
 	bench
 end
-result = test(1000)
+#result = test(1000)
 
-println(mean(result[(:fsa, :vector_creation)][100:end]))
-println(mean(result[(:fsawrapper, :vector_creation)][100:end]))
-println(mean(result[(:immutablearrays, :vector_creation)][100:end]))
+#println(mean(result[(:fsa, :vector_creation)][100:end]))
+#println(mean(result[(:fsawrapper, :vector_creation)][100:end]))
+#println(mean(result[(:immutablearrays, :vector_creation)][100:end]))
 
-println(@which NVec4(1,2,3,4))
-function test2()
-	println(@which nvec(1,2,3,4))
-	@time a = nvec(1,2,3,4)
-	@time a = nvec(1,2,3,4)
-	@time a = nvec(1,2,3,4)
-
-	@time c = NVec4(1,2,3,4)
-	@time c = NVec4(1,2,3,4)
-	@time b = Vector4(1,2,3,4)
-	@time b = Vector4(1,2,3,4)
-	a,b,c
+function test2(N)
+	a,b,c,d = rand(Float64, 4)
+	result =  LolVec(a,b,c,d)
+	bench = 0.0
+	for i=1:N
+		a,b,c,d = rand(Float64, 4)
+		tic()
+		result = LolVec(a,b,c,d)
+		b = toq()
+		bench += b
+	end
+		
+	result,bench
 end
 
-a,b,c = test2()
-println(a,b,c)
+@time t= test2(10)
+@time t,b= test2(10^4)
+println(b)
+#0.00622337 seconds (1 MB allocated)
+#0.001912617 seconds (470 kB allocated)
+
+#0.0036441109999999725 2mb
+#0.0010228019999999729 1mb
+#0.0012369930000000022 1mb

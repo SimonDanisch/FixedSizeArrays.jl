@@ -33,15 +33,9 @@ stagedfunction call{T, NDim, SIZE}(t::Type{FixedArray{T, NDim, SIZE}}, data)
     typename = gen_fixedsizevector_type(SIZE)
     :($(typename)(data...))
 end
-stagedfunction nvec{T}(a::T, b::T, c::T, d::T)
-    typename = gen_fixedsizevector_type((4,))
-    println("lol")
-    :($(typename)(a,b,c,d))
-end
 call{FS <: FixedArray, T, N}(::Type{FS}, a::Array{T, N}) = FixedArray{T, N, size(a)}(a...) 
 nvec{T, N}(x::Array{T,N})             = FixedArray(x)
 nvec{T}(x::T...)                      = FixedArray{T, 1, (length(x),)}(x)
 nvec{T}(SIZE::(Integer...,), x::T...) = FixedArray{T, length(SIZE), SIZE}(x)
 
 
-call{FS <: FixedArrayWrapper}(::Type{FS}, a...)  = FS(nvec(a...))
