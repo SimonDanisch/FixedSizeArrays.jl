@@ -5,17 +5,17 @@ type A{T} <: FixedVector{T, 3}
 	y::T 
 	z::T
 end
-
-function test()
-	a = [A(1,2,3), A(1,2,3)]
-	r = a[1]
-	println(a.data)
-	a = 0
-	r
+type B{T} <: FixedVector{T, 3}
+	f::T
+	d::T 
+	g::T
 end
 
-a = test()
-gc()
-sleep(1)
-gc()
-@show a
+const a = A(1,2,3)
+const b = A(1,2,3)
+
+@time a+a
+@time a+a
+
+@time b+b
+@time b+b

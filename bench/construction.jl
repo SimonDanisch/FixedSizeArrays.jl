@@ -7,6 +7,7 @@ immutable BenchData <: FixedVector{Float64, 5}
 	gc_num_pause::Float64
 	gc_num_full_sweep::Float64
 end
+
 function Base.show(io::IO, b::BenchData)
 	print(io, """
 		bytes allocated 	: $(b.gc_bytes)
@@ -18,32 +19,42 @@ function Base.show(io::IO, b::BenchData)
 end
 
 macro timing(expr)
+	tms 	= gensym()
+	bts 	= gensym()
+	gctms 	= gensym()
+	gcps 	= gensym() 
+	gcswps 	= gensym() 
+
+	tms1 	= gensym()
+	gcswps1 = gensym()
+	gcps1 	= gensym()
+	gctms1 	= gensym()
+	bts1 	= gensym() 
 	esc(quote
-		bts 	= Base.gc_bytes() # line 59:
-		gctms 	= Base.gc_time_ns() # line 61:
-		gcps 	= Base.gc_num_pause() # line 62:
-		gcswps 	= Base.gc_num_full_sweep() # line 63:
+		$bts 	 = Base.gc_bytes() 
+		$gctms 	 = Base.gc_time_ns()
+		$gcps 	 = Base.gc_num_pause() 
+		$gcswps  = Base.gc_num_full_sweep()
+		$tms 	 = Base.time_ns() 
 
-		tms 	= Base.time_ns() # line 60:
-		val 	= $(expr)
-		tms1 	= Base.time_ns() # line 68:
+		$expr
 
-		gcswps1 = Base.gc_num_full_sweep() # line 65:
-		gcps1 	= Base.gc_num_pause() # line 66:
-		gctms1 	= Base.gc_time_ns() # line 67:
-		bts1 	= Base.gc_bytes() # line 69:
-		BenchData(bts1-bts, tms1-tms, gctms1-gctms, gcps1-gcps, gcswps1-gcswps)
+		$tms1 	 = Base.time_ns()
+		$gcswps1 = Base.gc_num_full_sweep() 
+		$gcps1 	 = Base.gc_num_pause() 
+		$gctms1  = Base.gc_time_ns()
+		$bts1 	 = Base.gc_bytes()
+
+		BenchData($bts1-$bts, $tms1-$tms, $gctms1-$gctms, $gcps1-$gcps, $gcswps1-$gcswps)
 	end)
 end
-type LolVec{T} <: FixedVector{T, 4}
+type Vec4{T} <: FixedVector{T, 4}
 	x::T
 	y::T
 	z::T
 	w::T
 end
-immutable Point{FSV <: FixedVector} <: FixedArrayWrapper{FSV}
-	vec::FSV
-end
+
 
 function test(N)
 	bench = Dict(
@@ -80,12 +91,13 @@ function test(N)
 	end
 	bench
 end
-#result = test(1000)
+result = test(1000)
 
-#println(mean(result[(:fsa, :vector_creation)][100:end]))
-#println(mean(result[(:fsawrapper, :vector_creation)][100:end]))
-#println(mean(result[(:immutablearrays, :vector_creation)][100:end]))
+println(mean(result[(:fsa, :vector_creation)][100:end]))
+println(mean(result[(:fsawrapper, :vector_creation)][100:end]))
+println(mean(result[(:immutablearrays, :vector_creation)][100:end]))
 
+#=
 function test2(N)
 	a,b,c,d = rand(Float64, 4)
 	result =  LolVec(a,b,c,d)
@@ -110,3 +122,4 @@ println(b)
 #0.0036441109999999725 2mb
 #0.0010228019999999729 1mb
 #0.0012369930000000022 1mb
+=#
