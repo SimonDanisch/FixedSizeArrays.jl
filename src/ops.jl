@@ -100,20 +100,20 @@ det{T}(A::FixedMatrix{T, 4, 4}) = (
 
 
 function inv{T}(A::FixedMatrix{T, 3, 3})
-  determinant = det(A)
-  typeof(A)(
-    (A[2,2]*A[3,3]-A[2,3]*A[3,2]) /determinant,
-    -(A[2,1]*A[3,3]-A[2,3]*A[3,1])/determinant,
-    (A[2,1]*A[3,2]-A[2,2]*A[3,1]) /determinant,
+    determinant = det(A)
+    typeof(A)(
+        (A[2,2]*A[3,3]-A[2,3]*A[3,2]) /determinant,
+        -(A[2,1]*A[3,3]-A[2,3]*A[3,1])/determinant,
+        (A[2,1]*A[3,2]-A[2,2]*A[3,1]) /determinant,
 
-    -(A[1,2]*A[3,3]-A[1,3]*A[3,2])/determinant,
-    (A[1,1]*A[3,3]-A[1,3]*A[3,1]) /determinant,
-    -(A[1,1]*A[3,2]-A[1,2]*A[3,1])/determinant,
+        -(A[1,2]*A[3,3]-A[1,3]*A[3,2])/determinant,
+        (A[1,1]*A[3,3]-A[1,3]*A[3,1]) /determinant,
+        -(A[1,1]*A[3,2]-A[1,2]*A[3,1])/determinant,
 
-    (A[1,2]*A[2,3]-A[1,3]*A[2,2]) /determinant,
-    -(A[1,1]*A[2,3]-A[1,3]*A[2,1])/determinant,
-    (A[1,1]*A[2,2]-A[1,2]*A[2,1]) /determinant
-  )
+        (A[1,2]*A[2,3]-A[1,3]*A[2,2]) /determinant,
+        -(A[1,1]*A[2,3]-A[1,3]*A[2,1])/determinant,
+        (A[1,1]*A[2,2]-A[1,2]*A[2,1]) /determinant
+    )
 end
 function inv{T}(A::FixedMatrix{T, 2, 2})
   determinant = det(A)
@@ -122,6 +122,13 @@ function inv{T}(A::FixedMatrix{T, 2, 2})
       -A[2,1]/determinant,
       -A[1,2]/determinant,
       A[1,1] /determinant)
+end
+stagedfunction ctranspose{T, N, M}(A::FixedMatrix{T, N, M})
+    quote 
+        FixedMatrix{T, M, N}(
+            $([:(A[$i, $j]) for j=M:-1:1, i=N:-1:1]...)
+        )
+    end
 end
 
 

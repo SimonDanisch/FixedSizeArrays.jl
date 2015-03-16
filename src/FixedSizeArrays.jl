@@ -13,5 +13,5 @@ export FixedVector
 export FixedMatrix
 export nvec
 export normalize
-
+export gen_fixed_sizea_array
 end

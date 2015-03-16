@@ -30,6 +30,11 @@ immutable Vec2{T} <: FixedVector{T, 2}
     y::T
 end
 
+immutable RID <: DataField
+    pageid::Int32
+    tupleid::Int32
+end
+
 immutable Mat4x4{T} <: FixedMatrix{T, 4,4}
     c1::T
     c2::T

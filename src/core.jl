@@ -7,13 +7,13 @@ const NDIM_PARAM_POSITION = 2
 const SIZE_PARAM_POSITION = 3
 
 abstract FixedArray{T, NDim, SIZE}
-abstract ImmutableFixedArray{T, NDim, SIZE} <: FixedArray{T, NDim, SIZE}
+abstract MutableFixedArray{T, NDim, SIZE} <: FixedArray{T, NDim, SIZE}
+
+typealias MutableFixedVector{T, CARDINALITY} MutableFixedArray{T, 1, (CARDINALITY,)}
+typealias MutableFixedMatrix{T, M, N} 		 MutableFixedArray{T, 2, (M, N)}
 
 typealias FixedVector{T, CARDINALITY} FixedArray{T, 1, (CARDINALITY,)}
-typealias FixedMatrix{T, M, N} 		  FixedArray{T, 2, (M, N)}
-
-typealias ImmutableFixedVector{T, CARDINALITY} FixedArray{T, 1, (CARDINALITY,)}
-typealias ImmutableFixedMatrix{T, M, N}        FixedArray{T, 2, (M, N)}
+typealias FixedMatrix{T, M, N}        FixedArray{T, 2, (M, N)}
 
 abstract FixedArrayWrapper{T <: FixedArray} <: FixedArray
 
