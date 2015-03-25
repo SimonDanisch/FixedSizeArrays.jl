@@ -8,10 +8,17 @@ include("ops.jl")
 include("array_of_fixedsize.jl")
 
 export FixedArray
-export FixedArrayWrapper
 export FixedVector
 export FixedMatrix
+export MutableFixedArray
+export MutableFixedVector
+export MutableFixedMatrix
+
 export nvec
 export normalize
-export gen_fixed_sizea_array
+export @gen_fixed_size_vector
+export gen_fixed_size_matrix
+export fieldname
+export row
+export column
 end

@@ -1,8 +1,8 @@
-reduce{F <: Func{2}, T}(f::Type{F}, a::FixedVector{T, 1})   = a[1]
-reduce{F <: Func{2}, T}(f::Type{F}, a::FixedMatrix{T, 1,1}) = a[1]
-stagedfunction reduce(f::Func{2}, a::FixedVector)
+
+
+stagedfunction reduce(f::Func{2}, a::FixedArray)
     alength = length(a)
-    @assert alength >= 2 "type $a not long enough for reduce (needs at least two elements)"
+    alength == 1 && return :(a[1])
     quote 
         s = f(a[1], a[2])
         $([:(s = f(s, a[$i])) for i=3:alength]...)
@@ -27,12 +27,17 @@ function map_expression{F <: Func, FSA <: FixedArray}(f::Type{F}, fsa::Type{FSA}
     end
     # the type FSA from map can't be used, because it contains the parameter already (e.g. FSA{Int}), which results in a conversion.
     # map should return a fixedsize array with the return type of f, so the parameter has to be stripped of FSA.
-    type_name = :(Main.$(symbol(name(fsa)))) # custom types are not known in the Module FixedSizeArray, but in Main
-    eval(type_name)
-    :($type_name($(expr...)))
+    type_name = :($(symbol(name(fsa)))) # custom types are not known in the Module FixedSizeArray, but in Main
+    #eval(type_name)
+    :(FSA($(expr...)))
 end
 
-
+stagedfunction map{FSA <: FixedArray}(f::Func{1}, a::Type{FSA})
+    expr = quote
+        FSA($([:(f($i)) for i=1:length(FSA)]...))
+    end
+    expr
+end
 
 stagedfunction map{FSA <: FixedArray}(f::Func{1}, a::FSA)
     map_expression(f, a, a)

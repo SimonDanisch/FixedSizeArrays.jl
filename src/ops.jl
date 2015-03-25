@@ -62,7 +62,7 @@ for op in binaryOps
 end
 
 
-dot(a::FixedArray, b::FixedArray) = sum(a.*b)
+dot{T <: FixedArray}(a::T, b::T) = sum(a.*b)
 
 cross{T}(a::FixedVector{T, 2}, b::FixedVector{T, 2}) = a[1]*b[2]-a[2]*b[1]
 cross{T}(a::FixedVector{T, 3}, b::FixedVector{T, 3}) = typeof(a)(a[2]*b[3]-a[3]*b[2], 
@@ -72,9 +72,7 @@ cross{T}(a::FixedVector{T, 3}, b::FixedVector{T, 3}) = typeof(a)(a[2]*b[3]-a[3]*
 norm{T, N}(a::FixedVector{T, N})      = sqrt(dot(a,a))
 normalize{T, N}(a::FixedVector{T, N}) = a / norm(a)
 
-immutable RandFunc <: Func{1} end
-call(::Type{RandFunc}, x) = rand(x)
-rand{T <: FixedArray}(x::Type{T}) = T([rand(eltype(x)) for i=1:length(x)]...)
+
 
 function convert{T1 <: FixedArray, T2 <: FixedArray}(a::Type{T1}, b::Array{T2})
     @assert sizeof(b) % sizeof(a) == 0 "Type $a, with size: ($(sizeof(a))) doesn't fit into the array b: $(length(b)) x $(sizeof(eltype(b)))"
@@ -82,6 +80,7 @@ function convert{T1 <: FixedArray, T2 <: FixedArray}(a::Type{T1}, b::Array{T2})
 end
 
 #Matrix
+det{T}(A::FixedMatrix{T, 1, 1}) = A[1]
 det{T}(A::FixedMatrix{T, 2, 2}) = A[1,1]*A[2,2] - A[1,2]*A[2,1]
 det{T}(A::FixedMatrix{T, 3, 3}) = A[1,1]*(A[2,2]*A[3,3]-A[2,3]*A[3,2]) - A[1,2]*(A[2,1]*A[3,3]-A[2,3]*A[3,1]) + A[1,3]*(A[2,1]*A[3,2]-A[2,2]*A[3,1])
 det{T}(A::FixedMatrix{T, 4, 4}) = (
@@ -99,6 +98,15 @@ det{T}(A::FixedMatrix{T, 4, 4}) = (
         A[5]  * A[2]   * A[11] * A[16] + A[1] * A[6]  * A[11] * A[16])
 
 
+inv{T}(A::FixedMatrix{T, 1, 1}) = A
+function inv{T}(A::FixedMatrix{T, 2, 2})
+  determinant = det(A)
+  typeof(A)(
+      A[2,2] /determinant,
+      -A[2,1]/determinant,
+      -A[1,2]/determinant,
+      A[1,1] /determinant)
+end
 function inv{T}(A::FixedMatrix{T, 3, 3})
     determinant = det(A)
     typeof(A)(
@@ -115,27 +123,41 @@ function inv{T}(A::FixedMatrix{T, 3, 3})
         (A[1,1]*A[2,2]-A[1,2]*A[2,1]) /determinant
     )
 end
-function inv{T}(A::FixedMatrix{T, 2, 2})
-  determinant = det(A)
-  typeof(A)(
-      A[2,2] /determinant,
-      -A[2,1]/determinant,
-      -A[1,2]/determinant,
-      A[1,1] /determinant)
-end
-stagedfunction ctranspose{T, N, M}(A::FixedMatrix{T, N, M})
-    quote 
-        FixedMatrix{T, M, N}(
-            $([:(A[$i, $j]) for j=M:-1:1, i=N:-1:1]...)
-        )
-    end
-end
 
 
+stagedfunction ctranspose{T, M, N}(A::FixedMatrix{T, M, N})
+    returntype = gen_fixedsizevector_type((M,N), A.mutable)
+    :($returntype($([:(A[$(M+1-i), $(N+1-j)]) for i=M:-1:1, j=N:-1:1]...)))
+end
 
 # Matrix
 stagedfunction (*){T, M, N, K}(a::FixedMatrix{T, M, N}, b::FixedMatrix{T, N, K})
-    :(FixedMatrix{$T, $M, $K}( 
-         $([:(dot(a[$i, :], b[:, $j])) for i=1:M, j=1:K]...)
+    returntype = gen_fixedsizevector_type((M,K), a.mutable)
+    expr= :($returntype( 
+         $([:(dot(row(a, $i), column(b, $j))) for i=1:M, j=1:K]...)
     ))
+    expr
+end
+
+function (*){T, FSV <: FixedVector, M, N}(a::FixedMatrix{T, M, N}, b::FSV)
+    bb = FixedMatrix{T, length(b), 1}(b...)
+    a*bb
+end
+function (*){T, FSV <: FixedVector, M, N}(a::FSV, b::FixedMatrix{T, M, N})
+    aa = FixedMatrix{T, length(a), 1}(a...)
+    aa*b
+end
+function (*){FSV <: FixedVector}(a::FSV, b::FSV)
+    FixedMatrix{eltype(FSV), 1, 1}(dot(a,b))
+end
+
+function convert{FSAa <: FixedArray, FSAb <: FixedArray}(a::Type{FSAa}, b::FSAb)
+    FSAa(b...)
+end
+function convert{FSA <: FixedArray}(a::Type{FSA}, b::DenseArray)
+    FSA(b...)
+end
+
+function convert{DA <: DenseArray, FSA <: FixedArray}(b::Type{DA}, a::FSA)
+  reshape([a...], size(FSA))
 end

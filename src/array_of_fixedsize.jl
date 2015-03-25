@@ -14,7 +14,7 @@ end
 reinterpret{El, N, T}(::Type{T}, A::CArray{El, N, T}) 	= A.data
 reinterpret{T}(::Type{T}, A::CArray) 					= reinterpret(T, A.data)
 
-function Base.vect{T <: FixedArray}(V::T...)
+function Base.vect{T <: MutableFixedArray}(V::T...)
 	ElType = eltype(T)
 	isempty(V) && return CArray{T,1, ElType}()
 	dims = (length(V),length(T))
