@@ -69,8 +69,8 @@ cross{T}(a::FixedVector{T, 3}, b::FixedVector{T, 3}) = typeof(a)(a[2]*b[3]-a[3]*
                                                      a[3]*b[1]-a[1]*b[3], 
                                                      a[1]*b[2]-a[2]*b[1])
 
-norm{T, N}(a::FixedVector{T, N})      = sqrt(dot(a,a))
-normalize{T, N}(a::FixedVector{T, N}) = a / norm(a)
+norm{T, N}(a::FixedVector{T, N})     = sqrt(dot(a,a))
+normalize{FSA <: FixedArray}(a::FSA) = a / norm(a)
 
 
 
@@ -151,8 +151,8 @@ function (*){FSV <: FixedVector}(a::FSV, b::FSV)
     FixedMatrix{eltype(FSV), 1, 1}(dot(a,b))
 end
 
-function convert{FSAa <: FixedArray, FSAb <: FixedArray}(a::Type{FSAa}, b::FSAb)
-    FSAa(b...)
+function convert{FSAA <: FixedArray}(a::Type{FSAA}, b::FixedArray)
+    FSAA(b...)
 end
 function convert{FSA <: FixedArray}(a::Type{FSA}, b::DenseArray)
     FSA(b...)

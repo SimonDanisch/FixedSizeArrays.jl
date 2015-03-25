@@ -48,6 +48,11 @@ stagedfunction call{T, NDim, SIZE}(t::Type{FixedArray{T, NDim, SIZE}}, data::T..
     :($typename(data...))
 end
 
+
+function call{FSA <: FixedArray, T <: Real}(t::Type{FSA}, data::T) 
+    return FSA(ntuple(x->data, length(FSA))...)
+end
+
 nvec{T <: AbstractArray}(x::T)        = FixedArray(x)
 nvec{T}(x::T...)                      = FixedArray{T, 1, (length(x),)}(x)
 nvec{T}(SIZE::(Integer...,), x::T...) = FixedArray{T, length(SIZE), SIZE}(x)

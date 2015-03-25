@@ -8,9 +8,8 @@ size{T,N}(A::CArray{T,N})   			= ntuple(i->size(A,i), N)
 size{T,N}(A::CArray{T,N}, d::Integer) 	= div(size(A.data, d), length(T))
 pointer{T,N}(A::CArray{T,N}) 			= Ptr{T}(pointer(A.data))
 
-function getindex{T,N}(A::CArray{T,N}, i::Integer)
-	unsafe_load(Ptr{T}(pointer(A.data)), i)
-end
+getindex{T,N}(A::CArray{T,N}, i::Integer) = unsafe_load(Ptr{T}(pointer(A.data)), i)
+
 reinterpret{El, N, T}(::Type{T}, A::CArray{El, N, T}) 	= A.data
 reinterpret{T}(::Type{T}, A::CArray) 					= reinterpret(T, A.data)
 
