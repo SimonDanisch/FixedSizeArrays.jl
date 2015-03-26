@@ -8,6 +8,7 @@ include("mapreduce.jl")
 include("indexing.jl")
 include("ops.jl")
 include("array_of_fixedsize.jl")
+include("conversion.jl")
 
 export FixedArray
 export FixedVector

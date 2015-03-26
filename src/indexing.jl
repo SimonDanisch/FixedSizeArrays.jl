@@ -38,3 +38,9 @@ stagedfunction column{T, Column, Row, VT}(A::FixedMatrix{T, Row, Column}, j::Int
     fields = [:(A[$i,j]) for i=1:Row]
     :(VT($(fields...)))
 end
+
+
+function row{T, N}(v::FixedVector{T, N})
+    convert(FixedMatrix{T, 1, N}, v)
+end
+column{T, N}(v::FixedVector{T, N}) = v

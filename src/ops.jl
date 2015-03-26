@@ -72,13 +72,6 @@ cross{T}(a::FixedVector{T, 3}, b::FixedVector{T, 3}) = typeof(a)(a[2]*b[3]-a[3]*
 norm{T, N}(a::FixedVector{T, N})     = sqrt(dot(a,a))
 normalize{FSA <: FixedArray}(a::FSA) = a / norm(a)
 
-
-
-function convert{T1 <: FixedArray, T2 <: FixedArray}(a::Type{T1}, b::Array{T2})
-    @assert sizeof(b) % sizeof(a) == 0 "Type $a, with size: ($(sizeof(a))) doesn't fit into the array b: $(length(b)) x $(sizeof(eltype(b)))"
-    reinterpret(a, b, (div(sizeof(b), sizeof(a)),))
-end
-
 #Matrix
 det{T}(A::FixedMatrix{T, 1, 1}) = A[1]
 det{T}(A::FixedMatrix{T, 2, 2}) = A[1,1]*A[2,2] - A[1,2]*A[2,1]
@@ -133,43 +126,21 @@ end
 # Matrix
 stagedfunction (*){T, M, N, K}(a::FixedMatrix{T, M, N}, b::FixedMatrix{T, N, K})
     returntype = gen_fixedsizevector_type((M,K), a.mutable)
-    expr= :($returntype( 
+    :($returntype( 
          $([:(dot(row(a, $i), column(b, $j))) for i=1:M, j=1:K]...)
     ))
-    expr
 end
 
 function (*){T, FSV <: FixedVector, M, N}(a::FixedMatrix{T, M, N}, b::FSV)
     bb = FixedMatrix{T, length(b), 1}(b...)
     a*bb
 end
+
 function (*){T, FSV <: FixedVector, M, N}(a::FSV, b::FixedMatrix{T, M, N})
-    aa = FixedMatrix{T, length(a), 1}(a...)
+    aa = convert(FixedMatrix{T, length(a), 1}, a)
     aa*b
 end
+
 function (*){FSV <: FixedVector}(a::FSV, b::FSV)
     FixedMatrix{eltype(FSV), 1, 1}(dot(a,b))
-end
-#=
-Optimized convert version doesn't compile, as the dead code still gets checked for syntax, 
-which means if FSA is concrete, there will be FSA{Float32}{eltype(v)} in the emitted code.
-Could be solved by calling out to another function...
-function convert{FSA <: FixedArray}(::Type{FSA}, v::Array{T})
-    if FSA.abstract
-        unsafe_load(Ptr{FSA{eltype(v)}}}(pointer(v)))
-    else
-        unsafe_load(Ptr{FSA}(pointer(v)))
-    end
-end
-
-=#
-function convert{FSAA <: FixedArray}(a::Type{FSAA}, b::FixedArray)
-    FSAA(b...)
-end
-function convert{FSA <: FixedArray}(a::Type{FSA}, b::DenseArray)
-    FSA(b...)
-end
-
-function convert{DA <: DenseArray, FSA <: FixedArray}(b::Type{DA}, a::FSA)
-  reshape([a...], size(FSA))
 end
