@@ -13,15 +13,23 @@ function fixedarray_type_expr(typename::Symbol, SIZE::(Integer...), mutable::Boo
     fields_names        = [fields(i) for i=1:len]
     fields_types        = [Expr(:(::), fields(i), :T) for i=1:len]
     NDim                = length(SIZE)
-    
+
+    singlevaluedconstr  = len == 1 ? :() : quote
+        $typename(x::Real) = $typename($(ntuple(_->:(x), len)...))
+        call{T}(::Type{$typename{T}}, x::Real) = (x = convert(T, x) ;$typename($(ntuple(_->:(x), len)...)))
+    end
+
     typ_expr = mutable ? quote
         type $(typename){T} <: MutableFixedArray{T, $NDim, $SIZE}
             $(fields_types...)
         end
+        $singlevaluedconstr
+        
     end : quote 
         immutable $(typename){T} <: FixedArray{T, $NDim, $SIZE}
             $(fields_types...)
         end
+        $singlevaluedconstr
     end
 end
 # maps the dimension of vectors always to (length,)
@@ -47,11 +55,12 @@ stagedfunction call{T, NDim, SIZE}(t::Type{FixedArray{T, NDim, SIZE}}, data::T..
     typename = gen_fixedsizevector_type(SIZE, t.mutable)
     :($typename(data...))
 end
-
-
-function call{FSA <: FixedArray, T <: Real}(t::Type{FSA}, data::T) 
-    return FSA(ntuple(x->data, length(FSA))...)
+immutable ConstFunctor{T} <: Func{1}
+    args::T
 end
+call(f::ConstFunctor, i) = f.args
+
+
 
 nvec{T <: AbstractArray}(x::T)        = FixedArray(x)
 nvec{T}(x::T...)                      = FixedArray{T, 1, (length(x),)}(x)
@@ -88,14 +97,9 @@ eltype::Type{T}
 end
 call{T}(::RandFunc{T}, x) = rand(T)
 
-rand{FSA <: FixedArray}(x::Type{FSA}) = map(RandFunc(eltype(FSA)), FSA)
-
-
-immutable ZeroFunc{T} <: Func{1}
-    typ::Type{T}
-end
-call{T}(::ZeroFunc{T}, x) = zero(T)
-zero{FSA <: FixedArray}(::Type{FSA}) = map(ZeroFunc(eltype(FSA)), FSA)
+rand{FSA <: FixedArray}(x::Type{FSA})   = map(RandFunc(eltype(FSA)), FSA)
+zeros{FSA <: FixedArray}(::Type{FSA})   = map(ConstFunctor(zero(eltype(FSA))), FSA)
+ones{FSA <: FixedArray}(::Type{FSA})    = map(ConstFunctor(one(eltype(FSA))), FSA)
 
 immutable EyeFunc{NDim} <: Func{1}
     size::NTuple{NDim, Int}
@@ -107,10 +111,6 @@ function call{T}(ef::EyeFunc{T}, x)
 end
 eye{FSA <: FixedArray}(::Type{FSA}) = map(EyeFunc(size(FSA), eltype(FSA)), FSA)
 
-function row{T, N}(v::FixedVector{T, N})
-    FixedMatrix{T, 1, N}(v...)
-end
-column{T, N}(v::FixedVector{T, N}) = v
    
 #=
     Base.call{AT <: Array}(::Type{$(typename)}, A::AT) = $(typename)($([:(A[$i]) for i=1:len]...))
