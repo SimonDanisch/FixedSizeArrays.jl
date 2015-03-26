@@ -150,7 +150,19 @@ end
 function (*){FSV <: FixedVector}(a::FSV, b::FSV)
     FixedMatrix{eltype(FSV), 1, 1}(dot(a,b))
 end
+#=
+Optimized convert version doesn't compile, as the dead code still gets checked for syntax, 
+which means if FSA is concrete, there will be FSA{Float32}{eltype(v)} in the emitted code.
+Could be solved by calling out to another function...
+function convert{FSA <: FixedArray}(::Type{FSA}, v::Array{T})
+    if FSA.abstract
+        unsafe_load(Ptr{FSA{eltype(v)}}}(pointer(v)))
+    else
+        unsafe_load(Ptr{FSA}(pointer(v)))
+    end
+end
 
+=#
 function convert{FSAA <: FixedArray}(a::Type{FSAA}, b::FixedArray)
     FSAA(b...)
 end
