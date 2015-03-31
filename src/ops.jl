@@ -128,12 +128,12 @@ immutable MatMulFunctor{T, T2} <: Func{2} end
 
 call{A,B}(f::Type{MatMulFunctor{A,B}}, i::Integer, j::Integer) = dot(row(A, i), column(B, j))
 
-
-function (*){T, M, N, K}(a::FixedMatrix{T, M, N}, b::FixedMatrix{T, N, K})
+# non staged matmul version seems to be waaay slower
+function matmul{T, M, N, K}(a::FixedMatrix{T, M, N}, b::FixedMatrix{T, N, K})
     map(MatMulFunctor{a, b}, FixedMatrix{T, M, K})
 end
 # Matrix
-stagedfunction matmul{T, M, N, K}(a::FixedMatrix{T, M, N}, b::FixedMatrix{T, N, K})
+stagedfunction (*){T, M, N, K}(a::FixedMatrix{T, M, N}, b::FixedMatrix{T, N, K})
     returntype = gen_fixedsizevector_type((M,K), a.mutable)
     :($returntype( 
          $([:(dot(row(a, $i), column(b, $j))) for i=1:M, j=1:K]...)

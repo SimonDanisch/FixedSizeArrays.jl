@@ -19,23 +19,28 @@ abstract FixedArrayWrapper{T <: FixedArray} <: FixedArray
 
 
 eltype{T,N,SZ}(A::FixedArray{T,N,SZ}) 				= T
-eltype{T <: FixedArray}(A::Type{T})                 = first(T.types) 
+eltype{T <: FixedArray}(A::Type{T})                 = T.types[1]
 
 length{T,N,SZ}(A::FixedArray{T,N,SZ})           	= prod(SZ)
-length{T <: FixedArray}(A::Type{T})                 = prod(super(T).parameters[SIZE_PARAM_POSITION])
 length{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})         = prod(SZ)
+
+length{T <: FixedArray}(A::Type{T})                 = length(super(T))
+
 
 endof{T,N,SZ}(A::FixedArray{T,N,SZ})                = length(A)
 
 
 ndims{T,N,SZ}(A::FixedArray{T,N,SZ})            	= N
-ndims{T <: FixedArray}(A::Type{T})            		= super(T).parameters[NDIM_PARAM_POSITION]
+ndims{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})          = N
+ndims{T <: FixedArray}(A::Type{T})            		= ndims(super(T))
 
 size{T,N,SZ}(A::FixedArray{T,N,SZ})             	= SZ
 size{T,N,SZ}(A::FixedArray{T,N,SZ}, d::Integer) 	= SZ[d]
 
-size{T <: FixedArray}(A::Type{T})            		= super(T).parameters[SIZE_PARAM_POSITION]
-size{T <: FixedArray}(A::Type{T}, d::Integer) 		= T.parameters[SIZE_PARAM_POSITION][d]
+size{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})           = SZ
+size{T <: FixedArray}(A::Type{T})            		= size(super(T))
+
+size{T <: FixedArray}(A::Type{T}, d::Integer) 		= size(T)[d]
 
 # Iterator 
 start(A::FixedArray)            					= 1

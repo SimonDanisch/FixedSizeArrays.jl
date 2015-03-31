@@ -1,18 +1,31 @@
+# dealing with an abstract FixedArrayType, this code is terrible
+stagedfunction convert{SZ, T, ND}(a::Type{FixedArray{T, ND, SZ}}, v::Array{T, ND})
+    returntype = gen_fixedsizevector_type(SZ, false)
+    quote
+        length(v) != length(a) && throw(DimensionMismatch("Lenght of Array: $(length(v)) is not equal to length of FixedSizeArray: $(length(FSA))"))
+        unsafe_load(Ptr{$returntype{T}}(pointer(v)))
+    end
+end
+#did I say terrible?
 stagedfunction convert{FSA <: FixedArray, T, ND}(::Type{FSA}, v::Array{T, ND})
+    symbol(FSA.name.name) == :FixedArray && return :(convert(FixedArray{T, ND, size(v)}, v))
     conversion = isleaftype(FSA) ? quote # differentiate between FixedArrays which come with an element type and abstract one without
-        ptr_typ, converted = Ptr{FSA}, convert(Array{eltype(FSA)}, v)  
+        ptr_typ, converted, len = Ptr{FSA}, convert(Array{eltype(FSA)}, v), length(FSA)
     end : quote
-        ptr_typ, converted = Ptr{FSA{T}}, v
+        ptr_typ, converted, len = Ptr{FSA{T}}, v, length(v)
     end
     quote
-        length(v) != $(length(FSA)) && throw(DimensionMismatch("Lenght of Array: $(length(v)) is not equal to length of FixedSizeArray: $(length(FSA))"))
         $conversion
+        length(v) != len && throw(DimensionMismatch("Lenght of Array: $(length(v)) is not equal to length of FixedSizeArray: $(length(FSA))"))
         unsafe_load(ptr_typ(pointer(converted)))
     end
 end
 
 function convert{DA <: DenseArray, FSA <: FixedArray}(::Type{DA}, b::FSA)
-    pointer_to_array(Ptr{eltype(FSA)}(pointer_from_objref(b)), size(FSA))
+    elt = eltype(FSA)
+    ptr = pointer_from_objref(b)
+    sz = size(FSA)
+    pointer_to_array(Ptr{elt}(ptr), sz)
 end
 function convert{T,N, FSA <: FixedArray}(t::Type{Array{T, N}}, b::FSA)
     convert(t, convert(Array, b))
