@@ -38,8 +38,34 @@ const b = A(1,2,3)
 @time b+b
 const X = rand(4,4)
 const Z = Mat4x4(X...)
+@show sum(Z)
+@time sum(Z)
+@time sum(Z)
+
+@time sum(X)
+@time sum(X)
+#elapsed time: 6.641e-6 seconds (92 bytes allocated)
+#elapsed time: 7.245e-6 seconds (92 bytes allocated)
 println(X)
 println(Z)
 println("################")
 println(ctranspose(X))
 println(ctranspose(Z))
+
+@show Z*Z
+@time Z*Z
+@time Z*Z
+@time Z*Z
+@time Z*Z
+@time Z*Z
+
+
+const matmul = MatMulFunctor{Z, Z}
+@time map(matmul, FixedMatrix{eltype(Z), 4, 4})
+@time map(matmul, FixedMatrix{eltype(Z), 4, 4})
+@time map(matmul, FixedMatrix{eltype(Z), 4, 4})
+@time map(matmul, FixedMatrix{eltype(Z), 4, 4})
+@code_native map(matmul, FixedMatrix{eltype(Z), 4, 4})
+#elapsed time: 6.037e-6 seconds (224 bytes allocated)
+#elapsed time: 7.848e-6 seconds (224 bytes allocated)
+#elapsed time: 7.848e-6 seconds (224 bytes allocated)

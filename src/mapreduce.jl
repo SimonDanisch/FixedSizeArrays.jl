@@ -1,12 +1,12 @@
-
-
-stagedfunction reduce(f::Func{2}, a::FixedArray)
+#simple reduce function
+function reduce(f::Func{2}, a::FixedArray)
     alength = length(a)
-    alength == 1 && return :(a[1])
-    quote 
-        s = f(a[1], a[2])
-        $([:(s = f(s, a[$i])) for i=3:alength]...)
+    alength == 1 && return a[1]
+    s = f(a[1], a[2])
+    for i=3:alength
+        s = f(s, a[i])
     end
+    s
 end
 
 # either gives an expression to index into the fixedsizearray, or just inserts the constant
@@ -32,11 +32,14 @@ function map_expression{F <: Func, FSA <: FixedArray}(f::Type{F}, fsa::Type{FSA}
     :(FSA($(expr...)))
 end
 
-stagedfunction map{FSA <: FixedArray}(f::Func{1}, a::Type{FSA})
-    expr = quote
+stagedfunction map{FSA <: FixedArray, F <: Func{1}}(f::Union(Type{F}, F), a::Type{FSA})
+    quote
         FSA($([:(f($i)) for i=1:length(FSA)]...))
     end
-    expr
+end
+stagedfunction map{FSA <: FixedArray, F <: Func{2}}(f::Union(Type{F}, F), a::Type{FSA})
+    #@assert ndims(FSA) == 2
+    :(FSA($([:(f($i, $j)) for i=1:size(FSA,1), j=1:size(FSA,2)]...)))
 end
 
 stagedfunction map{FSA <: FixedArray}(f::Func{1}, a::FSA)
@@ -67,7 +70,3 @@ stagedfunction product(f, it...)
     end
 end
 
-map{FSA <: FixedArrayWrapper}(f::Func{1}, a::FSA)                        = without_params(FSA)(map(f, a.(1)))
-map{FSA <: FixedArrayWrapper}(f::Func{2}, a::FSA, b::FSA)                = without_params(FSA)(map(f, a.(1), b.(1)))
-map{FSA <: FixedArrayWrapper, REAL <: Real}(f::Func{2}, a::FSA, b::REAL) = without_params(FSA)(map(f, a.(1), b))
-map{FSA <: FixedArrayWrapper, REAL <: Real}(f::Func{2}, a::REAL, b::FSA) = without_params(FSA)(map(f, a, b.(1)))

@@ -123,8 +123,17 @@ stagedfunction ctranspose{T, M, N}(A::FixedMatrix{T, M, N})
     :($returntype($([:(A[$(M+1-i), $(N+1-j)]) for i=M:-1:1, j=N:-1:1]...)))
 end
 
+
+immutable MatMulFunctor{T, T2} <: Func{2} end
+
+call{A,B}(f::Type{MatMulFunctor{A,B}}, i::Integer, j::Integer) = dot(row(A, i), column(B, j))
+
+
+function (*){T, M, N, K}(a::FixedMatrix{T, M, N}, b::FixedMatrix{T, N, K})
+    map(MatMulFunctor{a, b}, FixedMatrix{T, M, K})
+end
 # Matrix
-stagedfunction (*){T, M, N, K}(a::FixedMatrix{T, M, N}, b::FixedMatrix{T, N, K})
+stagedfunction matmul{T, M, N, K}(a::FixedMatrix{T, M, N}, b::FixedMatrix{T, N, K})
     returntype = gen_fixedsizevector_type((M,K), a.mutable)
     :($returntype( 
          $([:(dot(row(a, $i), column(b, $j))) for i=1:M, j=1:K]...)

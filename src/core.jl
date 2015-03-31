@@ -35,7 +35,7 @@ size{T,N,SZ}(A::FixedArray{T,N,SZ})             	= SZ
 size{T,N,SZ}(A::FixedArray{T,N,SZ}, d::Integer) 	= SZ[d]
 
 size{T <: FixedArray}(A::Type{T})            		= super(T).parameters[SIZE_PARAM_POSITION]
-size{T <: FixedArray}(A::Type{T}, d::Integer) 		= super(T).parameters[SIZE_PARAM_POSITION][d]
+size{T <: FixedArray}(A::Type{T}, d::Integer) 		= T.parameters[SIZE_PARAM_POSITION][d]
 
 # Iterator 
 start(A::FixedArray)            					= 1

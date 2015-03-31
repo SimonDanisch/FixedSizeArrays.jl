@@ -24,4 +24,5 @@ export gen_fixed_size_matrix
 export fieldname
 export row
 export column
+export MatMulFunctor
 end
