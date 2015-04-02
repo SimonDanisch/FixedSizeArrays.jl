@@ -1,7 +1,5 @@
 module FixedSizeArrays
 
-import Quaternions.normalize
-
 include("core.jl")
 include("constructors.jl")
 include("mapreduce.jl")
