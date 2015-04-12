@@ -26,3 +26,11 @@ function Base.vect{T <: MutableFixedArray}(V::T...)
     CArray{T, 1, ElType}(result)
 end
 
+#=
+function Base.typed_vcat{FSA <: FixedArray}(::Type{FSA}, X::Real...)
+	ET = eltype(FSA)
+	l  = length(FSA)
+	length(X) % l && throw(DimensionMismatch("Number of elements in array doesn't match FixedArray type. FixedArray: $l, elements: $(length(X))"))
+	[FSA(X[i:i+l]...) for i=1:l:length(X)]
+end
+=#

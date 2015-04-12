@@ -36,6 +36,8 @@ function gen_functor(func::Symbol, unary::Int)
     return (functor_name, functor_expr)
 end
 
+
+
 for (callfun, reducefun) in reductions
     functor_name, functor_expr = gen_functor(reducefun, 2)
     eval(quote 
