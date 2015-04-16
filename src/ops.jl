@@ -142,7 +142,7 @@ end
 
 function (*){T, FSV <: FixedVector, M, N}(a::FixedMatrix{T, M, N}, b::FSV)
     bb = FixedMatrix{T, length(b), 1}(b...)
-    a*bb
+    FSV((a*bb)...)
 end
 
 function (*){T, FSV <: FixedVector, M, N}(a::FSV, b::FixedMatrix{T, M, N})
