@@ -1,9 +1,9 @@
 #simple reduce function
 function reduce(f::Func{2}, a::FixedArray)
-    alength = length(a)
-    alength == 1 && return a[1]
+    len = length(a)
+    len == 1 && return a[1]
     s = f(a[1], a[2])
-    for i=3:alength
+    for i=3:len
         s = f(s, a[i])
     end
     s
