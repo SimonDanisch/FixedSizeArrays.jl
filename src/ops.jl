@@ -91,7 +91,7 @@ det{T}(A::FixedMatrix{T, 4, 4}) = (
         A[5]  * A[2]   * A[11] * A[16] + A[1] * A[6]  * A[11] * A[16])
 
 
-inv{T}(A::FixedMatrix{T, 1, 1}) = A
+inv{T}(A::FixedMatrix{T, 1, 1}) = typeof(A)(inv(A[1]))
 function inv{T}(A::FixedMatrix{T, 2, 2})
   determinant = det(A)
   typeof(A)(
@@ -119,10 +119,10 @@ end
 
 
 stagedfunction ctranspose{T, M, N}(A::FixedMatrix{T, M, N})
-    returntype = gen_fixedsizevector_type((M,N), A.mutable)
-    :($returntype($([:(A[$(M+1-i), $(N+1-j)]) for i=M:-1:1, j=N:-1:1]...)))
+    returntype = gen_fixedsizevector_type((N, M), A.mutable)
+    :($returntype($([:(A[$(i), $(j)]') for j=1:N, i=1:M]...)))
 end
-
+                             
 
 immutable MatMulFunctor{T, T2} <: Func{2} end
 
