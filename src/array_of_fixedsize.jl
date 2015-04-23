@@ -25,4 +25,14 @@ function Base.vect{T <: MutableFixedArray}(V::T...)
     end
     CArray{T, 1, ElType}(result)
 end
-
+function Base.show{FSA <: FixedVector}(io::IO, a::Vector{FSA})
+	print(io, FSA, "[")
+	for elem in a
+		print(io, "[")
+		for i=1:length(elem)
+			print(io, elem[i], i < length(elem) ? ", " : "")
+		end
+		print(io, "]")
+	end
+	println(io, "]")
+end
