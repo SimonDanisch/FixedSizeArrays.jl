@@ -17,6 +17,7 @@ function fixedarray_type_expr(typename::Symbol, SIZE::(Integer...), mutable::Boo
     singlevaluedconstr  = len == 1 ? :() : quote
         $typename(x::Real) = $typename($(ntuple(_->:(x), len)...))
         call{T}(::Type{$typename{T}}, x::Real) = (x = convert(T, x) ;$typename($(ntuple(_->:(x), len)...)))
+        call{T, S <: AbstractString}(::Type{$typename{T}}, x::Vector{S}) = $typename($(ntuple(i->:(parse(T, x[$i])), len)...))
     end
 
     typ_expr = mutable ? quote
@@ -123,3 +124,5 @@ eye{FSA <: FixedArray}(::Type{FSA}) = map(EyeFunc(size(FSA), eltype(FSA)), FSA)
     $(mutabletypename)($(fields_names...)) = $(mutabletypename)(promote($(fields_names...))...)
 end
 =#
+
+
