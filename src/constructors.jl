@@ -94,13 +94,15 @@ function gen_fixed_size_matrix(M, N, mutable)
 end
 
 immutable RandFunc{T} <: Func{1} 
-eltype::Type{T}
+    range::Range{T}
 end
-call{T}(::RandFunc{T}, x) = rand(T)
+call{T}(rf::RandFunc{T}, x) = rand(rf.range)
 
-rand{FSA <: FixedArray}(x::Type{FSA})   = map(RandFunc(eltype(FSA)), FSA)
-zeros{FSA <: FixedArray}(::Type{FSA})   = map(ConstFunctor(zero(eltype(FSA))), FSA)
-ones{FSA <: FixedArray}(::Type{FSA})    = map(ConstFunctor(one(eltype(FSA))), FSA)
+rand{FSA <: FixedArray}(x::Type{FSA})               = map(RandFunc(zero(eltype(FSA)):one(eltype(FSA))), FSA)
+rand{FSA <: FixedArray}(x::Type{FSA}, range::Range) = map(RandFunc(range), FSA)
+
+zero{FSA <: FixedArray}(::Type{FSA})   = map(ConstFunctor(zero(eltype(FSA))), FSA)
+one{FSA <: FixedArray}(::Type{FSA})    = map(ConstFunctor(one(eltype(FSA))), FSA)
 
 immutable EyeFunc{NDim} <: Func{1}
     size::NTuple{NDim, Int}
@@ -111,8 +113,15 @@ function call{T}(ef::EyeFunc{T}, x)
     i==j?one(ef.eltype) : zero(ef.eltype)
 end
 eye{FSA <: FixedArray}(::Type{FSA}) = map(EyeFunc(size(FSA), eltype(FSA)), FSA)
-
-   
+immutable UnitFunctor <: Func{1}
+    i::Int
+    eltype::DataType
+end
+function call(ef::UnitFunctor, x)
+    ef.i==x ? one(ef.eltype) : zero(ef.eltype)
+end
+unit{FSA <: FixedVector}(::Type{FSA}, i::Integer) = map(UnitFunctor(i, eltype(FSA)), FSA)
+export unit
 #=
     Base.call{AT <: Array}(::Type{$(typename)}, A::AT) = $(typename)($([:(A[$i]) for i=1:len]...))
     $(typename)($(fields_names...)) = $(typename)(promote($(fields_names...))...)
