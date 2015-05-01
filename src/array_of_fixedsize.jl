@@ -25,13 +25,28 @@ function Base.vect{T <: MutableFixedArray}(V::T...)
     end
     CArray{T, 1, ElType}(result)
 end
+
+#=
+# This still doesn't work -.-
+function Base.typed_vcat{T <: FixedArray}(:Type{T}, V1::Real,  Rest::Real...)
+	println(T)
+	@assert length(Rest+1) % length(T) == 0 "cannot create array, as the elements can't be fitted into a FixedSizeVector. Length: $(length(Rest)+1), length FixedArray = $(length(T))"
+	@assert length(Rest+1) >= length(T) "Not enough elements given. Length: $(length(Rest)+1), needs at least = $(length(T))"
+	len   	 	= length(T)
+	result 		= Array(T, div(length(Rest+1), len))
+	result[1] 	= T(V1, Rest[1:len-1])
+
+	for i=len:len:length(Rest)
+		result[div(i, len)] = T(Rest[i:i+len]...)
+	end
+	result
+end
+=#
 function Base.show{FSA <: FixedVector}(io::IO, a::Vector{FSA})
-	print(io, FSA, "[")
+	print(io, "Vector with: ", length(a), "x", FSA, "[")
 	for elem in a
 		print(io, "[")
-		for i=1:length(elem)
-			print(io, elem[i], i < length(elem) ? ", " : "")
-		end
+		print(io, join(elem, ", "))
 		print(io, "]")
 	end
 	println(io, "]")
@@ -40,3 +55,4 @@ end
 function (.+){T<:FixedArray, ND}(a::Array{T, ND}, x::T)
 	T[elem + x for elem in a]
 end
+
