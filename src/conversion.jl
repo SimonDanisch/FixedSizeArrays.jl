@@ -33,7 +33,8 @@ end
 
 function convert{T1 <: FixedArray, T2 <: FixedArray}(a::Type{T1}, b::Array{T2})
     @assert sizeof(b) % sizeof(a) == 0 "Type $a, with size: ($(sizeof(a))) doesn't fit into the array b: $(length(b)) x $(sizeof(eltype(b)))"
-    reinterpret(a, b, (div(sizeof(b), sizeof(a)),))
+    eltype(T1) != eltype(T2) && return map(T1, b)
+    reinterpret(T1, b, (div(sizeof(b), sizeof(a)),))
 end
 
 function convert{FSAA <: FixedArray}(a::Type{FSAA}, b::FixedArray)
