@@ -1,4 +1,5 @@
 module FixedSizeArrays
+using Compat
 
 include("core.jl")
 include("constructors.jl")
@@ -23,4 +24,5 @@ export fieldname
 export row
 export column
 export MatMulFunctor
+
 end

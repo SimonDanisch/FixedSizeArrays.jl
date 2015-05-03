@@ -118,7 +118,7 @@ function inv{T}(A::FixedMatrix{T, 3, 3})
 end
 
 
-stagedfunction ctranspose{T, M, N}(A::FixedMatrix{T, M, N})
+@generated function ctranspose{T, M, N}(A::FixedMatrix{T, M, N})
     returntype = gen_fixedsizevector_type((N, M), A.mutable)
     :($returntype($([:(A[$(i), $(j)]') for j=1:N, i=1:M]...)))
 end
@@ -133,7 +133,7 @@ function matmul{T, M, N, K}(a::FixedMatrix{T, M, N}, b::FixedMatrix{T, N, K})
     map(MatMulFunctor{a, b}, FixedMatrix{T, M, K})
 end
 # Matrix
-stagedfunction (*){T, M, N, K}(a::FixedMatrix{T, M, N}, b::FixedMatrix{T, N, K})
+@generated function (*){T, M, N, K}(a::FixedMatrix{T, M, N}, b::FixedMatrix{T, N, K})
     returntype = gen_fixedsizevector_type((M,K), a.mutable)
     :($returntype( 
          $([:(dot(row(a, $i), column(b, $j))) for i=1:M, j=1:K]...)

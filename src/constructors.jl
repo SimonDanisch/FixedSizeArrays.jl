@@ -1,14 +1,14 @@
 
 # helper function for creating names.
-tuple_to_string(t::(Any...), sep::AbstractString) = foldl((v0,d)-> string(v0)*sep*string(d), t)
+tuple_to_string(t::@compat(Tuple{Vararg{Any}}), sep::AbstractString) = foldl((v0,d)-> string(v0)*sep*string(d), t)
 
 # Different base names for different dimensionalities...this is definitely a trade off between commonly used names and homogenity.
-vecname(sz::(Integer, Integer, Integer...), mutable::Bool, basename::AbstractString="FSArray") = symbol((mutable?"M":"")*basename*tuple_to_string(sz, "x"))
-vecname(sz::(Integer, Integer), mutable::Bool, basename::AbstractString="Matrix")              = symbol((mutable?"M":"")*basename*tuple_to_string(sz, "x"))
-vecname(sz::(Integer,), mutable::Bool, basename::AbstractString="Vec")                         = symbol((mutable?"M":"")*basename*string(first(sz)))
+vecname(sz::@compat(Tuple{Integer, Integer, Vararg{Integer}}), mutable::Bool, basename::AbstractString="FSArray") = symbol((mutable?"M":"")*basename*tuple_to_string(sz, "x"))
+vecname(sz::@compat(Tuple{Integer, Integer}), mutable::Bool, basename::AbstractString="Matrix")              = symbol((mutable?"M":"")*basename*tuple_to_string(sz, "x"))
+vecname(sz::@compat(Tuple{Integer}), mutable::Bool, basename::AbstractString="Vec")                         = symbol((mutable?"M":"")*basename*string(first(sz)))
 
 
-function fixedarray_type_expr(typename::Symbol, SIZE::(Integer...), mutable::Bool, fields::Function=fieldname)
+function fixedarray_type_expr(typename::Symbol, SIZE::@compat(Tuple{Vararg{Integer}}), mutable::Bool, fields::Function=fieldname)
     len = prod(SIZE)
     fields_names        = [fields(i) for i=1:len]
     fields_types        = [Expr(:(::), fields(i), :T) for i=1:len]
@@ -19,7 +19,7 @@ function fixedarray_type_expr(typename::Symbol, SIZE::(Integer...), mutable::Boo
         call{T}(::Type{$typename{T}}, x::Real) = (x = convert(T, x) ;$typename($(ntuple(_->:(x), len)...)))
         call{T, S <: AbstractString}(::Type{$typename{T}}, x::Vector{S}) = $typename($(ntuple(i->:(parse(T, x[$i])), len)...))
     end
-
+    SIZE = Tuple{SIZE...}
     typ_expr = mutable ? quote
         type $(typename){T} <: MutableFixedArray{T, $NDim, $SIZE}
             $(fields_types...)
@@ -35,9 +35,10 @@ function fixedarray_type_expr(typename::Symbol, SIZE::(Integer...), mutable::Boo
 end
 # maps the dimension of vectors always to (length,)
 flatten_dimension(SIZE) = SIZE
-flatten_dimension(SIZE::(Int, Int)) = any(x->x==1, SIZE) ? prod(SIZE) : SIZE
+flatten_dimension(SIZE::Tuple{Int, Int}) = any(x->x==1, SIZE) ? prod(SIZE) : SIZE
 
-function gen_fixedsizevector_type(SIZE::(Integer...), mutable::Bool)
+gen_fixedsizevector_type(SIZE, mutable::Bool) = gen_fixedsizevector_type((SIZE.parameters...), mutable)
+function gen_fixedsizevector_type(SIZE::@compat(Tuple{Vararg{Integer}}), mutable::Bool)
     typename = vecname(SIZE, mutable)
     # if already exists, there's nothing to be done here
     isdefined(FixedSizeArrays, typename) && return typename
@@ -49,9 +50,9 @@ function gen_fixedsizevector_type(SIZE::(Integer...), mutable::Bool)
 end
 
 #General constructor for arbitrary fixedsizearrays
-stagedfunction call{T, NDim, SIZE}(t::Type{FixedArray{T, NDim, SIZE}}, data::T...)
+@generated function call{T, NDim, SIZE}(t::Type{FixedArray{T, NDim, SIZE}}, data::T...)
     N = length(data)
-    @assert prod(SIZE) == N "not the right dimension"
+    @assert prod(SIZE.parameters) == N "not the right dimension"
     !t.abstract && return :(t(data...)) # return if type is known and not abstract
     typename = gen_fixedsizevector_type(SIZE, t.mutable)
     :($typename(data...))
@@ -65,7 +66,7 @@ call(f::ConstFunctor, i) = f.args
 
 nvec{T <: AbstractArray}(x::T)        = FixedArray(x)
 nvec{T}(x::T...)                      = FixedArray{T, 1, (length(x),)}(x)
-nvec{T}(SIZE::(Integer...,), x::T...) = FixedArray{T, length(SIZE), SIZE}(x)
+nvec{T}(SIZE::@compat(Tuple{Vararg{Integer}}), x::T...) = FixedArray{T, length(SIZE), SIZE}(x)
 
 
 macro gen_fixed_size_vector(basename, fields, N, mutable)

@@ -1,5 +1,5 @@
 # dealing with an abstract FixedArrayType, this code is terrible
-stagedfunction convert{SZ, T, ND}(a::Type{FixedArray{T, ND, SZ}}, v::Array{T, ND})
+@generated function convert{SZ, T, ND}(a::Type{FixedArray{T, ND, SZ}}, v::Array{T, ND})
     returntype = gen_fixedsizevector_type(SZ, false)
     quote
         length(v) != length(a) && throw(DimensionMismatch("Lenght of Array: $(length(v)) is not equal to length of FixedSizeArray: $(length(FSA))"))
@@ -7,7 +7,7 @@ stagedfunction convert{SZ, T, ND}(a::Type{FixedArray{T, ND, SZ}}, v::Array{T, ND
     end
 end
 #did I say terrible?
-stagedfunction convert{FSA <: FixedArray, T, ND}(::Type{FSA}, v::Array{T, ND})
+@generated function convert{FSA <: FixedArray, T, ND}(::Type{FSA}, v::Array{T, ND})
     symbol(FSA.name.name) == :FixedArray && return :(convert(FixedArray{T, ND, size(v)}, v))
     conversion = isleaftype(FSA) ? quote # differentiate between FixedArrays which come with an element type and abstract one without
         ptr_typ, converted, len = Ptr{FSA}, convert(Array{eltype(FSA)}, v), length(FSA)

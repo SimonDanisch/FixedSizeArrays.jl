@@ -9,11 +9,11 @@ const SIZE_PARAM_POSITION = 3
 abstract FixedArray{T, NDim, SIZE} 
 abstract MutableFixedArray{T, NDim, SIZE} <: FixedArray{T, NDim, SIZE}
 
-typealias MutableFixedVector{T, CARDINALITY} MutableFixedArray{T, 1, (CARDINALITY,)}
-typealias MutableFixedMatrix{T, M, N} 		 MutableFixedArray{T, 2, (M, N)}
+typealias MutableFixedVector{T, CARDINALITY} MutableFixedArray{T, 1, @compat(Tuple{CARDINALITY})}
+typealias MutableFixedMatrix{T, M, N} 		 MutableFixedArray{T, 2, @compat(Tuple{M,N})}
 
-typealias FixedVector{T, CARDINALITY} FixedArray{T, 1, (CARDINALITY,)}
-typealias FixedMatrix{T, M, N}        FixedArray{T, 2, (M, N)}
+typealias FixedVector{T, CARDINALITY} FixedArray{T, 1, Tuple{CARDINALITY,}}
+typealias FixedMatrix{T, M, N}        FixedArray{T, 2, Tuple{M, N}}
 
 abstract FixedArrayWrapper{T <: FixedArray} <: FixedArray
 
@@ -21,8 +21,8 @@ abstract FixedArrayWrapper{T <: FixedArray} <: FixedArray
 eltype{T,N,SZ}(A::FixedArray{T,N,SZ}) 				= T
 eltype{T <: FixedArray}(A::Type{T})                 = T.types[1]
 
-length{T,N,SZ}(A::FixedArray{T,N,SZ})           	= prod(SZ)
-length{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})         = prod(SZ)
+length{T,N,SZ}(A::FixedArray{T,N,SZ})           	= prod(SZ.parameters)
+length{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})         = prod(SZ.parameters)
 
 length{T <: FixedArray}(A::Type{T})                 = length(super(T))
 
@@ -34,10 +34,10 @@ ndims{T,N,SZ}(A::FixedArray{T,N,SZ})            	= N
 ndims{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})          = N
 ndims{T <: FixedArray}(A::Type{T})            		= ndims(super(T))
 
-size{T,N,SZ}(A::FixedArray{T,N,SZ})             	= SZ
-size{T,N,SZ}(A::FixedArray{T,N,SZ}, d::Integer) 	= SZ[d]
+size{T,N,SZ}(A::FixedArray{T,N,SZ})             	= (SZ.parameters...)
+size{T,N,SZ}(A::FixedArray{T,N,SZ}, d::Integer) 	= SZ.parameters[d]
 
-size{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})           = SZ
+size{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})           = (SZ.parameters...)
 size{T <: FixedArray}(A::Type{T})            		= size(super(T))
 
 size{T <: FixedArray}(A::Type{T}, d::Integer) 		= size(T)[d]

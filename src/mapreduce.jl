@@ -32,32 +32,32 @@ function map_expression{F <: Func, FSA <: FixedArray}(f::Type{F}, fsa::Type{FSA}
     :(FSA($(expr...)))
 end
 
-stagedfunction map{FSA <: FixedArray, F <: Func{1}}(f::Union(Type{F}, F), a::Type{FSA})
+@generated function map{FSA <: FixedArray, F <: Func{1}}(f::Union(Type{F}, F), a::Type{FSA})
     quote
         FSA($([:(f($i)) for i=1:length(FSA)]...))
     end
 end
-stagedfunction map{FSA <: FixedArray, F <: Func{2}}(f::Union(Type{F}, F), a::Type{FSA})
+@generated function map{FSA <: FixedArray, F <: Func{2}}(f::Union(Type{F}, F), a::Type{FSA})
     #@assert ndims(FSA) == 2
     :(FSA($([:(f($i, $j)) for i=1:size(FSA,1), j=1:size(FSA,2)]...)))
 end
 
-stagedfunction map{FSA <: FixedArray}(f::Func{1}, a::FSA)
+@generated function map{FSA <: FixedArray}(f::Func{1}, a::FSA)
     map_expression(f, a, a)
 end
-stagedfunction map{FSA <: FixedArray}(f::Func{2}, a::FSA, b::FSA)
+@generated function map{FSA <: FixedArray}(f::Func{2}, a::FSA, b::FSA)
     map_expression(f, a, a, b)
 end
-stagedfunction map{FSA <: FixedArray, REAL <: Real}(f::Func{2}, a::FSA, b::REAL)
+@generated function map{FSA <: FixedArray, REAL <: Real}(f::Func{2}, a::FSA, b::REAL)
     map_expression(f, a, a, b)
 end
-stagedfunction map{FSA <: FixedArray, REAL <: Real}(f::Func{2}, a::REAL, b::FSA)
+@generated function map{FSA <: FixedArray, REAL <: Real}(f::Func{2}, a::REAL, b::FSA)
     map_expression(f, b, a, b)
 end
 
 
 
-stagedfunction product(f, it...)
+@generated function product(f, it...)
     variables       = ntuple(fieldname, length(it))
     iterator_access = Expr(:block, [:($(variables[i]) = it[$i]) for i=1:length(it)]...)
     for_expression  = Expr(:for, 
