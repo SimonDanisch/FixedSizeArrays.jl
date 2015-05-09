@@ -16,7 +16,7 @@ r::T
 g::T
 b::T
 end
-Vec3(0) # constructor with 0 argument already defined. Actually, this only works if you created them
+Vec3(0) # constructor with 1 argument already defined. Actually, this only works if you created them
 #  with @gen_fixed_size_vector, due to ambiguity issues :(
 rand(Vec3{Int})+sin(Vec3(0,2,2)) # a lot of array functions are already defined
 immutable Mat3x3{T} FixedMatrix{T, 3,3}
