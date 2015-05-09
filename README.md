@@ -6,27 +6,6 @@
 
 #### This package is 0.4 only
 
-- [ ] Core Array
-	- [x] basic array interface
-	- [ ] Inherit from DenseArray (a lot of warnings is caused by this)
-	- [ ] use tuples as a basis
-- [ ] Indexing:
-	- [x] multidimensional access
-	- [x] colon access for matrices
-	- [ ] multidimensional colon access
-	- [ ] setindex!
-	- [ ] setindex!/getindex for arrays of FSA (e.g. easy acces to single fields) 
-	- [ ] access via dimension type (Red -> redchannel)
-- [ ] Constructor
-	- [x] generic constructor for arbitrary Nvectors
-	- [x] fast constructor for arbitrary types
-	- [x] different constructors for ease of use (zero, eye, from other FSAs, etc...) (could be more)
-- [ ] Functions
-	- [x] all kinds of unary/binary operators
-	- [x] matrix multiplication 
-	- [x] matrix functions (inv, transpose, etc...) (could be more)
-
-
 
 #### Usage and advantages:
 FixedSizeArrays is giving any composite type array like behavior by inheriting from FixedSizeArrays.
@@ -53,6 +32,32 @@ As they all inherit from FixedSizeArray, it's very easy to handle them in the sa
 For some more advantages, you can take a look at [MeshIO](https://github.com/JuliaIO/MeshIO.jl)
 Also, because it's so easy to define different types like Point3, RGB, HSV or Normal3, one can create customized code for these types via multiple dispatch. This is great for visualizing data, as you can offer default visualizations based on the type.
 Without FixedSizeArrays, this would end up in a lot of types which would all need to define the same functions over and over again.
+
+
+
+#### TODO's
+
+- [ ] Core Array
+	- [x] basic array interface
+	- [ ] Inherit from DenseArray (a lot of warnings is caused by this)
+	- [ ] use tuples as a basis
+- [ ] Indexing:
+	- [x] multidimensional access
+	- [x] colon access for matrices
+	- [ ] multidimensional colon access
+	- [ ] setindex!
+	- [ ] setindex!/getindex for arrays of FSA (e.g. easy acces to single fields) 
+	- [ ] access via dimension type (Red -> redchannel)
+- [ ] Constructor
+	- [x] generic constructor for arbitrary Nvectors
+	- [x] fast constructor for arbitrary types
+	- [x] different constructors for ease of use (zero, eye, from other FSAs, etc...) (could be more)
+- [ ] Functions
+	- [x] all kinds of unary/binary operators
+	- [x] matrix multiplication 
+	- [x] matrix functions (inv, transpose, etc...) (could be more)
+
+
 
 
 #### Acknowledgements
