@@ -31,9 +31,12 @@ eye(Mat3x3{Float32}) * rand(Vec3{Float32}) # will also "just work"
 This is expendable to a lot of other areas.
 You can define color types (see ColorTypes.jl) the same way, and arbitrary other point types like normals, vertices etc.
 As they all inherit from FixedSizeArray, it's very easy to handle them in the same way.
-I'm using this for my GPU array types, which can take any fixedsizearray, if its a color, a point or what not, because I can be sure that all the important functions are defined.
-For some more advantages, you can take a look at [MeshIO](https://github.com/JuliaIO/MeshIO.jl)
-Also, because it's so easy to define different types like Point3, RGB, HSV or Normal3, one can create customized code for these types via multiple dispatch. This is great for visualizing data, as you can offer default visualizations based on the type.
+I'm using this for my GPU array types, which can take any fixedsizearray, if its a color, a point or what not, because I can be sure that all the important functions are defined and the GPU can handle them. 
+If we are able to to compile Julia directly to OpenCL, FixedSizeArrays will hopefully directly map to native OpenCL types.
+
+For some more advantages, you can take a look at [MeshIO](https://github.com/JuliaIO/MeshIO.jl).
+
+Because it's so easy to define different types like Point3, RGB, HSV or Normal3, one can create customized code for these types via multiple dispatch. This is great for visualizing data, as you can offer default visualizations based on the type.
 Without FixedSizeArrays, this would end up in a lot of types which would all need to define the same functions over and over again.
 
 
