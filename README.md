@@ -4,6 +4,8 @@
 
 [![Build Status](https://travis-ci.org/SimonDanisch/FixedSizeArrays.jl.svg?branch=master)](https://travis-ci.org/SimonDanisch/FixedSizeArrays.jl)
 
+#### This package is 0.4 only
+
 - [ ] Core Array
 	- [x] basic array interface
 	- [ ] Inherit from DenseArray (a lot of warnings is caused by this)
