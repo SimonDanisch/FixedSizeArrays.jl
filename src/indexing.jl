@@ -10,14 +10,23 @@ function getindex{T, SZ}(A::FixedArray{T, 2, SZ}, j::UnitRange, i::Real)
         [A[k, i] for k in j]...
     )
 end
+
+immutable IndexFunctorTuple{T, T2} <: Func{1}
+    indexes::T
+    target::T2
+end
+call(f::IndexFunctorTuple, i) = f.target[f.indexes[i]]
+function getindex{T <: FixedArray, TuPl <: Tuple}(A::T, I::Type{TuPl})
+    range = TuPl.parameters[1] #Of form Tuple{1:3}
+    map(IndexFunctorTuple(range, A), FixedVector{eltype(A), length(range)})
+end
 immutable IndexFunctor{T} <: Func{1}
     args1::T
 end
-call(f::IndexFunctor, i) = getfield(f.args1, i) 
+call(f::IndexFunctor, i) = f.args1[i] 
 getindex(A::FixedArray, I::FixedArray) = map(IndexFunctor(A), I)
 
 #Wrapper 
-getindex{T,N,SZ}(A::FixedArray{T, N, SZ}, inds...)  = A.(1)[inds...]
 
 @generated function row{T, Column, Row}(A::FixedMatrix{T, Row, Column}, i::Integer)
     fields = [:(A[i,$j]) for j=1:Column]

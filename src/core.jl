@@ -17,14 +17,16 @@ typealias FixedMatrix{T, M, N}        FixedArray{T, 2, Tuple{M, N}}
 
 abstract FixedArrayWrapper{T <: FixedArray} <: FixedArray
 
+isfullyparametrized{T}(::Type{T}) = !any(x-> isa(x, TypeVar), T.parameters)
+
 
 eltype{T,N,SZ}(A::FixedArray{T,N,SZ}) 				= T
 eltype{T <: FixedArray}(A::Type{T})                 = T.types[1]
 
 length{T,N,SZ}(A::FixedArray{T,N,SZ})           	= prod(SZ.parameters)
 length{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})         = prod(SZ.parameters)
-
-length{T <: FixedArray}(A::Type{T})                 = length(super(T))
+#This is soo bad. But a non fully parametrized abstract type doesn't get catched by the above function
+length{T <: FixedArray}(A::Type{T})                 = isfullyparametrized(T) ? length(super(T)) : prod(super(A).parameters[3].parameters)
 
 
 endof{T,N,SZ}(A::FixedArray{T,N,SZ})                = length(A)

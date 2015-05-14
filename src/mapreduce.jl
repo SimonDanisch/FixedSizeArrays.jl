@@ -16,13 +16,13 @@ accessor{T                      }(arg::Type{T}, i::Integer, name::Symbol) = :($n
 
 #To simplify things, map_expression assumes that the argument names of the staged functions are f for the callable and a,b,c,.. for the other arguments.
 function map_expression{F <: Func, FSA <: FixedArray}(f::Type{F}, fsa::Type{FSA}, args...)
-    FN = first(super(F).parameters)
-    @assert length(args) == FN "cardinality of callable doesn't match arguments. Callable: $FN, args: $(length(args))"
+    Cardinality = first(super(F).parameters)
+    @assert length(args) == Cardinality "cardinality of callable doesn't match arguments. Callable: $Cardinality, args: $(length(args))"
     argnames = [:a, :b, :c, :d, :e, :f, :g] # must be the same as the arguments of map
     #call f for every index in FSA, with all the args.
     expr = ntuple(length(FSA)) do i 
         quote
-            f( $(ntuple(j-> accessor(args[j], i, argnames[j]), FN)...)) 
+            f( $(ntuple(j-> accessor(args[j], i, argnames[j]), Cardinality)...)) 
         end
     end
     # the type FSA from map can't be used, because it contains the parameter already (e.g. FSA{Int}), which results in a conversion.
@@ -33,9 +33,7 @@ function map_expression{F <: Func, FSA <: FixedArray}(f::Type{F}, fsa::Type{FSA}
 end
 
 @generated function map{FSA <: FixedArray, F <: Func{1}}(f::Union(Type{F}, F), a::Type{FSA})
-    quote
-        FSA($([:(f($i)) for i=1:length(FSA)]...))
-    end
+    :(FSA($([:(f($i)) for i=1:length(FSA)]...)))
 end
 @generated function map{FSA <: FixedArray, F <: Func{2}}(f::Union(Type{F}, F), a::Type{FSA})
     #@assert ndims(FSA) == 2
