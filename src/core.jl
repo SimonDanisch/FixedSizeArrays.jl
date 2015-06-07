@@ -23,8 +23,8 @@ isfullyparametrized{T}(::Type{T}) = !any(x-> isa(x, TypeVar), T.parameters)
 eltype{T,N,SZ}(A::FixedArray{T,N,SZ}) 				= T
 eltype{T <: FixedArray}(A::Type{T})                 = T.types[1]
 
-length{T,N,SZ}(A::FixedArray{T,N,SZ})           	= prod(SZ.parameters)
-length{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})         = prod(SZ.parameters)
+length{T,N,SZ}(A::FixedArray{T,N,SZ})           	= prod(SZ.parameters)::Int
+length{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})         = prod(SZ.parameters)::Int
 #This is soo bad. But a non fully parametrized abstract type doesn't get catched by the above function
 length{T <: FixedArray}(A::Type{T})                 = isfullyparametrized(T) ? length(super(T)) : prod(super(A).parameters[3].parameters)
 
@@ -36,13 +36,13 @@ ndims{T,N,SZ}(A::FixedArray{T,N,SZ})            	= N
 ndims{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})          = N
 ndims{T <: FixedArray}(A::Type{T})            		= ndims(super(T))
 
-size{T,N,SZ}(A::FixedArray{T,N,SZ})             	= (SZ.parameters...)
-size{T,N,SZ}(A::FixedArray{T,N,SZ}, d::Integer) 	= SZ.parameters[d]
+size{T,N,SZ}(A::FixedArray{T,N,SZ})             	= (SZ.parameters...)::NTuple{N, Int}
+size{T,N,SZ}(A::FixedArray{T,N,SZ}, d::Integer) 	= SZ.parameters[d]::Int
 
-size{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})           = (SZ.parameters...)
+size{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})           = (SZ.parameters...)::NTuple{N, Int}
 size{T <: FixedArray}(A::Type{T})            		= size(super(T))
 
-size{T <: FixedArray}(A::Type{T}, d::Integer) 		= size(T)[d]
+size{T <: FixedArray}(A::Type{T}, d::Integer) 		= size(T)[d]::Int
 
 # Iterator 
 start(A::FixedArray)            					= 1
