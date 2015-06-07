@@ -1,6 +1,5 @@
-@inline getindex{T,N,SZ}(A::FixedArray{T, N, SZ}, i::Int) = A.(i)
-
-getindex{T,N,SZ}(A::FixedArray{T, N, SZ}, inds::Real...) = A.(sub2ind(size(A)::NTuple{N, Int}, inds...))
+@inline getindex{T,SZ}(A::FixedArray{T, 1, SZ}, i::Int) = A.(i)
+@inline getindex{T,N,SZ}(A::FixedArray{T, N, SZ}, inds::Real...) = A.(sub2ind(size(A)::NTuple{N, Int}, inds...))
 
 function getindex{T, SZ}(A::FixedArray{T, 2, SZ}, i::Real, j::UnitRange)
     FixedVector{T, length(j)}(
