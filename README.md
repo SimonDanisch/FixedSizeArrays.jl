@@ -41,6 +41,11 @@ Because it's so easy to define different types like Point3, RGB, HSV or Normal3,
 Without FixedSizeArrays, this would end up in a lot of types which would all need to define the same functions over and over again.
 
 
+#### Roadmap
+* use tuple types, best with the new getindex changes in julia 0.4 (waiting for speed imrovements)
+* improve coverage
+* incorperate https://github.com/StephenVavasis/Modifyfield.jl
+* improve API and consistency
 
 #### TODO's
 
