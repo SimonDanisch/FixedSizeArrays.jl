@@ -6,7 +6,7 @@ const TYPE_PARAM_POSITION = 1
 const NDIM_PARAM_POSITION = 2
 const SIZE_PARAM_POSITION = 3
 
-abstract FixedArray{T, NDim, SIZE} 
+abstract FixedArray{T, NDim, SIZE}
 abstract MutableFixedArray{T, NDim, SIZE} <: FixedArray{T, NDim, SIZE}
 
 typealias MutableFixedVector{T, CARDINALITY} MutableFixedArray{T, 1, @compat(Tuple{CARDINALITY})}
