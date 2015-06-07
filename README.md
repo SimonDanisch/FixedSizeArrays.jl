@@ -42,7 +42,7 @@ Without FixedSizeArrays, this would end up in a lot of types which would all nee
 
 
 #### Roadmap
-* use tuple types, best with the new getindex changes in julia 0.4 (waiting for speed imrovements)
+* use tuple types, best with the new getindex changes (JuliaLang/julia#10525) in julia 0.4
 * improve coverage
 * incorperate https://github.com/StephenVavasis/Modifyfield.jl
 * improve API and consistency
