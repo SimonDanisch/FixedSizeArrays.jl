@@ -182,3 +182,28 @@ end
 function (*){FSV <: FixedVector}(a::FSV, b::FSV)
     FixedMatrix{eltype(FSV), 1, 1}(dot(a,b))
 end
+
+function (==){T1,T2,C,N}(a::FixedArray{T1,C,N}, b::FixedArray{T2,C,N})
+    l = length(a)
+    for i = 1:l
+        a[i] == b[i] || return false
+    end
+    true
+end
+
+function (==)(a::FixedArray,
+              b::FixedArray)
+    false
+end
+
+function (==)(a::FixedArray, b::AbstractArray)
+    s_a = size(a)
+    s_b = size(b)
+    s_a == s_b || return false
+    for i = 1:length(a)
+        a[i] == b[i] || return false
+    end
+    true
+end
+
+(==)(a::AbstractArray, b::FixedArray) = b == a

@@ -239,6 +239,19 @@ end
 @test isapprox(kfs, k)
 @test isapprox(lfs, l)
 
+# Equality
+@test Vector3{Int}(1) == Vector3{Float64}(1)
+@test Vector2{Int}(1) != Vector3{Float64}(1)
+@test Vector3(1,2,3) == Vector3(1.0,2.0,3.0)
+@test Vector3(1,2,3) != Vector3(1.0,4.0,3.0)
+@test Vector3(1,2,3) == [1,2,3]
+@test Matrix2x2{Int}(1,2,3,4) == Matrix2x2{Float64}(1,2,3,4)
+let
+    a = rand(16)
+    @test Matrix4x4(a...) == reshape(a, (4,4))
+    @test reshape(a, (4,4)) == Matrix4x4(a...)
+    @test Matrix4x4(a...) != reshape(a, (2,8))
+end
 
 println("SUCCESS")
 
