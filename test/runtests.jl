@@ -33,9 +33,9 @@ v2 = Vec3d(6.0,5.0,4.0)
 @test v1[1] == 1.0
 @test v1[2] == 2.0
 @test v1[3] == 3.0
-@test try v1[-1]; false; catch e; isa(e,BoundsError); end
-@test try v1[0];  false; catch e; isa(e,BoundsError); end
-@test try v1[4];  false; catch e; isa(e,BoundsError); end
+@test_throws BoundsError v1[-1]
+@test_throws BoundsError v1[0]
+@test_throws BoundsError v1[4]
 
 # negation
 @test -v1 == Vec3d(-1.0,-2.0,-3.0)
@@ -241,3 +241,4 @@ end
 
 
 println("SUCCESS")
+
