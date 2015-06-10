@@ -99,7 +99,14 @@ immutable RandFunc{T} <: Func{1}
 end
 call{T}(rf::RandFunc{T}, x) = rand(rf.range)
 
-rand{FSA <: FixedArray}(x::Type{FSA})               = map(RandFunc(zero(eltype(FSA)):one(eltype(FSA))), FSA)
+function rand{FSA <: FixedArray}(x::Type{FSA})
+    et = eltype(FSA)
+    if et <: FloatingPoint
+        map(RandFunc(zero(et):one(et)), FSA)
+    else
+        map(RandFunc(typemin(et):typemax(et)), FSA)
+    end
+end
 rand{FSA <: FixedArray}(x::Type{FSA}, range::Range) = map(RandFunc(range), FSA)
 
 zero{FSA <: FixedArray}(::Type{FSA})   = map(ConstFunctor(zero(eltype(FSA))), FSA)
