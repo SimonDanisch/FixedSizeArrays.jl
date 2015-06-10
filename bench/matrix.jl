@@ -13,27 +13,39 @@ function simplemap{S,T}(f, A::AbstractArray{S}, B::AbstractArray{T})
     end
     return F
 end
-
-const a = rand(10^7)
-const b = rand(10^7)
-
-
-@time c = parallelmap(+, a, b)
-@time parallelmap(+, a, b)
-@time d = parallelmap(Base.AddFun(), a, b)
-@time parallelmap(Base.AddFun(), a, b)
+function test()
+    const a = rand(10^7)
+    const b = rand(10^7)
 
 
-@time e = simplemap(+, a, b)
-@time simplemap(+, a, b)
-@time f = simplemap(Base.AddFun(), a, b)
-@time simplemap(Base.AddFun(), a, b)
+    c = parallelmap(+, a, b)
+    println("parallel:")
+    @time parallelmap(+, a, b)
+    d = parallelmap(Base.AddFun(), a, b)
+    println("functor:")
+    @time parallelmap(Base.AddFun(), a, b)
 
-@time g = map(+, a, b)
-@time map(+, a, b)
-@time h = map(Base.AddFun(), a, b)
-@time map(Base.AddFun(), a, b)
 
-@assert c==d && c==e && c==f && c==g && c==h
+    e = simplemap(+, a, b)
+    
+    println("simplemap:")
+    @time simplemap(+, a, b)
+    f = simplemap(Base.AddFun(), a, b)
+    println("functor:")
+    @time simplemap(Base.AddFun(), a, b)
 
+    g = map(+, a, b)
+    println("map:")
+    @time map(+, a, b)
+    h = map(Base.AddFun(), a, b)
+    println("functor:")
+    @time map(Base.AddFun(), a, b)
+
+    println("plus")
+    i = a+b
+    @time a+b
+
+    @assert c==d && c==e && c==f && c==g && c==h && c==i
+end
+test()
 
