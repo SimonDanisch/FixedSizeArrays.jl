@@ -21,10 +21,11 @@ isfullyparametrized{T}(::Type{T}) = !any(x-> isa(x, TypeVar), T.parameters)
 
 
 eltype{T,N,SZ}(A::FixedArray{T,N,SZ}) 				= T
-eltype{T <: FixedArray}(A::Type{T})                 = T.types[1]
+eltype{T,N,SZ}(A::Type{FixedArray{T,N,SZ}}) 		= T
+eltype{T <: FixedArray}(A::Type{T})                 = eltype(super(T))
 
 length{T, L}(A::FixedVector{T,L})           		= L
-length{T, M, N}(A::FixedMatrix{T,M, N})           		= M*N
+length{T, M, N}(A::FixedMatrix{T,M, N})           	= M*N
 length{T,N,SZ}(A::FixedArray{T,N,SZ})           	= prod(SZ.parameters)::Int
 length{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})         = prod(SZ.parameters)::Int
 #This is soo bad. But a non fully parametrized abstract type doesn't get catched by the above function
