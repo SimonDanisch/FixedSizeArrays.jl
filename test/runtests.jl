@@ -5,8 +5,8 @@ using Base.Test
 immutable Vec{N, T} <: FixedVector{N, T}
     _::NTuple{N, T}
 end
-
-
+call{N, T}(::Type{Vec{N, T}}, a::Real) = Vec(ntuple(FixedSizeArrays.ConstFunctor(a), Val{N}))
+call(::Type{Vec}, a::AbstractVector) = Vec(ntuple(FixedSizeArrays.IndexFunctor(a), Val{length(a)}))
 #t1 = ["1.909", "1.909", "1.909"]
 #@test Vec{3, Float64}(1.909) == Vec{3, Float64}(t1)
 #@test length(t1) == 3
@@ -117,15 +117,23 @@ zeromat = Mat2d((0.0,0.0),(0.0,0.0))
 
 @test zero(Mat2d) == zeromat
 
+for i=1:4, j=1:4
+	x1 = rand(i,j)
+	@test Mat(x1') == Mat(x1)'
+end
 
-v = Vec4d(1.0,2.0,3.0,4.0)
+
+
+v = Vec(1.0,2.0,3.0,4.0)
 r = row(v)
 c = column(v)
-println(r)
-println(c)
-#prod(Vector1(0))
-#a = c*r
-b = Mat4d(
+
+#@test r' == c
+#@test c' == r
+
+a = c*r
+
+b = Mat(
 	(1.0,2.0,3.0,4.0),
 	(2.0,4.0,6.0,8.0),
 	(3.0,6.0,9.0,12.0),
@@ -134,17 +142,22 @@ b = Mat4d(
 
 @test length(b) == 16
 
-#@test a==b
-#@test r*c == Matrix1x1(30.0)
-#@test r' == c
-#@test c' == r
-#@test row(r,1) == v
+@test a==b
+println(r)
+println(c)
+mat30 = Mat(((30.0,),))
+println(column(r, 1))
+println(row(r, 1))
+@test r*c == mat30
+
+
+#@test row(r, 1) == v
 #@test column(c,1) == v
 #@test row(r+c',1) == 2*v
 @test sum(r) == sum(v)
 @test prod(c) == prod(v)
 eye(Mat3d)
-@test eye(Mat3d) == Mat3d((1.0,0.0,0.0),
+@test eye(Mat3d) == Mat((1.0,0.0,0.0),
 							(0.0,1.0,0.0),
 							(0.0,0.0,1.0))
 #@test v*eye(Mat4d)*v == 30.0
@@ -162,11 +175,10 @@ end
 #im = Matrix4x4(jm)
 @test isa(im, Mat4d)
 
-im = Mat4d(jm)
+im = Mat(jm)
 
-@test isa(im,Mat4d)
+@test isa(im, Mat4d)
 #@test jm == im
-println(@which convert(Array{Float64,2}, im))
 
 jm2 = convert(Array{Float64,2}, im)
 @test isa(jm2, Array{Float64,2})
@@ -174,19 +186,21 @@ jm2 = convert(Array{Float64,2}, im)
 
 #Single valued constructor
 Mat4d(0.0) == zeros(Mat4d)
-Vec4d(0) == Vec4d(0,0,0,0)
+a = Vec4d(0)
+b = Vec4d(0,0,0,0)
+@test a == b
 
 v = rand(4)
 m = rand(4,4)
-vfs = Vec4d(v)
-mfs = Mat4d(m)
+vfs = Vec(v)
+mfs = Mat(m)
 function lol()
 	for i=1:10000
 		v = rand(4)
 		m = rand(4,4)
 		vm = m * v
-		vfs = Vec4d(v)
-		mfs = Mat4d(m)
+		vfs = Vec(v)
+		mfs = Mat(m)
 		fsvm = mfs * vfs
 		for i=1:4
 			@test isapprox(fsvm[i], vm[i])
@@ -220,7 +234,6 @@ afs = Vec(a)
 bfs = Vec(b)
 cfs = Mat(c)
 
-#=
 dfs = cross(acfs, bcfs)
 d2fs = afs+bfs
 ffs = cfs*afs
@@ -254,7 +267,7 @@ end
 @test isapprox(jfs, j)
 @test isapprox(kfs, k)
 @test isapprox(lfs, l)
-=#
+
 # Equality
 @test Vec{3, Int}(1) == Vec{3, Float64}(1)
 @test Vec{2, Int}(1) != Vec{3, Float64}(1)
@@ -264,7 +277,7 @@ end
 @test Mat((1,2),(3,4)) == Mat((1,2),(3,4))
 let
     a = rand(16)
-    b = Mat(a)
+    b = Mat4d(a)
     @test b == reshape(a, (4,4))
     @test reshape(a, (4,4)) == b
     @test b != reshape(a, (2,8))

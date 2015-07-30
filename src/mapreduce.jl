@@ -1,5 +1,5 @@
-@inline map{FSA <: FixedArray}(f::Func{1}, a::FSA)          = FSA(map(f, a.(1)))
-@inline map{FSA <: FixedArray}(f::Func{2}, a::FSA, b::FSA)  = FSA(map(f, a.(1), b.(1)))
+map{FSA <: FixedArray}(f::Func{1}, a::FSA)          = FSA(map(f, a.(1)))
+map{FSA <: FixedArray}(f::Func{2}, a::FSA, b::FSA)  = FSA(map(f, a.(1), b.(1)))
 
 inner_map(len::Int, inner) = ntuple(i -> quote f($(inner(i))) end, len)
 
@@ -10,7 +10,10 @@ function reduce{FSA <: FixedArray}(f::Func{2}, a::FSA)
     end
     red
 end
-
+@generated function map{R, C, T}(f::Func{1}, a::Mat{R, C, T})
+    exprs = [:(map(f, a.(1)[$i])) for i=1:C]
+    :(Mat(tuple($(exprs...))))
+end
 @generated function map{FSA <: FixedMatrix}(f::Func{1}, a::Type{FSA})
     exprs = []
     R, C = size(FSA)

@@ -64,6 +64,11 @@ end
 
 dot{T <: FixedArray}(a::T, b::T) = sum(a.*b)
 
+dot{T}(a::NTuple{1,T}, b::NTuple{1,T}) = a[1]*b[1]
+dot{T}(a::NTuple{2,T}, b::NTuple{2,T}) = a[1]*b[1] + a[2]*b[2]
+dot{T}(a::NTuple{3,T}, b::NTuple{3,T}) = a[1]*b[1] + a[2]*b[2] + a[3]*b[3]
+dot{T}(a::NTuple{4,T}, b::NTuple{4,T}) = a[1]*b[1] + a[2]*b[2] + a[3]*b[3]+a[4]*b[4]
+
 cross{T}(a::FixedVector{2, T}, b::FixedVector{2, T}) = a[1]*b[2]-a[2]*b[1]
 cross{T}(a::FixedVector{3, T}, b::FixedVector{3, T}) = typeof(a)(
     a[2]*b[3]-a[3]*b[2],
@@ -149,38 +154,49 @@ function inv{T}(A::FixedMatrix{4, 4, T})
     )
 end
 
-@generated function ctranspose{T, M, N}(A::FixedMatrix{M, N, T})
-    :(FixedMatrix{T, N, M}($([:(A[$(i), $(j)]') for j=1:N, i=1:M]...)))
+@generated function ctranspose{R, C, T}(a::Mat{R, C, T})
+    exprs = ntuple(i->:(row(a, $i)), R)
+    :(Mat(tuple($(exprs...))))
 end
                              
 # Matrix
 (*){T, M, N, O, K}(a::FixedMatrix{M, N, T}, b::FixedMatrix{O, K, T}) = error("DimensionMissmatch: $N != $O in $(typeof(a)) and $(typeof(b))")
 
-@generated function (*){T, M, N, K}(a::FixedMatrix{M, N, T}, b::FixedMatrix{N, K, T})
+@generated function (*){T, M, N, K}(a::Mat{M, N, T}, b::Mat{N, K, T})
     expr = []
     for i=1:M 
         rowt = [:(+($(ntuple(k->:(a.(1)[$k][$i]*b.(1)[$k][$j]), N)...))) for j=1:K]
         push!(expr, :(tuple($(rowt...))))
     end
-    expr = :(Main.Mat{$M, $K}(tuple($(expr...))))
+    :(Mat(tuple($(expr...))))
 end
 
-function (*){T, FSV <: FixedVector, M, N}(a::FixedMatrix{M, N, T}, b::FSV)
-    bb = convert(FixedMatrix{length(b), 1, T}, b)
-    FSV((a*bb).(1)[1])
+@generated function (*){T, FSV <: FixedVector, R, C}(a::Mat{R, C, T}, b::FSV)
+    N = length(b)
+    N != C && error("DimensionMissmatch: $N != $C for $(typeof(b)), $(typeof(a))")
+    expr = [:(dot(row(a, $i), b.(1))) for i=1:R]
+    if N == R
+        return :(FSV(tuple($(expr...))))
+    else
+        return :(Mat(tuple(tuple($(expr...)))))
+    end
 end
 
-function (*){T, FSV <: FixedVector, M, N}(a::FSV, b::FixedMatrix{M, N, T})
-    aa = convert(FixedMatrix{1, length(a), T}, a)
-    aa*b
+@generated function (*){T, FSV <: FixedVector, C}(a::FSV, b::Mat{1, C, T})
+    N = length(a)
+    N != C && error("DimensionMissmatch: $N != $R for $(typeof(a)), $(typeof(b))")
+    expr = [:(tuple($([:(a[$i]*b[$j]) for j=1:C]...))) for i=1:C]
+    :(Mat(tuple($(expr...))))
 end
 
-(*){FSV <: FixedVector}(a::FSV, b::FSV) = FixedMatrix{1, 1, eltype(FSV)}(dot(a,b))
+(*){FSV <: FixedVector}(a::FSV, b::FSV) = Mat{1, 1, eltype(FSV)}(dot(a,b))
     
 
 
 (==){T1,T2,C,N}(a::FixedArray{T1,C,N}, b::FixedArray{T2,C,N}) = a.(1) == b.(1)
 
+(==){R, T, FSA <: FixedVector}(a::FSA, b::Mat{R, 1, T}) = a.(1) == column(b,1)
+(==){R, T, FSA <: FixedVector}(a::Mat{R, 1, T}, b::FSA) = column(a,1) == b.(1)
 function (==)(a::FixedArray, b::AbstractArray)
     s_a = size(a)
     s_b = size(b)
