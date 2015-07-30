@@ -24,7 +24,7 @@ const binaryOps = (:.+, :.-,:.*, :./, :.\, :.^,:*,:/,
                    :atan2, :besselj, :bessely, :hankelh1, :hankelh2, 
                    :besseli, :besselk, :beta, :lbeta)
 
-const reductions = ((:sum,:+),(:prod,:*),(:minimum,:min),(:maximum,:max))
+const reductions = ((:sum,:+), (:prod,:*), (:minimum,:min), (:maximum,:max))
 
 function gen_functor(func::Symbol, unary::Int)
     functor_name  = gensym()
@@ -64,45 +64,48 @@ end
 
 dot{T <: FixedArray}(a::T, b::T) = sum(a.*b)
 
-cross{T}(a::FixedVector{T, 2}, b::FixedVector{T, 2}) = a[1]*b[2]-a[2]*b[1]
-cross{T}(a::FixedVector{T, 3}, b::FixedVector{T, 3}) = typeof(a)(a[2]*b[3]-a[3]*b[2], 
-                                                     a[3]*b[1]-a[1]*b[3], 
-                                                     a[1]*b[2]-a[2]*b[1])
+cross{T}(a::FixedVector{2, T}, b::FixedVector{2, T}) = a[1]*b[2]-a[2]*b[1]
+cross{T}(a::FixedVector{3, T}, b::FixedVector{3, T}) = typeof(a)(
+    a[2]*b[3]-a[3]*b[2],
+    a[3]*b[1]-a[1]*b[3],
+    a[1]*b[2]-a[2]*b[1]
+)
 
 norm{T, N}(a::FixedVector{T, N})     = sqrt(dot(a,a))
 normalize{FSA <: FixedArray}(a::FSA) = a / norm(a)
 
 #Matrix
-det{T}(A::FixedMatrix{T, 1, 1}) = A[1]
-det{T}(A::FixedMatrix{T, 2, 2}) = A[1,1]*A[2,2] - A[1,2]*A[2,1]
-det{T}(A::FixedMatrix{T, 3, 3}) = A[1,1]*(A[2,2]*A[3,3]-A[2,3]*A[3,2]) - A[1,2]*(A[2,1]*A[3,3]-A[2,3]*A[3,1]) + A[1,3]*(A[2,1]*A[3,2]-A[2,2]*A[3,1])
-det{T}(A::FixedMatrix{T, 4, 4}) = (
-        A[13] * A[10]  * A[7]  * A[4]  - A[9] * A[14] * A[7]  * A[4]   -
-        A[13] * A[6]   * A[11] * A[4]  + A[5] * A[14] * A[11] * A[4]   +
-        A[9]  * A[6]   * A[15] * A[4]  - A[5] * A[10] * A[15] * A[4]   -
-        A[13] * A[10]  * A[3]  * A[8]  + A[9] * A[14] * A[3]  * A[8]   +
-        A[13] * A[2]   * A[11] * A[8]  - A[1] * A[14] * A[11] * A[8]   -
-        A[9]  * A[2]   * A[15] * A[8]  + A[1] * A[10] * A[15] * A[8]   +
-        A[13] * A[6]   * A[3]  * A[12] - A[5] * A[14] * A[3]  * A[12]  -
-        A[13] * A[2]   * A[7]  * A[12] + A[1] * A[14] * A[7]  * A[12]  +
-        A[5]  * A[2]   * A[15] * A[12] - A[1] * A[6]  * A[15] * A[12]  -
-        A[9]  * A[6]   * A[3]  * A[16] + A[5] * A[10] * A[3]  * A[16]  +
-        A[9]  * A[2]   * A[7]  * A[16] - A[1] * A[10] * A[7]  * A[16]  -
-        A[5]  * A[2]   * A[11] * A[16] + A[1] * A[6]  * A[11] * A[16])
+det{T}(A::FixedMatrix{1, 1, T}) = A[1]
+det{T}(A::FixedMatrix{2, 2, T}) = A[1,1]*A[2,2] - A[1,2]*A[2,1]
+det{T}(A::FixedMatrix{3, 3, T}) = A[1,1]*(A[2,2]*A[3,3]-A[2,3]*A[3,2]) - A[1,2]*(A[2,1]*A[3,3]-A[2,3]*A[3,1]) + A[1,3]*(A[2,1]*A[3,2]-A[2,2]*A[3,1])
+det{T}(A::FixedMatrix{4, 4, T}) = (
+    A[13] * A[10]  * A[7]  * A[4]  - A[9] * A[14] * A[7]  * A[4]   -
+    A[13] * A[6]   * A[11] * A[4]  + A[5] * A[14] * A[11] * A[4]   +
+    A[9]  * A[6]   * A[15] * A[4]  - A[5] * A[10] * A[15] * A[4]   -
+    A[13] * A[10]  * A[3]  * A[8]  + A[9] * A[14] * A[3]  * A[8]   +
+    A[13] * A[2]   * A[11] * A[8]  - A[1] * A[14] * A[11] * A[8]   -
+    A[9]  * A[2]   * A[15] * A[8]  + A[1] * A[10] * A[15] * A[8]   +
+    A[13] * A[6]   * A[3]  * A[12] - A[5] * A[14] * A[3]  * A[12]  -
+    A[13] * A[2]   * A[7]  * A[12] + A[1] * A[14] * A[7]  * A[12]  +
+    A[5]  * A[2]   * A[15] * A[12] - A[1] * A[6]  * A[15] * A[12]  -
+    A[9]  * A[6]   * A[3]  * A[16] + A[5] * A[10] * A[3]  * A[16]  +
+    A[9]  * A[2]   * A[7]  * A[16] - A[1] * A[10] * A[7]  * A[16]  -
+    A[5]  * A[2]   * A[11] * A[16] + A[1] * A[6]  * A[11] * A[16]
+)
 
 
-inv{T}(A::FixedMatrix{T, 1, 1}) = typeof(A)(inv(A[1]))
-function inv{T}(A::FixedMatrix{T, 2, 2})
+inv{T}(A::FixedMatrix{1, 1, T}) = FixedMatrix{1, 1, T}(inv(A[1]))
+function inv{T}(A::FixedMatrix{2, 2, T})
   determinant = det(A)
-  typeof(A)(
+  FixedMatrix{T, 2, 2}(
       A[2,2] /determinant,
       -A[2,1]/determinant,
       -A[1,2]/determinant,
       A[1,1] /determinant)
 end
-function inv{T}(A::FixedMatrix{T, 3, 3})
+function inv{T}(A::FixedMatrix{3, 3, T})
     determinant = det(A)
-    typeof(A)(
+    FixedMatrix{T, 3, 3}(
         (A[2,2]*A[3,3]-A[2,3]*A[3,2]) /determinant,
         -(A[2,1]*A[3,3]-A[2,3]*A[3,1])/determinant,
         (A[2,1]*A[3,2]-A[2,2]*A[3,1]) /determinant,
@@ -118,10 +121,9 @@ function inv{T}(A::FixedMatrix{T, 3, 3})
 end
 
 
-function inv{T}(A::FixedMatrix{T, 4, 4})
+function inv{T}(A::FixedMatrix{4, 4, T})
     determinant = det(A)
-
-    typeof(A)(
+    FixedMatrix{T, 4, 4}(
         (A[2,3]*A[3,4]*A[4,2] - A[2,4]*A[3,3]*A[4,2] + A[2,4]*A[3,2]*A[4,3] - A[2,2]*A[3,4]*A[4,3] - A[2,3]*A[3,2]*A[4,4] + A[2,2]*A[3,3]*A[4,4]) / determinant,
         (A[2,4]*A[3,3]*A[4,1] - A[2,3]*A[3,4]*A[4,1] - A[2,4]*A[3,1]*A[4,3] + A[2,1]*A[3,4]*A[4,3] + A[2,3]*A[3,1]*A[4,4] - A[2,1]*A[3,3]*A[4,4]) / determinant,
         (A[2,2]*A[3,4]*A[4,1] - A[2,4]*A[3,2]*A[4,1] + A[2,4]*A[3,1]*A[4,2] - A[2,1]*A[3,4]*A[4,2] - A[2,2]*A[3,1]*A[4,4] + A[2,1]*A[3,2]*A[4,4]) / determinant,
@@ -147,54 +149,37 @@ function inv{T}(A::FixedMatrix{T, 4, 4})
     )
 end
 
-@generated function ctranspose{T, M, N}(A::FixedMatrix{T, M, N})
-    returntype = gen_fixedsizevector_type((N, M), A.mutable)
-    :($returntype($([:(A[$(i), $(j)]') for j=1:N, i=1:M]...)))
+@generated function ctranspose{T, M, N}(A::FixedMatrix{M, N, T})
+    :(FixedMatrix{T, N, M}($([:(A[$(i), $(j)]') for j=1:N, i=1:M]...)))
 end
                              
-
-immutable MatMulFunctor{T, T2} <: Func{2} end
-
-call{A,B}(f::Type{MatMulFunctor{A,B}}, i::Integer, j::Integer) = dot(row(A, i), column(B, j))
-
-# non staged matmul version seems to be waaay slower
-function matmul{T, M, N, K}(a::FixedMatrix{T, M, N}, b::FixedMatrix{T, N, K})
-    map(MatMulFunctor{a, b}, FixedMatrix{T, M, K})
-end
 # Matrix
-@generated function (*){T, M, N, K}(a::FixedMatrix{T, M, N}, b::FixedMatrix{T, N, K})
-    returntype = gen_fixedsizevector_type((M,K), a.mutable)
-    :($returntype( 
-         $([:(dot(row(a, $i), column(b, $j))) for i=1:M, j=1:K]...)
-    ))
+(*){T, M, N, O, K}(a::FixedMatrix{M, N, T}, b::FixedMatrix{O, K, T}) = error("DimensionMissmatch: $N != $O in $(typeof(a)) and $(typeof(b))")
+
+@generated function (*){T, M, N, K}(a::FixedMatrix{M, N, T}, b::FixedMatrix{N, K, T})
+    expr = []
+    for i=1:M 
+        rowt = [:(+($(ntuple(k->:(a.(1)[$k][$i]*b.(1)[$k][$j]), N)...))) for j=1:K]
+        push!(expr, :(tuple($(rowt...))))
+    end
+    expr = :(Main.Mat{$M, $K}(tuple($(expr...))))
 end
 
-function (*){T, FSV <: FixedVector, M, N}(a::FixedMatrix{T, M, N}, b::FSV)
-    bb = FixedMatrix{T, length(b), 1}(b...)
-    FSV((a*bb)...)
+function (*){T, FSV <: FixedVector, M, N}(a::FixedMatrix{M, N, T}, b::FSV)
+    bb = convert(FixedMatrix{length(b), 1, T}, b)
+    FSV((a*bb).(1)[1])
 end
 
-function (*){T, FSV <: FixedVector, M, N}(a::FSV, b::FixedMatrix{T, M, N})
-    aa = convert(FixedMatrix{T, length(a), 1}, a)
+function (*){T, FSV <: FixedVector, M, N}(a::FSV, b::FixedMatrix{M, N, T})
+    aa = convert(FixedMatrix{1, length(a), T}, a)
     aa*b
 end
 
-function (*){FSV <: FixedVector}(a::FSV, b::FSV)
-    FixedMatrix{eltype(FSV), 1, 1}(dot(a,b))
-end
+(*){FSV <: FixedVector}(a::FSV, b::FSV) = FixedMatrix{1, 1, eltype(FSV)}(dot(a,b))
+    
 
-function (==){T1,T2,C,N}(a::FixedArray{T1,C,N}, b::FixedArray{T2,C,N})
-    l = length(a)
-    for i = 1:l
-        a[i] == b[i] || return false
-    end
-    true
-end
 
-function (==)(a::FixedArray,
-              b::FixedArray)
-    false
-end
+(==){T1,T2,C,N}(a::FixedArray{T1,C,N}, b::FixedArray{T2,C,N}) = a.(1) == b.(1)
 
 function (==)(a::FixedArray, b::AbstractArray)
     s_a = size(a)

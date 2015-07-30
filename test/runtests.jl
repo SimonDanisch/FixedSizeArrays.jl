@@ -1,33 +1,28 @@
 using FixedSizeArrays
+sleep(0.1)
 using Base.Test
 
-@gen_fixed_size_vector("Vector", 	[:x,:y,:z,:w],              1:4, false)
-@gen_fixed_size_vector("Point",  	[:x,:y,:z,:w], 				1:4, false)
-@gen_fixed_size_vector("Normal",  	[:x,:y,:z,:w], 				1:4, false)
+immutable Vec{N, T} <: FixedVector{N, T}
+    _::NTuple{N, T}
+end
 
 
-# generate mutable variant (will be MVector, MPoint, etc...)
-@gen_fixed_size_vector("Vector",    [:x,:y,:z,:w],              1:4, true)
-@gen_fixed_size_vector("Point",     [:x,:y,:z,:w],              1:4, true)
-@gen_fixed_size_vector("Normal",    [:x,:y,:z,:w],              1:4, true)
-@gen_fixed_size_vector("UV",        [:u,:v],                    2:2, true)
-@gen_fixed_size_vector("UVW",       [:u,:v,:w],                 3:3, true)
+immutable Mat{Row, Column, T} <: FixedMatrix{Row, Column, T}
+    _::NTuple{Row, NTuple{Column, T}}
+end
+call{Row, Column, T}(::Type{Mat{Row, Column, T}}, a::Real) = Mat(ntuple(x->ntuple(y->a, Column), Row))
 
-#generating matrixes (Matrix1x1, Matrix1x2, etc...)
-gen_fixed_size_matrix(1:4, 1:4, false)
-gen_fixed_size_matrix(1:4, 1:4, true)
+#t1 = ["1.909", "1.909", "1.909"]
+#@test Vec{3, Float64}(1.909) == Vec{3, Float64}(t1)
+#@test length(t1) == 3
 
-t1 = ["1.909", "1.909", "1.909"]
-@test Vector3{Float64}(1.909) == Vector3{Float64}(t1)
-@test length(t1) == 3
+typealias Vec2d Vec{2, Float64}
+typealias Vec3d Vec{3, Float64}
+typealias Vec4d Vec{4, Float64}
+typealias Vec3f Vec{3, Float32}
 
-typealias Vec2d Vector2{Float64}
-typealias Vec3d Vector3{Float64}
-typealias Vec4d Vector4{Float64}
-typealias Vec3f Vector3{Float32}
-
-v1 = Vec3d(1.0,2.0,3.0)
-v2 = Vec3d(6.0,5.0,4.0)
+v1 = Vec(1.0,2.0,3.0)
+v2 = Vec(6.0,5.0,4.0)
 
 # indexing
 @test v1[1] == 1.0
@@ -38,7 +33,7 @@ v2 = Vec3d(6.0,5.0,4.0)
 @test_throws BoundsError v1[4]
 
 # negation
-@test -v1 == Vec3d(-1.0,-2.0,-3.0)
+@test -v1 == Vec(-1.0,-2.0,-3.0)
 @test isa(-v1,Vec3d)
 
 # addition
@@ -112,26 +107,39 @@ v2 = Vec3d(6.0,5.0,4.0)
 # matrix operations
 
 #typealias Mat1d Matrix1x1{Float64}
-typealias Mat2d Matrix2x2{Float64}
-typealias Mat3d Matrix3x3{Float64}
-typealias Mat4d Matrix4x4{Float64}
+typealias Mat2d Mat{2,2, Float64}
+typealias Mat3d Mat{3,3, Float64}
+typealias Mat4d Mat{4,4, Float64}
+zeromat = Mat2d((0.0,0.0),(0.0,0.0))
 
-@test zero(Mat2d) == Mat2d(0.0,0.0,0.0,0.0)
+
+
+@test length(Mat2d) == 4
+@test length(zeromat) == 4
+
+@test size(Mat2d) == (2,2)
+@test size(zeromat) == (2,2)
+
+@test zero(Mat2d) == zeromat
+
 
 v = Vec4d(1.0,2.0,3.0,4.0)
 r = row(v)
 c = column(v)
-
+println(r)
+println(c)
 #prod(Vector1(0))
-a = c*r
-b = Mat4d(1.0,2.0,3.0,4.0,
-             2.0,4.0,6.0,8.0,
-             3.0,6.0,9.0,12.0,
-             4.0,8.0,12.0,16.0)
+#a = c*r
+b = Mat4d(
+	(1.0,2.0,3.0,4.0),
+	(2.0,4.0,6.0,8.0),
+	(3.0,6.0,9.0,12.0),
+	(4.0,8.0,12.0,16.0)
+)
 
 @test length(b) == 16
 
-@test a==b
+#@test a==b
 #@test r*c == Matrix1x1(30.0)
 #@test r' == c
 #@test c' == r
@@ -141,17 +149,18 @@ b = Mat4d(1.0,2.0,3.0,4.0,
 @test sum(r) == sum(v)
 @test prod(c) == prod(v)
 eye(Mat3d)
-@test eye(Mat3d) == Mat3d(1.0,0.0,0.0,
-							0.0,1.0,0.0,
-							0.0,0.0,1.0)
+@test eye(Mat3d) == Mat3d((1.0,0.0,0.0),
+							(0.0,1.0,0.0),
+							(0.0,0.0,1.0))
 #@test v*eye(Mat4d)*v == 30.0
+println(length(r))
 @test -r == -1.0*r
 #@test diag(diagm(v)) == v
 
 # type conversion
 #@test isa(convert(Matrix1x4{Float32},r),Matrix1x4{Float32})
 jm = rand(4,4)
-im = convert(Matrix4x4, jm)
+im = convert(Mat{4,4}, jm)
 #im = Matrix4x4(jm)
 @test isa(im, Mat4d)
 
@@ -165,21 +174,27 @@ jm2 = convert(Array{Float64,2},im)
 @test jm == jm2
 
 #Single valued constructor
-Matrix4x4(0.0) === zeros(Mat4d)
-Vector4(0) == Vector4(0,0,0,0)
-Point3(0) == Point3(0,0,0)
+Mat4d(0.0) == zeros(Mat4d)
+Vec4d(0) == Vec4d(0,0,0,0)
 
-for i=1:10000
-	v = rand(4)
-	m = rand(4,4)
-	vm = m * v
-	vfs = Vector4(v)
-	mfs = Matrix4x4(m)
-	fsvm = mfs * vfs
-	for i=1:4
-		@test isapprox(fsvm[i], vm[i])
+v = rand(4)
+m = rand(4,4)
+vfs = Vec4d(v)
+mfs = Mat4d(m)
+function lol()
+	for i=1:10000
+		v = rand(4)
+		m = rand(4,4)
+		vm = m * v
+		vfs = Vec4d(v)
+		mfs = Mat4d(m)
+		fsvm = mfs * vfs
+		for i=1:4
+			@test isapprox(fsvm[i], vm[i])
+		end
 	end
 end
+#lol()
 
 ac = rand(3)
 bc = rand(3)
@@ -198,12 +213,12 @@ j = dot(a, g)
 k = abs(f)
 l = abs(-f)
 
-acfs = Vector3(ac)
-bcfs = Vector3(bc)
+acfs = Vec(ac)
+bcfs = Vec(bc)
 
-afs = Vector4(a)
-bfs = Vector4(b)
-cfs = Matrix4x4(c)
+afs = Vec(a)
+bfs = Vec(b)
+cfs = Mat(c)
 
 dfs = cross(acfs, bcfs)
 d2fs = afs+bfs
@@ -240,8 +255,8 @@ end
 @test isapprox(lfs, l)
 
 # Equality
-@test Vector3{Int}(1) == Vector3{Float64}(1)
-@test Vector2{Int}(1) != Vector3{Float64}(1)
+@test Vec{3, Int}(1) == Vec{3, Float64}(1)
+@test Vec{2, Int}(1) != Vec{3, Float64}(1)
 @test Vector3(1,2,3) == Vector3(1.0,2.0,3.0)
 @test Vector3(1,2,3) != Vector3(1.0,4.0,3.0)
 @test Vector3(1,2,3) == [1,2,3]

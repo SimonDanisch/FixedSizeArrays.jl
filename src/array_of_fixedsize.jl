@@ -2,11 +2,11 @@ immutable CArray{T, NDim, ElType} <: DenseArray{T, NDim}
 	data::Array{ElType, NDim}
 end
 
-length{T,N}(A::CArray{T,N}) 			= div(length(A.data), length(T)) 
-endof{T,N}(A::CArray{T,N})  			= length(A)
-size{T,N}(A::CArray{T,N})   			= ntuple(i->size(A,i), N)
-size{T,N}(A::CArray{T,N}, d::Integer) 	= div(size(A.data, d), length(T))
-pointer{T,N}(A::CArray{T,N}) 			= Ptr{T}(pointer(A.data))
+length{T,N}(A::CArray{T,N})           = div(length(A.data), length(T)) 
+endof{T,N}(A::CArray{T,N})            = length(A)
+size{T,N}(A::CArray{T,N})             = ntuple(i->size(A,i), N)
+size{T,N}(A::CArray{T,N}, d::Integer) = div(size(A.data, d), length(T))
+pointer{T,N}(A::CArray{T,N})          = Ptr{T}(pointer(A.data))
 
 getindex{T,N}(A::CArray{T,N}, i::Integer) = unsafe_load(Ptr{T}(pointer(A.data)), i)
 
@@ -42,7 +42,7 @@ function Base.typed_vcat{T <: FixedArray}(:Type{T}, V1::Real,  Rest::Real...)
 	result
 end
 =#
-function Base.show{FSA <: FixedVector}(io::IO, a::Vector{FSA})
+function show{FSA <: FixedVector}(io::IO, a::Vector{FSA})
 	print(io, "Vector with: ", length(a), "x", FSA, "[")
 	for elem in a
 		print(io, "[")
@@ -55,4 +55,3 @@ end
 function (.+){T<:FixedArray, ND}(a::Array{T, ND}, x::T)
 	T[elem + x for elem in a]
 end
-
