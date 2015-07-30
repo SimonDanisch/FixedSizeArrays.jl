@@ -1,6 +1,12 @@
 @inline getindex{T <: FixedVector}(x::T, i::Integer) = x.(1)[i]
-@inline getindex(x::FixedMatrix, i::Integer, j::Union(Integer, Range)) = x.(1)[i][j]
-@inline getindex(x::FixedMatrix, i::Integer) = x[ind2sub(size(x), i)...]
+
+
+
+@inline getindex{N, M, T}(a::Mat{N, M, T}, i, j) = a.(1)[j][i]
+@inline getindex{N, M, T}(a::Mat{N, M, T}, i) 	  = a[ind2sub((N,M), i)...]
+
+@inline column{R, C, T}(a::Mat2{R, C, T}, i) = a.(1)[i]
+@inline row{R, C, T}(a::Mat2{R, C, T}, j) 	 = ntuple(IndexFunc(a,j), Val{R})::NTuple{R, T}
     
 
 @inline row(x::FixedMatrix, i::Integer) = x[i]

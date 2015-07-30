@@ -11,15 +11,15 @@ function reduce{FSA <: FixedArray}(f::Func{2}, a::FSA)
     red
 end
 
-@generated function map{FSA <: FixedMatrix}(f::Func{1}, a::Union(FSA, Type{FSA}))
+@generated function map{FSA <: FixedMatrix}(f::Func{1}, a::Type{FSA})
     exprs = []
     R, C = size(FSA)
     T = eltype(FSA)
-    for i=1:R
-        push!(exprs, quote tuple($(inner_map(C, x->:($(sub2ind((R,C), i,x))))...)) end)
+    for i=1:C
+        push!(exprs, quote tuple($(inner_map(R, x->:($(sub2ind((R,C), i,x))))...)) end)
     end
     quote 
-        Main.Mat{$R, $C, $T}(tuple($(exprs...)))
+        Mat{$R, $C, $T}(tuple($(exprs...)))
     end
 end
 
@@ -27,22 +27,22 @@ end
     exprs = []
     R, C = size(FSA)
     T = eltype(FSA)
-    for i=1:R
-        push!(exprs, quote tuple($(ntuple(j -> quote f(a.(1)[$i][$j], b) end, C)...)) end)
+    for i=1:C
+        push!(exprs, quote tuple($(ntuple(j -> quote f(a.(1)[$i][$j], b) end, R)...)) end)
     end
     quote 
-        Main.Mat{$R, $C, $T}(tuple($(exprs...)))
+        Mat{$R, $C, $T}(tuple($(exprs...)))
     end
 end
 @generated function map{FSA <: FixedMatrix}(f::Func{2}, a::Number, b::FSA)
     exprs = []
     R, C = size(FSA)
     T = eltype(FSA)
-    for i=1:R
-        push!(exprs, quote tuple($(ntuple(j -> quote f(a, b.(1)[$i][$j]) end, C)...)) end)
+    for i=1:C
+        push!(exprs, quote tuple($(ntuple(j -> quote f(a, b.(1)[$i][$j]) end, R)...)) end)
     end
     quote 
-        Main.Mat{$R, $C, $T}(tuple($(exprs...)))
+        Mat{$R, $C, $T}(tuple($(exprs...)))
     end
 end
 @generated function map{FSA <: FixedArray}(f::Func{2}, a::FSA, b::Number)

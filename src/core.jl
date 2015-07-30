@@ -49,3 +49,11 @@ start(A::FixedArray)            					= 1
 next(A::FixedArray, state::Integer) 				= (A[state], state+1)
 done(A::FixedArray, state::Integer) 				= length(A) < state
 
+
+
+
+immutable Mat{Row, Column, T} <: FixedMatrix{Row, Column, T}
+    _::NTuple{Column, NTuple{Row, T}}
+end
+call{Row, Column, T}(::Type{Mat{Row, Column, T}}, a::Real) = Mat(ntuple(x->ntuple(y->a, Row), Column))
+export Mat

@@ -39,6 +39,9 @@ rand{FSA <: FixedArray}(x::Type{FSA}, range::Range) = map(RandFunc(range), FSA)
 
 call{FSA <: FixedArray, T}(::Type{FSA}, a::T, b::T, c::T...) = FSA(tuple(a, b, c...))
 call{FSA <: FixedVector}(::Type{FSA}, a::Real) = FSA(ntuple(x->a, length(FSA)))
+call{FSA <: FixedVector}(::Type{FSA}, a::AbstractVector) = FSA(tuple(a...))
+
+call{FSA <: FixedMatrix}(::Type{FSA}, a::AbstractMatrix) = FSA(ntuple(x->ntuple(y->a[x,y], size(a,1)), size(a,2)))
 
 #call{Row, Column, T}(::Type{FixedMatrix{Row, Column, T}}, a::Real) = FSA(ntuple(x->ntuple(y->a, Column), Row))
 
