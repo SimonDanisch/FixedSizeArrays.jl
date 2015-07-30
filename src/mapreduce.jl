@@ -5,11 +5,27 @@ inner_map(len::Int, inner) = ntuple(i -> quote f($(inner(i))) end, len)
 
 function reduce{FSA <: FixedArray}(f::Func{2}, a::FSA)
     red = f(a[1], a[2])
+    @inbounds for i=3:length(a)
+        red = f(red, a[i])
+    end
+    red
+end
+function Base.reduce{R,C,T}(f::Base.Func{2}, a::Mat{R,C,T})
+    red = reduce(f, a.(1)[1])
+    @inbounds for i=2:C
+        red = f(red, reduce(f, a.(1)[i]))
+    end
+    red
+end
+
+function reduce{FSA <: FixedArray}(f::Func{2}, a::FSA)
+    red = f(a[1], a[2])
     for i=3:length(a)
         red = f(red, a[i])
     end
     red
 end
+
 @generated function map{R, C, T}(f::Func{1}, a::Mat{R, C, T})
     exprs = [:(map(f, a.(1)[$i])) for i=1:C]
     :(Mat(tuple($(exprs...))))
