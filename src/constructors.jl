@@ -37,7 +37,13 @@ end
 rand{FSA <: FixedArray}(x::Type{FSA}, range::Range) = map(RandFunc(range), FSA)
 
 
-call{FSA <: FixedArray, T}(::Type{FSA}, a::T, b::T, c::T...) = FSA(tuple(a, b, c...))
+function call{FSA <: FixedArray, T}(::Type{FSA}, a::T, b::T, c::T...)
+    FSA(tuple(a, b, c...))
+end
+function call{FSAA <: FixedArray}(a::Type{FSAA}, b::FixedArray)
+    typeof(b) == a && return b
+    map(IndexFunctor(b), a)
+end
 
 
 call(T::Type{FixedVector}, a::AbstractVector) = T(tuple(a...))
