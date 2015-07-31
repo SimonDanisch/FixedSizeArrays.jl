@@ -6,7 +6,7 @@ using Base.Test
 function test(n, a, b)
 	r = a*b
 	for i=1:n
-		r = r*a*b
+		r = a*r
 	end
 	r
 end
@@ -80,19 +80,21 @@ function test_dot(n, a::ImmutableArrays.ImmutableArray)
 end
 
 function test()
-
+	N = 10^7
 	const a = [1 1 1 1; 2 2 2 2; 3 3 3 3; 4 4 4 4]
-	const b = [1 1 1 1; 2 2 2 2; 3 3 3 3; 4 4 4 4]
+	const b = [1,2,3,4]
 	println("matmul: ")
-	test(10^6, a, b)
-	@time test(10^6, a, b)
+	test(N, a, b)
+	@time test(N, a, b)
+	test(N, a, a)
+	@time test(N, a, a)
 	println("sum: ")
-	sum1 = test_sum(10^6, a)
-	test_sum(10^6, a)
-	@time test_sum(10^6, a)
+	sum1 = test_sum(N, a)
+	test_sum(N, a)
+	@time test_sum(N, a)
 	println("dot:")
-	test_dot(10^6, a)
-	@time test_dot(10^6, a)
+	#test_dot(N, a)
+	#@time test_dot(N, a)
 	println("GeometryTypes: ")
 	const a2 = Mat((
 		(1,2,3,4),
@@ -100,12 +102,7 @@ function test()
 		(1,2,3,4),
 		(1,2,3,4)
 	))
-	const b2 = Mat((
-		(1,2,3,4),
-		(1,2,3,4),
-		(1,2,3,4),
-		(1,2,3,4)
-	))
+	const b2 = Vec(1,2,3,4)
 	for i=1:length(a)
 		@test a[i] == a2[i]
 	end
@@ -114,27 +111,28 @@ function test()
 	end
 
 	println("matmul")
-	test(10^6, a2, b2)
-	@time test(10^6, a2, b2)
-
+	test(N, a2, b2)
+	@time test(N, a2, b2)
+	test(N, a2, a2)
+	@time test(N, a2, a2)
 	println("column:")
-	test_column(10^6, a2)
-	@time test_column(10^6, a2)
+	test_column(N, a2)
+	@time test_column(N, a2)
 
 	println("row:")
-	test_row(10^6, a2)
-	@time test_row(10^6, a2)
+	test_row(N, a2)
+	@time test_row(N, a2)
 
-	sum2 = test_sum(10^6, a2)
+	sum2 = test_sum(N, a2)
 	println("sum:")
-	test_sum(10^6, a2)
-	@time test_sum(10^6, a2)
+	test_sum(N, a2)
+	@time test_sum(N, a2)
 
 	@test sum2 == sum1
 
 	println("dot:")
-	test_dot(10^6, a2)
-	@time test_dot(10^6, a2)
+	test_dot(N, a2)
+	@time test_dot(N, a2)
 
 	println("ImmutableArrays: ")
 	const a3 = ImmutableArrays.Matrix4x4(
@@ -143,12 +141,7 @@ function test()
 		ImmutableArrays.Vector4(1,2,3,4),
 		ImmutableArrays.Vector4(1,2,3,4)
 	)
-	const b3 = ImmutableArrays.Matrix4x4(
-		ImmutableArrays.Vector4(1,2,3,4),
-		ImmutableArrays.Vector4(1,2,3,4),
-		ImmutableArrays.Vector4(1,2,3,4),
-		ImmutableArrays.Vector4(1,2,3,4)
-	)
+	const b3 = ImmutableArrays.Vector4(1,2,3,4)
 	for i=1:length(a)
 		@test a[i] == a3[i]
 	end
@@ -157,27 +150,30 @@ function test()
 	end
 
 	println("matmul")
-	test(10^6, a3, b3)
-	@time test(10^6, a3, b3)
+	test(N, a3, b3)
+	@time test(N, a3, b3)
+	
+	test(N, a3, a3)
+	@time test(N, a3, a3)
 
 	println("column:")
-	test_column(10^6, a3)
-	@time test_column(10^6, a3)
+	test_column(N, a3)
+	@time test_column(N, a3)
 
 	println("row:")
-	test_row(10^6, a3)
-	@time test_row(10^6, a3)
+	test_row(N, a3)
+	@time test_row(N, a3)
 
-	sum2 = test_sum(10^6, a3)
+	sum2 = test_sum(N, a3)
 	println("sum:")
-	test_sum(10^6, a3)
-	@time test_sum(10^6, a3)
+	test_sum(N, a3)
+	@time test_sum(N, a3)
 
 	@test sum2 == sum1
 
 	println("dot:")
-	test_dot(10^6, a3)
-	@time test_dot(10^6, a3)
+	test_dot(N, a3)
+	@time test_dot(N, a3)
 
 end
 @inbounds test()

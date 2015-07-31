@@ -40,7 +40,6 @@ rand{FSA <: FixedArray}(x::Type{FSA}, range::Range) = map(RandFunc(range), FSA)
 call{FSA <: FixedArray, T}(::Type{FSA}, a::T, b::T, c::T...) = FSA(tuple(a, b, c...))
 
 
-
 call(T::Type{FixedVector}, a::AbstractVector) = T(tuple(a...))
 
 
