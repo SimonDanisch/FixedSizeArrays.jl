@@ -38,7 +38,7 @@ end
         push!(exprs, quote tuple($(inner_map(R, x->:($(sub2ind((R,C), i,x))))...)) end)
     end
     quote 
-        Mat{$R, $C, $T}(tuple($(exprs...)))
+        Mat(tuple($(exprs...)))
     end
 end
 

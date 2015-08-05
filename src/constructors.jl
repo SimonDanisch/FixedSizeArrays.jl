@@ -44,6 +44,7 @@ call{N, T}(::Type{NTuple{N, T}}, a::Vararg{T}) = a
 convert{T <: Tuple}(::Type{T}, x::Real) =  ntuple(ConstFunctor(eltype(T)(x)), Val{length(T.parameters),})
 
 
+
 call{FSA <: FixedVectorNoTuple}(::Type{FSA}, a...) = FSA(a...)
 
 call{N, T}(::Type{FixedVector{N, T}}, a::Real, b::Real, c::Real...) = FSA(tuple(T(a),T(b), map(T, c)...))
