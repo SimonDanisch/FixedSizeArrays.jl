@@ -6,11 +6,13 @@ Base.call{T}(a::IndexFunc{T}, j) = a.arg[a.i,j]
 
 getindex{T <: FixedVector}(x::T, i::Integer) = x.(1)[i]
 
+getindex{T <: FixedVectorNoTuple}(x::T, i::Integer) = x.(i)
+
 
 getindex{N, M, T}(a::Mat{N, M, T}, i::Range, j::Int) = ntuple(IndexFunc(a, j), Val{length(i)})::NTuple{length(i), T}
 
 getindex{N, M, T}(a::Mat{N, M, T}, i::Int, j::Union(Range, Int)) = a.(1)[j][i]
-getindex{N, M, T}(a::Mat{N, M, T}, i::Int) 	 = a[ind2sub((N,M), i)...]
+getindex{N, M, T}(a::Mat{N, M, T}, i::Int) = a[ind2sub((N,M), i)...]
 
 column{R, C, T}(a::Mat{R, C, T}, i::Union(Range, Int)) = a.(1)[i]
 
@@ -40,7 +42,7 @@ end
 getindex(A::FixedArray, I::Union(NTuple, FixedArray)) = map(IndexFunctor(A), I)
 
 
-row{N, T}(v::FixedVector{N, T}) = convert(FixedMatrix{1, N, T}, v)
+row{N, T}(v::FixedVector{N, T}) = convert(Mat{1, N, T}, v)
 
 row{N, T}(v::FixedVector{N, T}, i::Int) = (v[i],)
 

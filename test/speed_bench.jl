@@ -80,11 +80,11 @@ function test_dot(n, a::ImmutableArrays.ImmutableArray)
 end
 
 function test()
-	N = 10^7
+	N = 10^6
 	const a = [1 1 1 1; 2 2 2 2; 3 3 3 3; 4 4 4 4]
 	const b = [1,2,3,4]
 	println("matmul: ")
-	test(N, a, b)
+	mmul1 = test(N, a, b)
 	@time test(N, a, b)
 	test(N, a, a)
 	@time test(N, a, a)
@@ -111,7 +111,7 @@ function test()
 	end
 
 	println("matmul")
-	test(N, a2, b2)
+	mmul2 = test(N, a2, b2)
 	@time test(N, a2, b2)
 	test(N, a2, a2)
 	@time test(N, a2, a2)
@@ -150,7 +150,7 @@ function test()
 	end
 
 	println("matmul")
-	test(N, a3, b3)
+	mmul3 = test(N, a3, b3)
 	@time test(N, a3, b3)
 	
 	test(N, a3, a3)
@@ -170,6 +170,8 @@ function test()
 	@time test_sum(N, a3)
 
 	@test sum2 == sum1
+	@test mmul1 == mmul2
+	@test mmul1 == mmul3
 
 	println("dot:")
 	test_dot(N, a3)

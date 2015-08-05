@@ -99,29 +99,28 @@ det{T}(A::FixedMatrix{4, 4, T}) = (
 )
 
 
-inv{T}(A::FixedMatrix{1, 1, T}) = FixedMatrix{1, 1, T}(inv(A[1]))
-function inv{T}(A::FixedMatrix{2, 2, T})
-  determinant = det(A)
-  FixedMatrix{T, 2, 2}(
-      A[2,2] /determinant,
-      -A[2,1]/determinant,
-      -A[1,2]/determinant,
-      A[1,1] /determinant)
-end
-function inv{T}(A::FixedMatrix{3, 3, T})
+inv{T}(A::Mat{1, 1, T}) = Mat{1, 1, T}(inv(A[1]))
+function inv{T}(A::Mat{2, 2, T})
     determinant = det(A)
-    FixedMatrix{T, 3, 3}(
-        (A[2,2]*A[3,3]-A[2,3]*A[3,2]) /determinant,
+    Mat{2, 2, T}(
+        (A[2,2] /determinant, -A[2,1]/determinant),
+        (-A[1,2]/determinant, A[1,1] /determinant)
+    )
+end
+function inv{T}(A::Mat{3, 3, T})
+    determinant = det(A)
+    Mat{3, 3, T}(
+        ((A[2,2]*A[3,3]-A[2,3]*A[3,2]) /determinant,
         -(A[2,1]*A[3,3]-A[2,3]*A[3,1])/determinant,
-        (A[2,1]*A[3,2]-A[2,2]*A[3,1]) /determinant,
+        (A[2,1]*A[3,2]-A[2,2]*A[3,1]) /determinant),
 
-        -(A[1,2]*A[3,3]-A[1,3]*A[3,2])/determinant,
+        (-(A[1,2]*A[3,3]-A[1,3]*A[3,2])/determinant,
         (A[1,1]*A[3,3]-A[1,3]*A[3,1]) /determinant,
-        -(A[1,1]*A[3,2]-A[1,2]*A[3,1])/determinant,
+        -(A[1,1]*A[3,2]-A[1,2]*A[3,1])/determinant),
 
-        (A[1,2]*A[2,3]-A[1,3]*A[2,2]) /determinant,
+        ((A[1,2]*A[2,3]-A[1,3]*A[2,2]) /determinant,
         -(A[1,1]*A[2,3]-A[1,3]*A[2,1])/determinant,
-        (A[1,1]*A[2,2]-A[1,2]*A[2,1]) /determinant
+        (A[1,1]*A[2,2]-A[1,2]*A[2,1]) /determinant)
     )
 end
 
@@ -129,45 +128,48 @@ end
 function inv{T}(A::FixedMatrix{4, 4, T})
     determinant = det(A)
     FixedMatrix{T, 4, 4}(
-        (A[2,3]*A[3,4]*A[4,2] - A[2,4]*A[3,3]*A[4,2] + A[2,4]*A[3,2]*A[4,3] - A[2,2]*A[3,4]*A[4,3] - A[2,3]*A[3,2]*A[4,4] + A[2,2]*A[3,3]*A[4,4]) / determinant,
+        ((A[2,3]*A[3,4]*A[4,2] - A[2,4]*A[3,3]*A[4,2] + A[2,4]*A[3,2]*A[4,3] - A[2,2]*A[3,4]*A[4,3] - A[2,3]*A[3,2]*A[4,4] + A[2,2]*A[3,3]*A[4,4]) / determinant,
         (A[2,4]*A[3,3]*A[4,1] - A[2,3]*A[3,4]*A[4,1] - A[2,4]*A[3,1]*A[4,3] + A[2,1]*A[3,4]*A[4,3] + A[2,3]*A[3,1]*A[4,4] - A[2,1]*A[3,3]*A[4,4]) / determinant,
         (A[2,2]*A[3,4]*A[4,1] - A[2,4]*A[3,2]*A[4,1] + A[2,4]*A[3,1]*A[4,2] - A[2,1]*A[3,4]*A[4,2] - A[2,2]*A[3,1]*A[4,4] + A[2,1]*A[3,2]*A[4,4]) / determinant,
-        (A[2,3]*A[3,2]*A[4,1] - A[2,2]*A[3,3]*A[4,1] - A[2,3]*A[3,1]*A[4,2] + A[2,1]*A[3,3]*A[4,2] + A[2,2]*A[3,1]*A[4,3] - A[2,1]*A[3,2]*A[4,3]) / determinant,
+        (A[2,3]*A[3,2]*A[4,1] - A[2,2]*A[3,3]*A[4,1] - A[2,3]*A[3,1]*A[4,2] + A[2,1]*A[3,3]*A[4,2] + A[2,2]*A[3,1]*A[4,3] - A[2,1]*A[3,2]*A[4,3]) / determinant),
 
-        (A[1,4]*A[3,3]*A[4,2] - A[1,3]*A[3,4]*A[4,2] - A[1,4]*A[3,2]*A[4,3] + A[1,2]*A[3,4]*A[4,3] + A[1,3]*A[3,2]*A[4,4] - A[1,2]*A[3,3]*A[4,4]) / determinant,
+        ((A[1,4]*A[3,3]*A[4,2] - A[1,3]*A[3,4]*A[4,2] - A[1,4]*A[3,2]*A[4,3] + A[1,2]*A[3,4]*A[4,3] + A[1,3]*A[3,2]*A[4,4] - A[1,2]*A[3,3]*A[4,4]) / determinant,
         (A[1,3]*A[3,4]*A[4,1] - A[1,4]*A[3,3]*A[4,1] + A[1,4]*A[3,1]*A[4,3] - A[1,1]*A[3,4]*A[4,3] - A[1,3]*A[3,1]*A[4,4] + A[1,1]*A[3,3]*A[4,4]) / determinant,
         (A[1,4]*A[3,2]*A[4,1] - A[1,2]*A[3,4]*A[4,1] - A[1,4]*A[3,1]*A[4,2] + A[1,1]*A[3,4]*A[4,2] + A[1,2]*A[3,1]*A[4,4] - A[1,1]*A[3,2]*A[4,4]) / determinant,
-        (A[1,2]*A[3,3]*A[4,1] - A[1,3]*A[3,2]*A[4,1] + A[1,3]*A[3,1]*A[4,2] - A[1,1]*A[3,3]*A[4,2] - A[1,2]*A[3,1]*A[4,3] + A[1,1]*A[3,2]*A[4,3]) / determinant,
+        (A[1,2]*A[3,3]*A[4,1] - A[1,3]*A[3,2]*A[4,1] + A[1,3]*A[3,1]*A[4,2] - A[1,1]*A[3,3]*A[4,2] - A[1,2]*A[3,1]*A[4,3] + A[1,1]*A[3,2]*A[4,3]) / determinant),
            
 
-        (A[1,3]*A[2,4]*A[4,2] - A[1,4]*A[2,3]*A[4,2] + A[1,4]*A[2,2]*A[4,3] - A[1,2]*A[2,4]*A[4,3] - A[1,3]*A[2,2]*A[4,4] + A[1,2]*A[2,3]*A[4,4]) / determinant,
+        ((A[1,3]*A[2,4]*A[4,2] - A[1,4]*A[2,3]*A[4,2] + A[1,4]*A[2,2]*A[4,3] - A[1,2]*A[2,4]*A[4,3] - A[1,3]*A[2,2]*A[4,4] + A[1,2]*A[2,3]*A[4,4]) / determinant,
         (A[1,4]*A[2,3]*A[4,1] - A[1,3]*A[2,4]*A[4,1] - A[1,4]*A[2,1]*A[4,3] + A[1,1]*A[2,4]*A[4,3] + A[1,3]*A[2,1]*A[4,4] - A[1,1]*A[2,3]*A[4,4]) / determinant,
         (A[1,2]*A[2,4]*A[4,1] - A[1,4]*A[2,2]*A[4,1] + A[1,4]*A[2,1]*A[4,2] - A[1,1]*A[2,4]*A[4,2] - A[1,2]*A[2,1]*A[4,4] + A[1,1]*A[2,2]*A[4,4]) / determinant,
-        (A[1,3]*A[2,2]*A[4,1] - A[1,2]*A[2,3]*A[4,1] - A[1,3]*A[2,1]*A[4,2] + A[1,1]*A[2,3]*A[4,2] + A[1,2]*A[2,1]*A[4,3] - A[1,1]*A[2,2]*A[4,3]) / determinant,
+        (A[1,3]*A[2,2]*A[4,1] - A[1,2]*A[2,3]*A[4,1] - A[1,3]*A[2,1]*A[4,2] + A[1,1]*A[2,3]*A[4,2] + A[1,2]*A[2,1]*A[4,3] - A[1,1]*A[2,2]*A[4,3]) / determinant),
            
 
 
-        (A[1,4]*A[2,3]*A[3,2] - A[1,3]*A[2,4]*A[3,2] - A[1,4]*A[2,2]*A[3,3] + A[1,2]*A[2,4]*A[3,3] + A[1,3]*A[2,2]*A[3,4] - A[1,2]*A[2,3]*A[3,4]) / determinant,
+        ((A[1,4]*A[2,3]*A[3,2] - A[1,3]*A[2,4]*A[3,2] - A[1,4]*A[2,2]*A[3,3] + A[1,2]*A[2,4]*A[3,3] + A[1,3]*A[2,2]*A[3,4] - A[1,2]*A[2,3]*A[3,4]) / determinant,
         (A[1,3]*A[2,4]*A[3,1] - A[1,4]*A[2,3]*A[3,1] + A[1,4]*A[2,1]*A[3,3] - A[1,1]*A[2,4]*A[3,3] - A[1,3]*A[2,1]*A[3,4] + A[1,1]*A[2,3]*A[3,4]) / determinant,
         (A[1,4]*A[2,2]*A[3,1] - A[1,2]*A[2,4]*A[3,1] - A[1,4]*A[2,1]*A[3,2] + A[1,1]*A[2,4]*A[3,2] + A[1,2]*A[2,1]*A[3,4] - A[1,1]*A[2,2]*A[3,4]) / determinant,
-        (A[1,2]*A[2,3]*A[3,1] - A[1,3]*A[2,2]*A[3,1] + A[1,3]*A[2,1]*A[3,2] - A[1,1]*A[2,3]*A[3,2] - A[1,2]*A[2,1]*A[3,3] + A[1,1]*A[2,2]*A[3,3]) / determinant
+        (A[1,2]*A[2,3]*A[3,1] - A[1,3]*A[2,2]*A[3,1] + A[1,3]*A[2,1]*A[3,2] - A[1,1]*A[2,3]*A[3,2] - A[1,2]*A[2,1]*A[3,3] + A[1,1]*A[2,2]*A[3,3]) / determinant)
     )
 end
-
-@generated function ctranspose{R, C, T}(a::Mat{R, C, T})
-    exprs = ntuple(i->:(row(a, $i)), R)
-    :(Mat(tuple($(exprs...))))
+immutable RowFunctor{M}
+    mat::M
+end
+call(r::RowFunctor, i::Int) = row(r.mat, i)
+function ctranspose{R, C, T}(a::Mat{R, C, T})
+    Mat(ntuple(RowFunctor(a), Val{R}))
 end
                              
 # Matrix
 (*){T, M, N, O, K}(a::FixedMatrix{M, N, T}, b::FixedMatrix{O, K, T}) = error("DimensionMissmatch: $N != $O in $(typeof(a)) and $(typeof(b))")
 
 @generated function (*){T, M, N, K}(a::Mat{M, N, T}, b::Mat{N, K, T})
-    expr = []
-    for i=1:M 
-        rowt = [:(+($(ntuple(k->:(a.(1)[$k][$i]*b.(1)[$k][$j]), N)...))) for j=1:K]
-        push!(expr, :(tuple($(rowt...))))
-    end
+    expr = [
+        :(tuple(
+            $([:( dot(row(a, $k), column(b, $m)) ) for k=1:K]...)
+        ))
+        for m=1:M
+    ]
     :(Mat(tuple($(expr...))))
 end
 
@@ -175,7 +177,7 @@ end
     N = length(b)
     N != C && error("DimensionMissmatch: $N != $C for $(typeof(b)), $(typeof(a))")
     expr = [:(dot(row(a, $i), b.(1))) for i=1:R]
-    if N == R
+    if N == R # TODO, remove this and just always return FSV. Currently this would mean something like symbol(FSV.name.name), as FSV == FSV{N, F}
         return :(FSV(tuple($(expr...))))
     else
         return :(Mat(tuple(tuple($(expr...)))))

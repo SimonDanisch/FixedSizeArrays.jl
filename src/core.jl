@@ -12,6 +12,9 @@ typealias MutableFixedMatrix{T, M, N} 		 MutableFixedArray{T, 2, Tuple{M,N}}
 typealias FixedVector{CARDINALITY, T} FixedArray{T, 1, Tuple{CARDINALITY,}}
 typealias FixedMatrix{M, N, T}        FixedArray{T, 2, Tuple{M, N}}
 
+abstract FixedVectorNoTuple{CARDINALITY, T} <: FixedVector{CARDINALITY, T}
+export FixedVectorNoTuple
+
 
 isfullyparametrized{T}(::Type{T}) = !any(x-> isa(x, TypeVar), T.parameters)
 
@@ -50,10 +53,16 @@ next(A::FixedArray, state::Integer) 				= (A[state], state+1)
 done(A::FixedArray, state::Integer) 				= length(A) < state
 
 
-
-
 immutable Mat{Row, Column, T} <: FixedMatrix{Row, Column, T}
     _::NTuple{Column, NTuple{Row, T}}
 end
 call{Row, Column, T}(::Type{Mat{Row, Column, T}}, a::Real) = Mat(ntuple(x->ntuple(y->a, Row), Column))
 export Mat
+
+function show{R,C,T}(io::IO, m::Mat{R,C,T})
+	println(io, typeof(m), "(")
+	for i=1:R
+		println(io, "    ", join(row(m, i), " "))
+	end
+	println(io, ")")
+end
