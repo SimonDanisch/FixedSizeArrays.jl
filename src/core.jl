@@ -10,12 +10,23 @@ typealias MutableFixedVector{T, CARDINALITY} MutableFixedArray{T, 1, Tuple{CARDI
 typealias MutableFixedMatrix{T, M, N} 		 MutableFixedArray{T, 2, Tuple{M,N}}
 
 typealias FixedVector{CARDINALITY, T} FixedArray{T, 1, Tuple{CARDINALITY,}}
-typealias FixedMatrix{M, N, T}        FixedArray{T, 2, Tuple{M, N}}
+typealias FixedMatrix{Row, Column, T}        FixedArray{T, 2, Tuple{Row, Column}}
 
 abstract FixedVectorNoTuple{CARDINALITY, T} <: FixedVector{CARDINALITY, T}
 export FixedVectorNoTuple
 
 
+# Get the abstract FixedSizeArray type, even for complex type hirarchies
+function fixedsizearray_type{FSA <: FixedArray}(::Type{FSA})
+    ff = super(FSA)
+    while ff.name.name != :FixedArray
+        ff = super(ff)
+        if ff == Any 
+            error("Uncommon type hierarchy encountered. Please report issue on Github")
+        end
+    end
+    ff
+end
 isfullyparametrized{T}(::Type{T}) = !any(x-> isa(x, TypeVar), T.parameters)
 
 
@@ -56,7 +67,6 @@ done(A::FixedArray, state::Integer) 				= length(A) < state
 immutable Mat{Row, Column, T} <: FixedMatrix{Row, Column, T}
     _::NTuple{Column, NTuple{Row, T}}
 end
-call{Row, Column, T}(::Type{Mat{Row, Column, T}}, a::Real) = Mat(ntuple(x->ntuple(y->a, Row), Column))
 export Mat
 
 function show{R,C,T}(io::IO, m::Mat{R,C,T})

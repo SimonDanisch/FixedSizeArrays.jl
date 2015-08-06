@@ -80,7 +80,7 @@ function test_dot(n, a::ImmutableArrays.ImmutableArray)
 end
 
 function test()
-	N = 10^6
+	N = 10^7
 	const a = [1 1 1 1; 2 2 2 2; 3 3 3 3; 4 4 4 4]
 	const b = [1,2,3,4]
 	println("matmul: ")

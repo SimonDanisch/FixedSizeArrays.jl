@@ -175,7 +175,7 @@ end
 
 @generated function (*){T, FSV <: FixedVector, R, C}(a::Mat{R, C, T}, b::FSV)
     N = length(b)
-    N != C && error("DimensionMissmatch: $N != $C for $(typeof(b)), $(typeof(a))")
+    N != C && error("DimensionMissmatch: $N != $C for $a, $b")
     expr = [:(dot(row(a, $i), b.(1))) for i=1:R]
     if N == R # TODO, remove this and just always return FSV. Currently this would mean something like symbol(FSV.name.name), as FSV == FSV{N, F}
         return :(FSV(tuple($(expr...))))
@@ -195,7 +195,16 @@ end
     
 
 
-(==){T1,T2,C,N}(a::FixedArray{T1,C,N}, b::FixedArray{T2,C,N}) = a.(1) == b.(1)
+function (==)(a::FixedVectorNoTuple, b::FixedVectorNoTuple)
+    s_a = size(a)
+    s_b = size(b)
+    s_a == s_b || return false
+    for i = 1:length(a)
+        a[i] == b[i] || return false
+    end
+    true  
+end
+(==)(a::FixedArray, b::FixedArray) = a.(1) == b.(1)
 
 (==){R, T, FSA <: FixedVector}(a::FSA, b::Mat{R, 1, T}) = a.(1) == column(b,1)
 (==){R, T, FSA <: FixedVector}(a::Mat{R, 1, T}, b::FSA) = column(a,1) == b.(1)

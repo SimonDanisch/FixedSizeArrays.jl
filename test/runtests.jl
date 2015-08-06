@@ -4,25 +4,115 @@ using FactCheck
 immutable Vec{N, T} <: FixedVector{N, T}
     _::NTuple{N, T}
 end
-
+immutable Point{N, T} <: FixedVector{N, T}
+    _::NTuple{N, T}
+end
+immutable Normal{N, T} <: FixedVector{N, T}
+    _::NTuple{N, T}
+end
 immutable RGB{T} <: FixedVectorNoTuple{3, T}
     r::T
     g::T
     b::T
 end
-sleep(0.1)
 
-facts("FixedVectorNoTuple") do
-	context("Constructor") do 
-		@fact typeof(RGB(1,2,3)) => RGB{Int}
-		@fact typeof(RGB(1f0,2f0,3f0)) => RGB{Float32}
-		@fact typeof(RGB{Float32}(1,2,3)) => RGB{Float32}
-	end
-end
+typealias Vec1d Vec{1, Float64}
 typealias Vec2d Vec{2, Float64}
 typealias Vec3d Vec{3, Float64}
 typealias Vec4d Vec{4, Float64}
 typealias Vec3f Vec{3, Float32}
+#println(Vec4d(rand(4)))
+facts("Constructor FixedVectorNoTuple") do
+    for T=[Float32, Float64, Int, Int32, Uint, Uint32, Uint8]
+        context("$T") do
+            r = rand(T)
+            @fact RGB{T}(r) => RGB(r,r,r)
+            @fact RGB{T}([r,r,r]) => RGB(r,r,r)
+            @fact typeof(RGB(r,r,r))    => RGB{T}
+            @fact typeof(RGB{T}(1))     => RGB{T}
+            @fact typeof(RGB{T}(1,2,3)) => RGB{T}
+
+            @fact typeof(RGB{T}(1f0)) => RGB{T}
+            @fact typeof(RGB{T}(1f0,2f0,3f0)) => RGB{T}
+            @fact typeof(RGB{T}(1f0, 2, 3.0)) => RGB{T}
+            @fact typeof(RGB(1f0, 2, 3.0)) => RGB{Float64}
+
+        end
+    end
+end
+
+# A little brutal, but hey.... Better redudantant tests, than not enough tests
+facts("Constructor ") do
+    for N=1:5
+        context("construction, conversion, $N") do 
+            for VT=[Point, Vec, Normal], VT2=[Normal, Vec, Point], ET=[Float32, Int, Uint, Float64], ET2=[Float64, Uint, Int, Float32]
+                rand_range  = ET(1):ET(10)
+                rand_range2 = ET2(1):ET2(10)
+
+                rn = rand(rand_range, N)
+                v0 = VT(rn)
+                # multi constructor
+                v1 = VT{N, ET}(rn...)
+                @fact v1 => v0
+                @fact typeof(v1) => VT{N, ET}
+                @fact length(v1) => N
+                @fact eltype(v1) => ET
+
+                @fact length(typeof(v1)) => N
+                @fact eltype(typeof(v1)) => ET
+                
+                for i=1:N
+                    @fact v1[i] => rn[i]
+                end
+                # from other FSA without parameters
+                v2 = VT2(v1)
+
+                @fact typeof(v2) => VT2{N, ET}
+                @fact length(v2) => N
+                @fact eltype(v2) => ET
+                for i=1:N
+                    @fact v2[i] => v1[i]
+                end
+                # from other FSA with parameters
+                for i=1:N
+                    v3 = VT2{i, ET2}(v1)
+                    @fact typeof(v3) => VT2{i, ET2}
+                    @fact length(v3) => i
+                    @fact eltype(v3) => ET2
+                    for i=1:i
+                        @fact v3[i] => ET2(v2[i])
+                    end
+                end
+                # from single
+                r  = rand(rand_range)
+                r2 = rand(rand_range2)
+                v1 = VT{N, ET}(r)
+                v2 = VT{N, ET2}(r)
+                v3 = VT{N, ET}(r2)
+                v4 = VT{N, ET2}(r2)
+
+                for i=1:N
+                    @fact v1[i] => r
+                    @fact v2[i] => ET2(r)
+                    @fact v3[i] => r2
+                    @fact v4[i] => ET2(r2)
+                end
+            end
+        end
+    end
+end
+@show RGB(1)
+@show RGB{Int}(1)
+@show RGB{Int}(1,2,3)
+@show RGB{Float32}(1,2,3)
+@show RGB(1,2,3)
+
+@show RGB([1,2,3])
+
+@show RGB(1,2f0,3)
+
+
+
 Vec(Vec3d(1), 1.0)
 #t1 = ["1.909", "1.909", "1.909"]
 #@fact Vec{3, Float64}(1.909) => Vec{3, Float64}(t1)
@@ -36,7 +126,7 @@ facts("Constructors") do
 
 		@fact typeof(Vec3f(1))  	=> Vec{3, Float32}
 		@fact typeof(Vec3f(0))  	=> Vec{3, Float32}
-		@fact Vec3f(1.0f0) 			=> Vec(1f0,1f0,1f0)
+		@fact Vec3f(1.0) 			=> Vec(1f0,1f0,1f0)
 		@fact Vec3f(1.0f0) 			=> Vec(1f0,1f0,1f0)
 		@fact Vec3f(1.0f0) 			=> Vec3f(1)
 		@fact Vec(1.0, 1.0, 1.0) 	=> Vec3d(1)
@@ -124,23 +214,27 @@ facts("Ops") do
 		@fact (2.0 .^ v1) => Vec3d(2.0,4.0,8.0)
 		@fact (2 .^ v1) => Vec3d(2.0,4.0,8.0)
 	end
+    context("vector norm+cross product") do 
+        @fact norm(Vec3d(1.0,2.0,2.0)) => 3.0
+
+        # cross product
+        @fact cross(v1,v2) => Vec3d(-7.0,14.0,-7.0)
+        @fact isa(cross(v1,v2),Vec3d)  => true
+    end
+
 end
 
 
-# vector norm
-@fact norm(Vec3d(1.0,2.0,2.0)) => 3.0
 
-# cross product
-@fact cross(v1,v2) => Vec3d(-7.0,14.0,-7.0)
-@fact isa(cross(v1,v2),Vec3d)  => true
 
 
 # type conversion
-@fact isa(convert(Vec3f,v1), Vec3f)  => true
+facts("Conversion 2") do 
+    @fact isa(convert(Vec3f,v1), Vec3f)  => true
 
-@fact isa(convert(Vector{Float64}, v1), Vector{Float64})  => true
-@fact convert(Vector{Float64}, v1) => [1.0,2.0,3.0]
-
+    @fact isa(convert(Vector{Float64}, v1), Vector{Float64})  => true
+    @fact convert(Vector{Float64}, v1) => [1.0,2.0,3.0]
+end
 
 # matrix operations
 
@@ -148,6 +242,7 @@ end
 typealias Mat2d Mat{2,2, Float64}
 typealias Mat3d Mat{3,3, Float64}
 typealias Mat4d Mat{4,4, Float64}
+
 zeromat = Mat2d((0.0,0.0),(0.0,0.0))
 
 
@@ -166,67 +261,71 @@ for i=1:4, j=1:4
 end
 
 
+facts("Matrix") do 
+    v = Vec(1.0,2.0,3.0,4.0)
+    r = row(v)
+    c = column(v)
 
-v = Vec(1.0,2.0,3.0,4.0)
-r = row(v)
-c = column(v)
+    #@fact r' => c
+    #@fact c' => r
 
-#@fact r' => c
-#@fact c' => r
+    a = c*r
 
-a = c*r
+    b = Mat(
+    	(1.0,2.0,3.0,4.0),
+    	(2.0,4.0,6.0,8.0),
+    	(3.0,6.0,9.0,12.0),
+    	(4.0,8.0,12.0,16.0)
+    )
 
-b = Mat(
-	(1.0,2.0,3.0,4.0),
-	(2.0,4.0,6.0,8.0),
-	(3.0,6.0,9.0,12.0),
-	(4.0,8.0,12.0,16.0)
-)
+    @fact length(b) => 16
 
-@fact length(b) => 16
-
-@fact a=>b
-mat30 = Mat(((30.0,),))
-@fact r*c => mat30
+    @fact a=>b
+    mat30 = Mat(((30.0,),))
+    @fact r*c => mat30
 
 
-#@fact row(r, 1) => v
-#@fact column(c,1) => v
-#@fact row(r+c',1) => 2*v
-@fact sum(r) => sum(v)
-@fact prod(c) => prod(v)
+    #@fact row(r, 1) => v
+    #@fact column(c,1) => v
+    #@fact row(r+c',1) => 2*v
+    @fact sum(r) => sum(v)
+    @fact prod(c) => prod(v)
 
-@fact eye(Mat3d) => Mat((1.0,0.0,0.0),
-							(0.0,1.0,0.0),
-							(0.0,0.0,1.0))
-#@fact v*eye(Mat4d)*v => 30.0
-@fact -r => -1.0*r
-#@fact diag(diagm(v)) => v
+    @fact eye(Mat3d) => Mat((1.0,0.0,0.0),
+    							(0.0,1.0,0.0),
+    							(0.0,0.0,1.0))
+    #@fact v*eye(Mat4d)*v => 30.0
+    @fact -r => -1.0*r
+    #@fact diag(diagm(v)) => v
 
-# type conversion
-#@fact isa(convert(Matrix1x4{Float32},r),Matrix1x4{Float32})
-jm = rand(4,4)
-im = Mat(jm)
-for i=1:4*2
-	@fact jm[i] => im[i]
+    # type conversion
+    #@fact isa(convert(Matrix1x4{Float32},r),Matrix1x4{Float32})
+    jm = rand(4,4)
+    im = Mat(jm)
+    for i=1:4*2
+    	@fact jm[i] => im[i]
+    end
+    #im = Matrix4x4(jm)
+    @fact isa(im, Mat4d)  => true
+
+    jm2 = convert(Array{Float64,2}, im)
+    @fact isa(jm2, Array{Float64,2})  => true
+    @fact jm => jm2
+
+    #Single valued constructor
+    @fact Mat4d(0.0) => zero(Mat4d)
+
+    a = Vec4d(0)
+    b = Vec4d(0,0,0,0)
+    @fact a => b
+
+    v = rand(4)
+    m = rand(4,4)
+    vfs = Vec(v)
+    mfs = Mat(m)
+    @fact typeof(vfs) => Vec4d
+    @fact typeof(mfs) => Mat4d
 end
-#im = Matrix4x4(jm)
-@fact isa(im, Mat4d)  => true
-
-jm2 = convert(Array{Float64,2}, im)
-@fact isa(jm2, Array{Float64,2})  => true
-@fact jm => jm2
-
-#Single valued constructor
-Mat4d(0.0) => zeros(Mat4d)
-a = Vec4d(0)
-b = Vec4d(0,0,0,0)
-@fact a => b
-
-v = rand(4)
-m = rand(4,4)
-vfs = Vec(v)
-mfs = Mat(m)
 function Base.isapprox{FSA <: FixedArray}(a::FSA, b::Array)
 	for i=1:length(a)
 		!isapprox(a[i], b[i]) && return false
@@ -239,7 +338,7 @@ facts("Matrix Math") do
 		m = rand(i,j)
 		vfs = Vec(v)
 		mfs = Mat(m)
-		
+
 		context("Matrix{$i, $j} * Vector{$j}") do
 			vm = m * v
 			fsvm = mfs * vfs
@@ -306,31 +405,36 @@ kfs = abs(ffs)
 lfs = abs(-ffs)
 
 
+facts("Vector Math") do 
+    context("all") do
+        @fact isapprox(acfs, ac)  => true
+        @fact isapprox(bcfs, bc)  => true
 
-@fact isapprox(acfs, ac)  => true
-@fact isapprox(bcfs, bc)  => true
+        @fact isapprox(afs, a) => true
+        @fact isapprox(bfs, b) => true
+        @fact isapprox(cfs, c) => true
 
-@fact isapprox(afs, a) => true
-@fact isapprox(bfs, b) => true
-@fact isapprox(cfs, c) => true
+        @fact isapprox(dfs, d) => true
+        @fact isapprox(d2fs, d2) => true
+        @fact isapprox(ffs, f) => true
+        @fact isapprox(gfs, g) => true
+        @fact isapprox(hfs, h) => true
+        @fact isapprox(ifs, i) => true
+        @fact isapprox(jfs, j) => true
+        @fact isapprox(kfs, k) => true
+        @fact isapprox(lfs, l) => true
+    end
+end
 
-@fact isapprox(dfs, d) => true
-@fact isapprox(d2fs, d2) => true
-@fact isapprox(ffs, f) => true
-@fact isapprox(gfs, g) => true
-@fact isapprox(hfs, h) => true
-@fact isapprox(ifs, i) => true
-@fact isapprox(jfs, j) => true
-@fact isapprox(kfs, k) => true
-@fact isapprox(lfs, l) => true
-
-# Equality
-@fact Vec{3, Int}(1) => Vec{3, Float64}(1)
-@fact Vec{2, Int}(1) => not(Vec{3, Float64}(1))
-@fact Vec(1,2,3) => Vec(1.0,2.0,3.0)
-@fact Vec(1,2,3) => not(Vec(1.0,4.0,3.0))
-@fact Vec(1,2,3) => [1,2,3]
-@fact Mat((1,2),(3,4)) => Mat((1,2),(3,4))
+facts("Equality") do
+    @fact Vec{3, Int}(1) => Vec{3, Float64}(1)
+    @fact Vec{2, Int}(1) => not(Vec{3, Float64}(1))
+    @fact Vec(1,2,3) => Vec(1.0,2.0,3.0)
+    @fact Vec(1,2,3) => not(Vec(1.0,4.0,3.0))
+    @fact Vec(1,2,3) => [1,2,3]
+    @fact Mat((1,2),(3,4)) => Mat((1,2),(3,4))
+end
+#=
 let
     a = rand(16)
     b = Mat4d(a)
@@ -338,6 +442,7 @@ let
     @fact reshape(a, (4,4)) => b
     @fact b => not(reshape(a, (2,8)))
 end
+=#
 
-println("SUCCESS")
+FactCheck.exitstatus()
 
