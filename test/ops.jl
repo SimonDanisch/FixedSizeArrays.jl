@@ -10,9 +10,9 @@ const unaryOps = (-, ~, conj, abs,
                   sech, csch, coth, asech, acsch, acoth,
                   sinc, cosc, cosd, cotd, cscd, secd,
                   sind, tand, acosd, acotd, acscd, asecd,
-                  asind, atand, radians2degrees, degrees2radians,
+                  asind, atand, rad2deg, deg2rad,
                   log, log2, log10, log1p, exponent, exp,
-                  exp2, expm1, cbrt, sqrt, square, erf, 
+                  exp2, expm1, cbrt, sqrt, erf, 
                   erfc, erfcx, erfi, dawson, ceil, floor,
                   trunc, round, significand, lgamma, hypot,
                   gamma, lfact, frexp, modf, airy, airyai,
@@ -28,41 +28,40 @@ const binaryOps = (.+, .-,.*, ./, .\, .^,*,/,
                    atan2, besselj, bessely, hankelh1, hankelh2, 
                    besseli, besselk, beta, lbeta)
 
-const reductions = (sum, prod, minimum,(maximum)
-testresult = Dict{Function, Any}()
-
-function Base.filter(fun, x...)
-      result = []
-      @assert length(unique(map(length, x))) == 1 "all iterables need to have the same length. Lengths given: $(map(length, x))"
-      for i=1:length(x[1])
-            args = ntuple(j-> x[j][i], length(x))
-            fun(args...) && push!(result, args)
-      end
-      result
-end
-
-@show filter(!=, [2,3,4,5], [2,1,4,7])
-
-Base.call{FS <: AbstractFixedSizeArray, T, N}(::Type{FS}, a::Array{T, N}) = AbstractFixedSizeArray{T, N, size(a)}(a...) 
-Base.call{FS <: AbstractFixedSizeArray, T, N}(::Type{FS}, a::Array{T, N}) = AbstractFixedSizeArray{T, N, size(a)}(a...) 
 
 
 
-nvec{T, N}(x::Array{T,N}) = AbstractFixedSizeArray(x)
-     
+facts("mapping operators") do 
+    context("unary: ") do 
+        baseline = Any[rand(2), rand(3), rand(3,7), rand(7,2), rand(Float32, 4, 1), rand(Float32, 4), rand(Float64, 4,4)]
+        test     = map(Vec, baseline)
+        for op in unaryOps
+            for t in test
+                if typeof(op(t[1])) == eltype(t) # map does not handle operators that change the type yet.
+                    v = op(t)
 
-function testunaray()
-      baseline = Any[rand(2), rand(3), rand(3,7), rand(7,2), rand(Float32, 4, 1), rand(Float32, 4), rand(Float64, 4,4)]
-      test     = map(nvec, baseline)
-      for op in unaryOps
-            baeline_result = map(op, baseline)
-            test_result    = map(op, test)
-
-            if all(map(==, baeline_result, test_result))
-                  testresult[op] = "passed"
-            else
-                  testresult[op] = ["didn't pass: ", filter(!=, baseline_result, test_result)]
+                    for i=1:length(v)
+                        @fact v[i] => op(t[i])
+                    end 
+                end
             end
-      end
-            
+        end
+    end
+
+    context("binary: ") do
+        baseline = Any[rand(2), rand(3), rand(3,7), rand(7,2), rand(Float32, 4, 1), rand(Float32, 4), rand(Float64, 4,4)]
+        baseline2 = Any[rand(2), rand(3), rand(3,7), rand(7,2), rand(Float32, 4, 1), rand(Float32, 4), rand(Float64, 4,4)]
+        test1     = map(Vec, baseline)
+        test2     = map(Vec, baseline2)
+        for op in binaryOps
+            for i=1:length(test)
+                v1 = test1[i]
+                v2 = test2[i]
+                r = op(v1, v2)
+                for j=1:length(v)
+                    @fact r[j] => op(v1[j], v2[j])
+                end 
+            end
+        end
+    end
 end

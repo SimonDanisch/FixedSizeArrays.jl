@@ -21,7 +21,7 @@ typealias Vec2d Vec{2, Float64}
 typealias Vec3d Vec{3, Float64}
 typealias Vec4d Vec{4, Float64}
 typealias Vec3f Vec{3, Float32}
-#println(Vec4d(rand(4)))
+
 facts("Constructor FixedVectorNoTuple") do
     for T=[Float32, Float64, Int, Int32, Uint, Uint32, Uint8]
         context("$T") do
@@ -434,7 +434,8 @@ facts("Equality") do
     @fact Vec(1,2,3) => [1,2,3]
     @fact Mat((1,2),(3,4)) => Mat((1,2),(3,4))
 end
-#=
+#= 
+#don't have this yet
 let
     a = rand(16)
     b = Mat4d(a)
@@ -443,6 +444,87 @@ let
     @fact b => not(reshape(a, (2,8)))
 end
 =#
+
+const unaryOps = (
+    -, ~, conj, abs, 
+    sin, cos, tan, sinh, cosh, tanh, 
+    asin, acos, atan, asinh, acosh, atanh,
+    sec, csc, cot, asec, acsc, acot,
+    sech, csch, coth, asech, acsch, acoth,
+    sinc, cosc, cosd, cotd, cscd, secd,
+    sind, tand, acosd, acotd, acscd, asecd,
+    asind, atand, rad2deg, deg2rad,
+    log, log2, log10, log1p, exponent, exp,
+    exp2, expm1, cbrt, sqrt, erf, 
+    erfc, erfcx, erfi, dawson, 
+
+    #trunc, round, ceil, floor, #see JuliaLang/julia#12163
+    significand, lgamma, hypot,
+    gamma, lfact, frexp, modf, airy, airyai,
+    airyprime, airyaiprime, airybi, airybiprime,
+    besselj0, besselj1, bessely0, bessely1,
+    eta, zeta, digamma
+)
+
+# vec-vec and vec-scalar
+const binaryOps = (
+    .+, .-,.*, ./, .\, /,
+    .==, .!=, .<, .<=, .>, .>=, +, -,
+    min, max,
+    
+    atan2, besselj, bessely, hankelh1, hankelh2, 
+    besseli, besselk, beta, lbeta
+)
+
+
+
+
+facts("mapping operators") do
+     context("binary: ") do
+        test1 = (Vec(1,2,typemax(Int)), Mat((typemin(Int),2,5), (2,3,5), (-2,3,6)), Vec{4, Float32}(0.777))
+        test2 = (Vec(1,0,typemax(Int)), Mat((typemin(Int),77,1), (2,typemax(Int),5), (-2,3,6)), Vec{4, Float32}(-23.2929))
+        for op in binaryOps
+            for i=1:length(test1)
+                v1 = test1[i]
+                v2 = test2[i]
+                context("$op with $v1 and $v2") do
+                    try # really bad tests, but better than nothing...
+                        if applicable(op, v1[1], v2[1]) && typeof(op(v1[1], v2[1])) == eltype(v1)
+                            r = op(v1, v2)
+                            for j=1:length(v1)
+                                @fact r[j] => op(v1[j], v2[j])
+                            end
+                        
+                        end
+                    catch e 
+                        println(e)
+                    end
+                end
+            end
+        end
+    end
+    context("unary: ") do 
+        test = (Vec(1,2,typemax(Int)), Mat((typemin(Int),2,5), (2,3,5), (-2,3,6)), Vec{4, Float32}(0.777))
+        for op in unaryOps
+            for t in test
+                context("$op with $t") do
+                    try
+                        if applicable(op, t[1]) && typeof(op(t[1])) == eltype(t)
+                            v = op(t)
+                            for i=1:length(v)
+                                @fact v[i] => op(t[i])
+                            end
+                        end
+                    catch e
+                        println(e)
+                    end
+                end
+            end
+        end
+    end
+
+end
+
 
 FactCheck.exitstatus()
 

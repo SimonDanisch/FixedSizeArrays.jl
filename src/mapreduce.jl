@@ -1,5 +1,10 @@
-map{FSA <: FixedArray}(f::Func{1}, a::FSA)          = FSA(map(f, a.(1)))
-map{FSA <: FixedArray}(f::Func{2}, a::FSA, b::FSA)  = FSA(map(f, a.(1), b.(1)))
+map{FSA <: FixedVector}(f::Func{1}, a::FSA)          = FSA(map(f, a.(1)))
+map{FSA <: FixedVector}(f::Func{2}, a::FSA, b::FSA)  = FSA(map(f, a.(1), b.(1)))
+
+map{R, C, T}(f::Func{1}, a::Mat{R,C,T}) = Mat(ntuple(c->map(f, a.(1)[c]), Val{C}))
+        
+map{R, C, T, T2}(f::Func{2}, a::Mat{R,C,T}, b::Mat{R,C,T2}) = Mat(ntuple(c->map(f, a.(1)[c], b.(1)[c]), Val{C}))
+
 
 inner_map(len::Int, inner) = ntuple(i -> quote f($(inner(i))) end, len)
 
