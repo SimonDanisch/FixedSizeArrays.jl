@@ -194,7 +194,6 @@ end
 (*){FSV <: FixedVector}(a::FSV, b::FSV) = Mat{1, 1, eltype(FSV)}(dot(a,b))
     
 
-
 function (==)(a::FixedVectorNoTuple, b::FixedVectorNoTuple)
     s_a = size(a)
     s_b = size(b)

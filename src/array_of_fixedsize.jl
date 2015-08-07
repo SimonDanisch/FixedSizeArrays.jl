@@ -52,6 +52,6 @@ function show{FSA <: FixedVector}(io::IO, a::Vector{FSA})
 	println(io, "]")
 end
 
-function (.+){T<:FixedArray, ND}(a::Array{T, ND}, x::T)
-	T[elem + x for elem in a]
-end
+
+(.+){T<:FixedArray, ND}(a::Array{T, ND}, x::T) = T[elem + x for elem in a]
+	
