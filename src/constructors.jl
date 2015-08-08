@@ -11,7 +11,8 @@ end
 
 
 @generated function Base.call{FSA <: FixedArray}(::Type{FSA}, a)
-    fsa_constructor(FSA, a)
+    expr = fsa_constructor(FSA, a)
+    expr
 end
 @generated function Base.call{FSA <: FixedArray}(::Type{FSA}, a...)
     fsa_constructor(FSA, a...)
@@ -26,7 +27,7 @@ function fsa_constructor{FSA <: FixedArray, T1 <: FixedArray}(::Type{FSA}, a::Ty
     end
     if isempty(b)
         if ElType != eltype(T1)
-            return :( $FSA(map(ElType, a)...) )
+            return :( $FSA(map($ElType, a)...) )
         else
             return :( $FSA(a...) )
         end
@@ -146,6 +147,5 @@ rand{FSA <: FixedArray}(x::Type{FSA}, range::Range) = map(RandFunc(range), FSA)
 convert{T <: Tuple}(::Type{T}, x::Real) =  ntuple(ConstFunctor(eltype(T)(x)), Val{length(T.parameters),})
 convert{T <: Tuple, FSA <: FixedArray}(::Type{T}, x::FSA) = map(eltype(T), x.(1)[1:length(T.parameters)])
 convert{T <: FixedArray}(t::Type{T}, f::T) = f
-function convert{FSA1 <: FixedArray}(t::Type{FSA1}, f::FixedArray)
+convert{FSA1 <: FixedArray}(t::Type{FSA1}, f::FixedArray) =
     map(ConversionIndexFunctor(f, eltype_or(FSA1, eltype(typeof(f)))), FSA1)
-end

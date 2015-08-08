@@ -1,5 +1,9 @@
-map{FSA <: FixedVector}(f::Func{1}, a::FSA)          = FSA(map(f, a.(1)))
-map{FSA <: FixedVector}(f::Func{2}, a::FSA, b::FSA)  = FSA(map(f, a.(1), b.(1)))
+map{FSA <: FixedVector}(f::Func{1}, a::FSA)         = FSA(map(f, a.(1)))
+map{FSA <: FixedVector}(f::Func{2}, a::FSA, b::FSA) = FSA(map(f, a.(1), b.(1)))
+
+@generated function map{FSA <: FixedVectorNoTuple}(f::Func{2}, a::FSA, b::FSA)
+    :(FSA($(ntuple( i->:(f(a.($i), b.($i))), length(a))...)))
+end
 
 map{R, C, T}(f::Func{1}, a::Mat{R,C,T}) = Mat(ntuple(c->map(f, a.(1)[c]), Val{C}))
         
@@ -30,6 +34,8 @@ function reduce{FSA <: FixedArray}(f::Func{2}, a::FSA)
     end
     red
 end
+
+
 
 @generated function map{R, C, T}(f::Func{1}, a::Mat{R, C, T})
     exprs = [:(map(f, a.(1)[$i])) for i=1:C]
@@ -71,22 +77,22 @@ end
 end
 @generated function map{FSA <: FixedArray}(f::Func{2}, a::FSA, b::Number)
     exprs = ntuple(i -> :(f(a[$i], b)), length(a))
-    :(FSA($(exprs...)))
+    :($FSA($(exprs...)))
 end
 @generated function map{FSA <: FixedArray}(f::Func{2}, a::Number, b::FSA)
     exprs = ntuple(i -> :(f(a, b[$i])), length(b))
-    :(FSA($(exprs...)))
+    :($FSA($(exprs...)))
 end
 
 
 @generated function map{FSA <: FixedArray}(f::Func{1}, a::Type{FSA})
-    :(FSA($([:(f($i)) for i=1:length(FSA)]...)))
+    :($FSA($([:(f($i)) for i=1:length(FSA)]...)))
 end
 
 @generated function map{FSA <: FixedArray, F <: Func{1}}(f::Union(Type{F}, F), a::Type{FSA})
-    :(FSA($([:(f($i)) for i=1:length(FSA)]...)))
+    :($FSA($([:(f($i)) for i=1:length(FSA)]...)))
 end
 @generated function map{FSA <: FixedArray, F <: Func{2}}(f::Union(Type{F}, F), a::Type{FSA})
-    :(FSA($([:(f($i, $j)) for i=1:size(FSA,1), j=1:size(FSA,2)]...)))
+    :($FSA($([:(f($i, $j)) for i=1:size(FSA,1), j=1:size(FSA,2)]...)))
 end
 
