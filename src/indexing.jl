@@ -4,7 +4,7 @@ immutable IndexFunc{T} <: Base.Func{1}
 end
 Base.call{T}(a::IndexFunc{T}, j) = a.arg[a.i,j] 
 
-getindex{T <: FixedVector}(x::T, i::Integer) = x.(1)[i]
+getindex{T <: FixedVector}(x::T, i::Union(Range, Integer)) = x.(1)[i]
 
 getindex{T <: FixedVectorNoTuple}(x::T, i::Integer) = x.(i)
 

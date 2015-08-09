@@ -10,34 +10,30 @@ function eltype_or{FSA <: FixedArray}(::Type{FSA}, ElType)
 end
 
 
-@generated function Base.call{FSA <: FixedArray}(::Type{FSA}, a)
-    expr = fsa_constructor(FSA, a)
-    expr
-end
-@generated function Base.call{FSA <: FixedArray}(::Type{FSA}, a...)
-    fsa_constructor(FSA, a...)
-end
-
-
-function fsa_constructor{FSA <: FixedArray, T1 <: FixedArray}(::Type{FSA}, a::Type{T1}, b...)
-    SZ = size_or(FSA, nothing)
-    ElType = eltype_or(FSA, eltype(T1))
+@generated function call{FSA <: FixedArray, T1 <: FixedArray}(::Type{FSA}, a::T1, b...)
+    SZ      = size_or(FSA, nothing)
+    ElType  = eltype_or(FSA, eltype(T1))
+    a_expr = :( a )
     if SZ != nothing
-       (prod(SZ) != (length(T1) + length(b))) && throw(DimensionMismatch("size of $FSA is not fitting array $a + $b arguments"))
+        if (prod(SZ) > (length(T1) + length(b)))
+            throw(DimensionMismatch("size of $FSA is not fitting array $a + $b arguments"))
+        elseif prod(SZ) < length(T1) && isempty(b)
+            a_expr = :( a[1:$(prod(SZ))] )
+        end
     end
     if isempty(b)
         if ElType != eltype(T1)
-            return :( $FSA(map($ElType, a)...) )
+            return :( $FSA(map($ElType, $a_expr)...) )
         else
-            return :( $FSA(a...) )
+            return :( $FSA($a_expr...) )
         end
     else
-        return :( $FSA(a[1]..., a[2]...) )
+        return :( $FSA(a..., b...) )
     end
 end
 
 
-function fsa_constructor{FSA <: FixedArray, T <: Array}(::Type{FSA}, a::Type{T})
+@generated function call{FSA <: FixedArray, T <: Array}(::Type{FSA}, a::T)
     SZ     = size_or(FSA, :(size(a)))
     ElType = eltype_or(FSA, eltype(a))
     expr = :($FSA(fill_tuples((sz, i...)->$ElType(a[i...]), $SZ)))
@@ -51,10 +47,19 @@ function fsa_constructor{FSA <: FixedArray, T <: Array}(::Type{FSA}, a::Type{T})
 end
 
 
-function fsa_constructor{FSA <: FixedArray, X}(::Type{FSA}, a::X)
+@generated function call{FSA <: FixedArray, X}(::Type{FSA}, a::X)
+    println(FSA, " ", a)
     SZ      = size_or(FSA, (1,))
     ElType  = eltype_or(FSA, a)
     Len     = prod(SZ)
+    if a <: Tuple # a::Tuple is ambigous to default constructor, so need to do it here
+        tuple_expr = any(x-> x!=ElType, a.parameters) ? :( map($ElType, a) ) : :(a)
+        if FSA <: FixedVectorNoTuple
+            return :( $FSA($tuple_expr...) )
+        else
+            return :($FSA($tuple_expr))
+        end
+    end
     if FSA <: FixedVectorNoTuple
         return :($FSA($(ntuple(i-> :($ElType(a)), Len)...)))
     else
@@ -63,13 +68,13 @@ function fsa_constructor{FSA <: FixedArray, X}(::Type{FSA}, a::X)
     end
 end
 
-function fsa_constructor{FSA <: FixedArray}(::Type{FSA}, a...)
+@generated function call{FSA <: FixedArray}(::Type{FSA}, a...)
     SZ     = size_or(FSA, (length(a),))
     ElType = eltype_or(FSA, promote_type(a...))
     if FSA <: FixedVectorNoTuple
         return :($FSA(map($ElType, a)...))
     else
-        a[1] <: Tuple && return :($FSA(a))
+        all(x-> x <: Tuple, a) && return :( $FSA(a) ) # TODO be smarter about this
         any(x-> x != ElType, a) && return :($FSA(map($ElType, a))) 
         return :($FSA(a))
     end
