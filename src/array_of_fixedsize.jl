@@ -62,4 +62,4 @@ call(::MaxFun, a, b) = max(a, b)
 call(::MinFun, a, b) = min(a, b)
 
 minimum{T <: FixedArray}(a::Vector{T}) = reduce(MinFun(), a)
-maximum{T <: FixedArray}(a::Vector{T}) = reduce(pMaxFun(), a)
+maximum{T <: FixedArray}(a::Vector{T}) = reduce(MaxFun(), a)
