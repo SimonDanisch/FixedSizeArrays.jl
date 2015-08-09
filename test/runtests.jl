@@ -147,15 +147,7 @@ facts("Constructor ") do
         end
     end
 end
-@show RGB(1)
-@show RGB{Int}(1)
-@show RGB{Int}(1,2,3)
-@show RGB{Float32}(1,2,3)
-@show RGB(1,2,3)
 
-@show RGB([1,2,3])
-
-@show RGB(1,2f0,3)
 
 
 
