@@ -48,7 +48,6 @@ end
 
 
 @generated function call{FSA <: FixedArray, X}(::Type{FSA}, a::X)
-    println(FSA, " ", a)
     SZ      = size_or(FSA, (1,))
     ElType  = eltype_or(FSA, a)
     Len     = prod(SZ)
