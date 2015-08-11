@@ -1,3 +1,5 @@
+type_name(fsa) = :(Main.$(symbol(fsa.name.name)))
+
 function size_or{FSA <: FixedArray}(::Type{FSA}, SZ)
     fsa = fixedsizearray_type(FSA)
     s  = tuple(fsa.parameters[3].parameters...)
@@ -51,19 +53,21 @@ end
     SZ      = size_or(FSA, (1,))
     ElType  = eltype_or(FSA, a)
     Len     = prod(SZ)
+    T_N     = type_name(FSA)
+    println(T_N)
     if a <: Tuple # a::Tuple is ambigous to default constructor, so need to do it here
         tuple_expr = any(x-> x!=ElType, a.parameters) ? :( map($ElType, a) ) : :(a)
         if FSA <: FixedVectorNoTuple
-            return :( $FSA($tuple_expr...) )
+            return :( $T_N($tuple_expr...) )
         else
-            return :($FSA($tuple_expr))
+            return :($T_N($tuple_expr))
         end
     end
     if FSA <: FixedVectorNoTuple
-        return :($FSA($(ntuple(i-> :($ElType(a)), Len)...)))
+        return :($T_N($(ntuple(i-> :($ElType(a)), Len)...)))
     else
         expr = fill_tuples_expr(const_fill, ElType, :a, SZ)
-        return :($FSA($expr))
+        return :($T_N($expr))
     end
 end
 
@@ -74,7 +78,7 @@ end
         return :($FSA(map($ElType, a)...))
     else
         all(x-> x <: Tuple, a) && return :( $FSA(a) ) # TODO be smarter about this
-        any(x-> x != ElType, a) && return :($FSA(map($ElType, a))) 
+        any(x-> x != ElType, a) && return :($FSA(map($ElType, a)))
         return :($FSA(a))
     end
 end
@@ -89,21 +93,21 @@ array_fill(T, sym, SZ, inds...)        = :($T($sym[1][$(inds...)]))
 hierarchical_fill(T, sym, SZ, inds...) = :($T($sym[$(inds...)]))
 
 
-_fill_tuples_expr(inner::Function, T, sym, originalSZ, SZ::Tuple{Int}, inds...) = 
+_fill_tuples_expr(inner::Function, T, sym, originalSZ, SZ::Tuple{Int}, inds...) =
     :(tuple($(ntuple(i->inner(T, sym, originalSZ, i, inds...), SZ[1])...)))
-_fill_tuples_expr{N}(inner::Function, T, sym, originalSZ, SZ::NTuple{N, Int}, inds...) = 
+_fill_tuples_expr{N}(inner::Function, T, sym, originalSZ, SZ::NTuple{N, Int}, inds...) =
     :(tuple($(ntuple(i->_fill_tuples_expr(inner, T, sym, originalSZ, Base.tail(SZ), i, inds...), SZ[1]))))
 fill_tuples_expr(inner::Function, T, sym, SZ) = _fill_tuples_expr(inner, T, sym, SZ, SZ)
 
 
-_fill_tuples(inner, originalSZ, SZ::Tuple{Int}, inds::Int...) = 
+_fill_tuples(inner, originalSZ, SZ::Tuple{Int}, inds::Int...) =
     ntuple(i->inner(SZ, i, inds...), Val{SZ[1]})
-_fill_tuples{N}(inner, originalSZ, SZ::NTuple{N, Int}, inds::Int...) = 
+_fill_tuples{N}(inner, originalSZ, SZ::NTuple{N, Int}, inds::Int...) =
     ntuple(i->_fill_tuples(inner, originalSZ, SZ[1:end-1], i, inds...), Val{SZ[end]})
 fill_tuples{N}(inner, SZ::NTuple{N, Int}) = _fill_tuples(inner, SZ, SZ)
 
 
-immutable RandFunc{T} <: Func{1} 
+immutable RandFunc{T} <: Func{1}
     range::Range{T}
 end
 call{T}(rf::RandFunc{T}, x) = rand(rf.range)
