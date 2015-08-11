@@ -29,7 +29,7 @@ facts("Array of FixedArrays") do
 
     c = Point{3, Float64}[Point{3, Float64}(typemin(Float64)), a..., Point{3, Float64}(typemax(Float64))]
     d = RGB{Float64}[RGB(typemin(Float64)), b..., RGB(typemax(Float64))]
-    
+
     context("reduce") do
         sa = sum(a)
         ma = mean(a)
@@ -82,7 +82,7 @@ end
 # A little brutal, but hey.... Better redudantant tests, than not enough tests
 facts("Constructor ") do
     for N=1:5
-        context("construction, conversion, $N") do 
+        context("construction, conversion, $N") do
             for VT=[Point, Vec, Normal], VT2=[Normal, Vec, Point], ET=[Float32, Int, Uint, Float64], ET2=[Float64, Uint, Int, Float32]
                 rand_range  = ET(1):ET(10)
                 rand_range2 = ET2(1):ET2(10)
@@ -97,7 +97,7 @@ facts("Constructor ") do
 
                 @fact length(typeof(v1)) --> N
                 @fact eltype(typeof(v1)) --> ET
-                
+
                 for i=1:N
                     @fact v1[i] --> rn[i]
                 end
@@ -157,7 +157,7 @@ Vec(Vec3d(1), 1.0)
 #@fact length(t1) --> 3
 
 facts("Constructors") do
-	context("FixedVector: unary, from FixedVector") do 
+	context("FixedVector: unary, from FixedVector") do
 		@fact typeof(Vec3f(1,1,1))     --> Vec{3, Float32}
 		@fact typeof(Vec3f(1,1f0,1))   --> Vec{3, Float32}
 		@fact typeof(Vec3f(1f0,1,1.0)) --> Vec{3, Float32}
@@ -177,10 +177,10 @@ end
 v2 = Vec(6.0,5.0,4.0)
 v1 = Vec(1.0,2.0,3.0)
 v2 = Vec(6.0,5.0,4.0)
-	
+
 facts("Indexing") do
-	
-	context("FixedVector") do 
+
+	context("FixedVector") do
 		@fact v1[1] --> 1.0
 		@fact v1[2] --> 2.0
 		@fact v1[3] --> 3.0
@@ -193,25 +193,25 @@ end
 
 
 facts("Ops") do
-	context("Negation") do 
+	context("Negation") do
 		@fact -v1 --> Vec(-1.0,-2.0,-3.0)
 		@fact isa(-v1, Vec3d) --> true
 	end
 
-	context("Negation") do 
+	context("Negation") do
 		@fact v1+v2 --> Vec3d(7.0,7.0,7.0)
 	end
-	context("Negation") do 
+	context("Negation") do
 		@fact v2-v1 --> Vec3d(5.0,3.0,1.0)
 	end
-	context("Multiplication") do 
+	context("Multiplication") do
 		@fact v1.*v2 --> Vec3d(6.0,10.0,12.0)
 	end
 	context("Division") do
 		@fact v1 ./ v1 --> Vec3d(1.0,1.0,1.0)
 	end
 
-	context("Scalar") do 
+	context("Scalar") do
 		@fact 1.0 + v1 --> Vec3d(2.0,3.0,4.0)
 		@fact 1.0 .+ v1 --> Vec3d(2.0,3.0,4.0)
 		@fact v1 + 1.0 --> Vec3d(2.0,3.0,4.0)
@@ -252,7 +252,7 @@ facts("Ops") do
 		@fact (2.0 .^ v1) --> Vec3d(2.0,4.0,8.0)
 		@fact (2 .^ v1) --> Vec3d(2.0,4.0,8.0)
 	end
-    context("vector norm+cross product") do 
+    context("vector norm+cross product") do
         @fact norm(Vec3d(1.0,2.0,2.0)) --> 3.0
 
         # cross product
@@ -267,7 +267,7 @@ end
 
 
 # type conversion
-facts("Conversion 2") do 
+facts("Conversion 2") do
     @fact isa(convert(Vec3f,v1), Vec3f)  --> true
 
     @fact isa(convert(Vector{Float64}, v1), Vector{Float64})  --> true
@@ -299,7 +299,7 @@ for i=1:4, j=1:4
 end
 
 
-facts("Matrix") do 
+facts("Matrix") do
     v = Vec(1.0,2.0,3.0,4.0)
     r = row(v)
     c = column(v)
@@ -399,7 +399,7 @@ facts("Matrix Math") do
 				#@fact isapprox(fmm, mm)  --> true
 			end
 		end
-		
+
 		context("transpose M") do
 			mm = m'
 			#fmm = mfs'
@@ -443,7 +443,7 @@ kfs = abs(ffs)
 lfs = abs(-ffs)
 
 
-facts("Vector Math") do 
+facts("Vector Math") do
     context("all") do
         @fact isapprox(acfs, ac)  --> true
         @fact isapprox(bcfs, bc)  --> true
@@ -472,7 +472,7 @@ facts("Equality") do
     @fact Vec(1,2,3) --> [1,2,3]
     @fact Mat((1,2),(3,4)) --> Mat((1,2),(3,4))
 end
-#= 
+#=
 #don't have this yet
 let
     a = rand(16)
@@ -484,8 +484,8 @@ end
 =#
 
 const unaryOps = (
-    -, ~, conj, abs, 
-    sin, cos, tan, sinh, cosh, tanh, 
+    -, ~, conj, abs,
+    sin, cos, tan, sinh, cosh, tanh,
     asin, acos, atan, asinh, acosh, atanh,
     sec, csc, cot, asec, acsc, acot,
     sech, csch, coth, asech, acsch, acoth,
@@ -493,8 +493,8 @@ const unaryOps = (
     sind, tand, acosd, acotd, acscd, asecd,
     asind, atand, rad2deg, deg2rad,
     log, log2, log10, log1p, exponent, exp,
-    exp2, expm1, cbrt, sqrt, erf, 
-    erfc, erfcx, erfi, dawson, 
+    exp2, expm1, cbrt, sqrt, erf,
+    erfc, erfcx, erfi, dawson,
 
     #trunc, round, ceil, floor, #see JuliaLang/julia#12163
     significand, lgamma, hypot,
@@ -509,8 +509,8 @@ const binaryOps = (
     .+, .-,.*, ./, .\, /,
     .==, .!=, .<, .<=, .>, .>=, +, -,
     min, max,
-    
-    atan2, besselj, bessely, hankelh1, hankelh2, 
+
+    atan2, besselj, bessely, hankelh1, hankelh2,
     besseli, besselk, beta, lbeta
 )
 
@@ -532,16 +532,16 @@ facts("mapping operators") do
                             for j=1:length(v1)
                                 @fact r[j] --> op(v1[j], v2[j])
                             end
-                        
+
                         end
-                    catch e 
+                    catch e
                         println(e)
                     end
                 end
             end
         end
     end
-    context("unary: ") do 
+    context("unary: ") do
         test = (Vec(1,2,typemax(Int)), Mat((typemin(Int),2,5), (2,3,5), (-2,3,6)), Vec{4, Float32}(0.777))
         for op in unaryOps
             for t in test
@@ -565,4 +565,3 @@ end
 
 
 FactCheck.exitstatus()
-
