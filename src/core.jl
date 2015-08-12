@@ -18,10 +18,10 @@ export FixedVectorNoTuple
 
 # Get the abstract FixedSizeArray type, even for complex type hirarchies
 function fixedsizearray_type{FSA <: FixedArray}(::Type{FSA})
-    ff = super(FSA)
+    ff = FSA
     while ff.name.name != :FixedArray
         ff = super(ff)
-        if ff == Any 
+        if ff == Any
             error("Uncommon type hierarchy encountered. Please report issue on Github")
         end
     end
@@ -58,7 +58,7 @@ size{T <: FixedArray}(A::Type{T})            		= size(super(T))
 
 size{T <: FixedArray}(A::Type{T}, d::Integer) 		= size(T)[d]::Int
 
-# Iterator 
+# Iterator
 start(A::FixedArray)            					= 1
 next(A::FixedArray, state::Integer) 				= (A[state], state+1)
 done(A::FixedArray, state::Integer) 				= length(A) < state
