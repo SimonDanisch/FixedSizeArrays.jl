@@ -6,7 +6,7 @@ map{FSA <: FixedVector}(f::Func{2}, a::FSA, b::FSA) = FSA(map(f, a.(1), b.(1)))
 end
 
 map{R, C, T}(f::Func{1}, a::Mat{R,C,T}) = Mat(ntuple(c->map(f, a.(1)[c]), Val{C}))
-        
+
 map{R, C, T, T2}(f::Func{2}, a::Mat{R,C,T}, b::Mat{R,C,T2}) = Mat(ntuple(c->map(f, a.(1)[c], b.(1)[c]), Val{C}))
 
 
@@ -48,7 +48,7 @@ end
     for i=1:C
         push!(exprs, quote tuple($(inner_map(R, x->:($(sub2ind((R,C), i,x))))...)) end)
     end
-    quote 
+    quote
         Mat(tuple($(exprs...)))
     end
 end
@@ -60,7 +60,7 @@ end
     for i=1:C
         push!(exprs, quote tuple($(ntuple(j -> quote f(a.(1)[$i][$j], b) end, R)...)) end)
     end
-    quote 
+    quote
         Mat{$R, $C, $T}(tuple($(exprs...)))
     end
 end
@@ -71,7 +71,7 @@ end
     for i=1:C
         push!(exprs, quote tuple($(ntuple(j -> quote f(a, b.(1)[$i][$j]) end, R)...)) end)
     end
-    quote 
+    quote
         Mat{$R, $C, $T}(tuple($(exprs...)))
     end
 end
@@ -81,18 +81,17 @@ end
 end
 @generated function map{FSA <: FixedArray}(f::Func{2}, a::Number, b::FSA)
     exprs = ntuple(i -> :(f(a, b[$i])), length(b))
-    :($FSA($(exprs...)))
+    :($FSA(tuple($(exprs...))))
 end
 
 
 @generated function map{FSA <: FixedArray}(f::Func{1}, a::Type{FSA})
-    :($FSA($([:(f($i)) for i=1:length(FSA)]...)))
+    :($FSA(tuple($([:(f($i)) for i=1:length(FSA)]...))))
 end
 
 @generated function map{FSA <: FixedArray, F <: Func{1}}(f::Union(Type{F}, F), a::Type{FSA})
-    :($FSA($([:(f($i)) for i=1:length(FSA)]...)))
+    :($FSAa(tuple($([:(f($i)) for i=1:length(FSA)]...))))
 end
 @generated function map{FSA <: FixedArray, F <: Func{2}}(f::Union(Type{F}, F), a::Type{FSA})
-    :($FSA($([:(f($i, $j)) for i=1:size(FSA,1), j=1:size(FSA,2)]...)))
+    :($FSA(tuple($([:(f($i, $j)) for i=1:size(FSA,1), j=1:size(FSA,2)]...))))
 end
-
