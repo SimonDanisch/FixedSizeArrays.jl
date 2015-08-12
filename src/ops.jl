@@ -1,6 +1,6 @@
 # operations
-const unaryOps = (:-, :~, :conj, :abs, 
-                  :sin, :cos, :tan, :sinh, :cosh, :tanh, 
+const unaryOps = (:-, :~, :conj, :abs,
+                  :sin, :cos, :tan, :sinh, :cosh, :tanh,
                   :asin, :acos, :atan, :asinh, :acosh, :atanh,
                   :sec, :csc, :cot, :asec, :acsc, :acot,
                   :sech, :csch, :coth, :asech, :acsch, :acoth,
@@ -8,7 +8,7 @@ const unaryOps = (:-, :~, :conj, :abs,
                   :sind, :tand, :acosd, :acotd, :acscd, :asecd,
                   :asind, :atand, :rad2deg, :deg2rad,
                   :log, :log2, :log10, :log1p, :exponent, :exp,
-                  :exp2, :expm1, :cbrt, :sqrt, :erf, 
+                  :exp2, :expm1, :cbrt, :sqrt, :erf,
                   :erfc, :erfcx, :erfi, :dawson, :ceil, :floor,
                   :trunc, :round, :significand, :lgamma, :hypot,
                   :gamma, :lfact, :frexp, :modf, :airy, :airyai,
@@ -21,7 +21,7 @@ const binaryOps = (:.+, :.-,:.*, :./, :.\, :.^,:*,:/,
                    :.==, :.!=, :.<, :.<=, :.>, :.>=, :+, :-,
                    :min, :max,
                    :div, :fld, :rem, :mod, :mod1, :cmp,
-                   :atan2, :besselj, :bessely, :hankelh1, :hankelh2, 
+                   :atan2, :besselj, :bessely, :hankelh1, :hankelh2,
                    :besseli, :besselk, :beta, :lbeta)
 
 const reductions = ((:sum,:+), (:prod,:*), (:minimum,:min), (:maximum,:max))
@@ -29,7 +29,7 @@ const reductions = ((:sum,:+), (:prod,:*), (:minimum,:min), (:maximum,:max))
 function gen_functor(func::Symbol, unary::Int)
     functor_name  = gensym()
     arguments     = ntuple(i->symbol("arg$i"), unary)
-    functor_expr  = quote 
+    functor_expr  = quote
         immutable $functor_name <: Func{$unary} end
         call(::$functor_name, $(arguments...)) = $func($(arguments...))
     end
@@ -38,14 +38,14 @@ end
 
 for (callfun, reducefun) in reductions
     functor_name, functor_expr = gen_functor(reducefun, 2)
-    eval(quote 
+    eval(quote
         $functor_expr
         $(callfun){T <: FixedArray}(x::T) = reduce($functor_name(), x)
     end)
 end
 for op in unaryOps
     functor_name, functor_expr = gen_functor(op, 1)
-    eval(quote 
+    eval(quote
         $functor_expr
         $(op){T <: FixedArray}(x::T) = map($functor_name(), x)
     end)
@@ -125,9 +125,9 @@ function inv{T}(A::Mat{3, 3, T})
 end
 
 
-function inv{T}(A::FixedMatrix{4, 4, T})
+function inv{T}(A::Mat{4, 4, T})
     determinant = det(A)
-    FixedMatrix{T, 4, 4}(
+    Mat{4, 4, T}(
         ((A[2,3]*A[3,4]*A[4,2] - A[2,4]*A[3,3]*A[4,2] + A[2,4]*A[3,2]*A[4,3] - A[2,2]*A[3,4]*A[4,3] - A[2,3]*A[3,2]*A[4,4] + A[2,2]*A[3,3]*A[4,4]) / determinant,
         (A[2,4]*A[3,3]*A[4,1] - A[2,3]*A[3,4]*A[4,1] - A[2,4]*A[3,1]*A[4,3] + A[2,1]*A[3,4]*A[4,3] + A[2,3]*A[3,1]*A[4,4] - A[2,1]*A[3,3]*A[4,4]) / determinant,
         (A[2,2]*A[3,4]*A[4,1] - A[2,4]*A[3,2]*A[4,1] + A[2,4]*A[3,1]*A[4,2] - A[2,1]*A[3,4]*A[4,2] - A[2,2]*A[3,1]*A[4,4] + A[2,1]*A[3,2]*A[4,4]) / determinant,
@@ -137,13 +137,13 @@ function inv{T}(A::FixedMatrix{4, 4, T})
         (A[1,3]*A[3,4]*A[4,1] - A[1,4]*A[3,3]*A[4,1] + A[1,4]*A[3,1]*A[4,3] - A[1,1]*A[3,4]*A[4,3] - A[1,3]*A[3,1]*A[4,4] + A[1,1]*A[3,3]*A[4,4]) / determinant,
         (A[1,4]*A[3,2]*A[4,1] - A[1,2]*A[3,4]*A[4,1] - A[1,4]*A[3,1]*A[4,2] + A[1,1]*A[3,4]*A[4,2] + A[1,2]*A[3,1]*A[4,4] - A[1,1]*A[3,2]*A[4,4]) / determinant,
         (A[1,2]*A[3,3]*A[4,1] - A[1,3]*A[3,2]*A[4,1] + A[1,3]*A[3,1]*A[4,2] - A[1,1]*A[3,3]*A[4,2] - A[1,2]*A[3,1]*A[4,3] + A[1,1]*A[3,2]*A[4,3]) / determinant),
-           
+
 
         ((A[1,3]*A[2,4]*A[4,2] - A[1,4]*A[2,3]*A[4,2] + A[1,4]*A[2,2]*A[4,3] - A[1,2]*A[2,4]*A[4,3] - A[1,3]*A[2,2]*A[4,4] + A[1,2]*A[2,3]*A[4,4]) / determinant,
         (A[1,4]*A[2,3]*A[4,1] - A[1,3]*A[2,4]*A[4,1] - A[1,4]*A[2,1]*A[4,3] + A[1,1]*A[2,4]*A[4,3] + A[1,3]*A[2,1]*A[4,4] - A[1,1]*A[2,3]*A[4,4]) / determinant,
         (A[1,2]*A[2,4]*A[4,1] - A[1,4]*A[2,2]*A[4,1] + A[1,4]*A[2,1]*A[4,2] - A[1,1]*A[2,4]*A[4,2] - A[1,2]*A[2,1]*A[4,4] + A[1,1]*A[2,2]*A[4,4]) / determinant,
         (A[1,3]*A[2,2]*A[4,1] - A[1,2]*A[2,3]*A[4,1] - A[1,3]*A[2,1]*A[4,2] + A[1,1]*A[2,3]*A[4,2] + A[1,2]*A[2,1]*A[4,3] - A[1,1]*A[2,2]*A[4,3]) / determinant),
-           
+
 
 
         ((A[1,4]*A[2,3]*A[3,2] - A[1,3]*A[2,4]*A[3,2] - A[1,4]*A[2,2]*A[3,3] + A[1,2]*A[2,4]*A[3,3] + A[1,3]*A[2,2]*A[3,4] - A[1,2]*A[2,3]*A[3,4]) / determinant,
@@ -159,7 +159,7 @@ call(r::RowFunctor, i::Int) = row(r.mat, i)
 function ctranspose{R, C, T}(a::Mat{R, C, T})
     Mat(ntuple(RowFunctor(a), Val{R}))
 end
-                             
+
 # Matrix
 (*){T, M, N, O, K}(a::FixedMatrix{M, N, T}, b::FixedMatrix{O, K, T}) = error("DimensionMissmatch: $N != $O in $(typeof(a)) and $(typeof(b))")
 
@@ -192,7 +192,7 @@ end
 end
 
 (*){FSV <: FixedVector}(a::FSV, b::FSV) = Mat{1, 1, eltype(FSV)}(dot(a,b))
-    
+
 
 function (==)(a::FixedVectorNoTuple, b::FixedVectorNoTuple)
     s_a = size(a)
@@ -201,7 +201,7 @@ function (==)(a::FixedVectorNoTuple, b::FixedVectorNoTuple)
     for i = 1:length(a)
         a[i] == b[i] || return false
     end
-    true  
+    true
 end
 (==)(a::FixedArray, b::FixedArray) = a.(1) == b.(1)
 
