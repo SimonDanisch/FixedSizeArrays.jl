@@ -1,3 +1,4 @@
+__precompile__(true)
 module FixedSizeArrays
 using Compat
 
@@ -5,6 +6,7 @@ importall Base
 import Base.Func
 
 include("core.jl")
+include("functors.jl")
 include("constructors.jl")
 include("mapreduce.jl")
 include("indexing.jl")

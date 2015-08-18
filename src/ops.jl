@@ -152,13 +152,7 @@ function inv{T}(A::Mat{4, 4, T})
         (A[1,2]*A[2,3]*A[3,1] - A[1,3]*A[2,2]*A[3,1] + A[1,3]*A[2,1]*A[3,2] - A[1,1]*A[2,3]*A[3,2] - A[1,2]*A[2,1]*A[3,3] + A[1,1]*A[2,2]*A[3,3]) / determinant)
     )
 end
-immutable RowFunctor{M}
-    mat::M
-end
-call(r::RowFunctor, i::Int) = row(r.mat, i)
-function ctranspose{R, C, T}(a::Mat{R, C, T})
-    Mat(ntuple(RowFunctor(a), Val{R}))
-end
+
 
 # Matrix
 (*){T, M, N, O, K}(a::FixedMatrix{M, N, T}, b::FixedMatrix{O, K, T}) = error("DimensionMissmatch: $N != $O in $(typeof(a)) and $(typeof(b))")

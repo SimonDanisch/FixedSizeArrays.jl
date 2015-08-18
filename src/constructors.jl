@@ -1,4 +1,4 @@
-type_name(fsa) = :(Main.$(symbol(fsa.name.name)))
+type_name(fsa) = :($(symbol(fsa.name)))
 
 function size_or{FSA <: FixedArray}(::Type{FSA}, SZ)
     fsa = fixedsizearray_type(FSA)
@@ -7,7 +7,7 @@ function size_or{FSA <: FixedArray}(::Type{FSA}, SZ)
 end
 function eltype_or{FSA <: FixedArray}(::Type{FSA}, ElType)
     fsa = fixedsizearray_type(FSA)
-    s  = fsa.parameters[1]
+    s   = fsa.parameters[1]
     isa(s, TypeVar) ? ElType : s
 end
 
@@ -15,11 +15,11 @@ end
 @generated function call{FSA <: FixedArray, T1 <: FixedArray}(::Type{FSA}, a::T1, b...)
     SZ      = size_or(FSA, nothing)
     ElType  = eltype_or(FSA, eltype(T1))
-    a_expr = :( a )
+    a_expr  = :( a )
     if SZ != nothing
         if (prod(SZ) > (length(T1) + length(b)))
-            throw(DimensionMismatch("size of $FSA is not fitting array $a + $b arguments"))
-        elseif prod(SZ) < length(T1) && isempty(b)
+            throw(DimensionMismatch("$FSA is too small, can not be constructed from array $a and $b arguments"))
+        elseif prod(SZ) < length(T1) && isempty(b) #shrinking constructor, e.g. Vec3(Vec4(...))
             a_expr = :( a[1:$(prod(SZ))] )
         end
     end
@@ -53,8 +53,7 @@ end
     SZ      = size_or(FSA, (1,))
     ElType  = eltype_or(FSA, a)
     Len     = prod(SZ)
-    T_N     = type_name(FSA)
-    println(T_N)
+    T_N     = FSA
     if a <: Tuple # a::Tuple is ambigous to default constructor, so need to do it here
         tuple_expr = any(x-> x!=ElType, a.parameters) ? :( map($ElType, a) ) : :(a)
         if FSA <: FixedVectorNoTuple
@@ -66,7 +65,7 @@ end
     if FSA <: FixedVectorNoTuple
         return :($T_N($(ntuple(i-> :($ElType(a)), Len)...)))
     else
-        expr = fill_tuples_expr(const_fill, ElType, :a, SZ)
+        expr = fill_tuples_expr((inds...)->:($ElType(a[1])), SZ)
         return :($T_N($expr))
     end
 end
@@ -75,6 +74,7 @@ end
     SZ     = size_or(FSA, (length(a),))
     ElType = eltype_or(FSA, promote_type(a...))
     if FSA <: FixedVectorNoTuple
+        length(a) != prod(SZ) && throw(DimensionMismatch("can't construct $FSA with $(length(a)) arguments. Args: $a"))
         return :($FSA(map($ElType, a)...))
     else
         all(x-> x <: Tuple, a) && return :( $FSA(a) ) # TODO be smarter about this
@@ -84,20 +84,17 @@ end
 end
 
 
-
-
-
 const_fill(T, sym, SZ, inds...)        = :($T($sym[1]))
 flat_fill(T, sym, SZ, inds...)         = :($T($sym[$(sub2ind(SZ, inds...))]))
 array_fill(T, sym, SZ, inds...)        = :($T($sym[1][$(inds...)]))
 hierarchical_fill(T, sym, SZ, inds...) = :($T($sym[$(inds...)]))
 
 
-_fill_tuples_expr(inner::Function, T, sym, originalSZ, SZ::Tuple{Int}, inds...) =
-    :(tuple($(ntuple(i->inner(T, sym, originalSZ, i, inds...), SZ[1])...)))
-_fill_tuples_expr{N}(inner::Function, T, sym, originalSZ, SZ::NTuple{N, Int}, inds...) =
-    :(tuple($(ntuple(i->_fill_tuples_expr(inner, T, sym, originalSZ, Base.tail(SZ), i, inds...), SZ[1]))))
-fill_tuples_expr(inner::Function, T, sym, SZ) = _fill_tuples_expr(inner, T, sym, SZ, SZ)
+_fill_tuples_expr(inner::Function, SZ::Tuple{Int}, inds...) =
+    :(tuple($(ntuple(i->inner(i, inds...), SZ[1])...)))
+_fill_tuples_expr{N}(inner::Function, SZ::NTuple{N, Int}, inds...) =
+    :(tuple($(ntuple(i->_fill_tuples_expr(inner, SZ[1:end-1], i, inds...),SZ[end])...)))
+fill_tuples_expr(inner::Function, SZ::Tuple) = _fill_tuples_expr(inner, SZ)
 
 
 _fill_tuples(inner, originalSZ, SZ::Tuple{Int}, inds::Int...) =
@@ -107,53 +104,24 @@ _fill_tuples{N}(inner, originalSZ, SZ::NTuple{N, Int}, inds::Int...) =
 fill_tuples{N}(inner, SZ::NTuple{N, Int}) = _fill_tuples(inner, SZ, SZ)
 
 
-immutable RandFunc{T} <: Func{1}
-    range::Range{T}
-end
-call{T}(rf::RandFunc{T}, x) = rand(rf.range)
-
-immutable ConstFunctor{T} <: Base.Func{1}
-    args::T
-end
-Base.call(f::ConstFunctor, i) = f.args
-immutable EyeFunc{N} <: Func{1}
-    size::NTuple{N, Int}
-    eltype::DataType
-end
-function call{T}(ef::EyeFunc{T}, x)
-    i,j = ind2sub(ef.size, x)
-    i==j ? one(ef.eltype) : zero(ef.eltype)
-end
-
-immutable UnitFunctor <: Func{1}
-    i::Int
-    eltype::DataType
-end
-call(ef::UnitFunctor, x) = ef.i==x ? one(ef.eltype) : zero(ef.eltype)
-
-
-immutable ConversionIndexFunctor{T, T2} <: Func{1}
-    args1::T
-    target::Type{T2}
-end
-call(f::ConversionIndexFunctor, i) = f.target(f.args1[i])
 
 
 zero{FSA <: FixedArray}(::Type{FSA}) = map(ConstFunctor(zero(eltype(FSA))), FSA)
 one{FSA <: FixedArray}(::Type{FSA})  = map(ConstFunctor(one(eltype(FSA))), FSA)
 eye{FSA <: FixedArray}(::Type{FSA})  = map(EyeFunc(size(FSA), eltype(FSA)), FSA)
 unit{FSA <: FixedVector}(::Type{FSA}, i::Integer) = map(UnitFunctor(i, eltype(FSA)), FSA)
+
 function rand{FSA <: FixedArray}(x::Type{FSA})
     T = eltype(FSA)
-    T <: applicable(eps, T) && return map(RandFunc(zero(T) : eps(T) : one(T)), FSA) # this case is basically for FixedPointNumbers
-    map(RandFunc(typemin(T) : typemax(T)), FSA)
+    T <: applicable(eps, T) && return map(RandFunctor(zero(T) : eps(T) : one(T)), FSA) # this case is basically for FixedPointNumbers
+    map(RandFunctor(typemin(T) : typemax(T)), FSA)
 end
-rand{FSA <: FixedArray}(x::Type{FSA}, range::Range) = map(RandFunc(range), FSA)
+rand{FSA <: FixedArray}(x::Type{FSA}, range::Range) = map(RandFunctor(range), FSA)
 
 
 #conversion
-convert{T <: Tuple}(::Type{T}, x::Real) =  ntuple(ConstFunctor(eltype(T)(x)), Val{length(T.parameters),})
-convert{T <: Tuple, FSA <: FixedArray}(::Type{T}, x::FSA) = map(eltype(T), x.(1)[1:length(T.parameters)])
-convert{T <: FixedArray}(t::Type{T}, f::T) = f
+convert{T <: Tuple}(::Type{T}, x::Real)                     =  ntuple(ConstFunctor(eltype(T)(x)), Val{length(T.parameters),})
+convert{T <: Tuple, FSA <: FixedArray}(::Type{T}, x::FSA)   = map(eltype(T), x.(1)[1:length(T.parameters)])
+convert{T <: FixedArray}(t::Type{T}, f::T)                  = f
 convert{FSA1 <: FixedArray}(t::Type{FSA1}, f::FixedArray) =
     map(ConversionIndexFunctor(f, eltype_or(FSA1, eltype(typeof(f)))), FSA1)
