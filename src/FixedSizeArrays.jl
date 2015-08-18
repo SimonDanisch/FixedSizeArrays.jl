@@ -22,6 +22,7 @@ export FixedMatrix
 export MutableFixedArray
 export MutableFixedVector
 export MutableFixedMatrix
+export Mat
 
 export unit
 export normalize

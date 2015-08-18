@@ -1,8 +1,3 @@
-# Alot of workarounds for not having triangular dispatch
-const TYPE_PARAM_POSITION = 1
-const NDIM_PARAM_POSITION = 2
-const SIZE_PARAM_POSITION = 3
-
 abstract FixedArray{T, NDim, SIZE}
 abstract MutableFixedArray{T, NDim, SIZE} <: FixedArray{T, NDim, SIZE}
 
@@ -67,7 +62,6 @@ done(A::FixedArray, state::Integer) 				= length(A) < state
 immutable Mat{Row, Column, T} <: FixedMatrix{Row, Column, T}
     _::NTuple{Column, NTuple{Row, T}}
 end
-export Mat
 
 function show{R,C,T}(io::IO, m::Mat{R,C,T})
 	println(io, typeof(m), "(")

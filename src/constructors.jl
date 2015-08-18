@@ -48,6 +48,12 @@ end
     end
 end
 
+call{FSA <: FixedVectorNoTuple}(::Type{FSA}, a::Tuple, b::Tuple...) = error("$FSA can't be constructed from $a")
+call{FSA <: FixedVectorNoTuple}(::Type{FSA}, a::Tuple) = FSA(a...)
+
+call{FSA <: FixedArray, T}(::Type{FSA}, a::T..., ) = FSA(a)
+
+
 
 @generated function call{FSA <: FixedArray, X}(::Type{FSA}, a::X)
     SZ      = size_or(FSA, (1,))

@@ -54,7 +54,7 @@ end
 
 
 facts("Constructor FixedVectorNoTuple") do
-    for T=[Float32, Float64, Int, Int32, Uint, Uint32, Uint8]
+    for T=[Float32, Float64, Int, Uint, Uint32, Uint8]
         context("$T") do
             r = rand(T)
             x = RGB{Int}[RGB(1) for i=1:10]
@@ -74,14 +74,13 @@ facts("Constructor FixedVectorNoTuple") do
             @fact typeof(RGB{T}(1f0, 2, 3.0))   --> RGB{T}
             @fact typeof(RGB(1f0, 2, 3.0))      --> RGB{Float64}
             @fact typeof(RGB{Int}(1f0, 2, 3.0)) --> RGB{Int}
-
         end
     end
 end
 
 # A little brutal, but hey.... Better redudantant tests, than not enough tests
 facts("Constructor ") do
-    for N=1:5
+    for N=1:3:10
         context("construction, conversion, $N") do
             for VT=[Point, Vec, Normal], VT2=[Normal, Vec, Point], ET=[Float32, Int, Uint, Float64], ET2=[Float64, Uint, Int, Float32]
                 rand_range  = ET(1):ET(10)
@@ -151,11 +150,6 @@ end
 
 
 
-Vec(Vec3d(1), 1.0)
-#t1 = ["1.909", "1.909", "1.909"]
-#@fact Vec{3, Float64}(1.909) --> Vec{3, Float64}(t1)
-#@fact length(t1) --> 3
-
 facts("Constructors") do
 	context("FixedVector: unary, from FixedVector") do
 		@fact typeof(Vec3f(1,1,1))     --> Vec{3, Float32}
@@ -179,15 +173,38 @@ v1 = Vec(1.0,2.0,3.0)
 v2 = Vec(6.0,5.0,4.0)
 
 facts("Indexing") do
-
 	context("FixedVector") do
 		@fact v1[1] --> 1.0
 		@fact v1[2] --> 2.0
-		@fact v1[3] --> 3.0
+        @fact v1[3] --> 3.0
+        @fact v1[1:3] --> (1.0, 2.0, 3.0)
+        @fact v1[1:2] --> (1.0, 2.0)
+		@fact v1[1:1] --> (1.0,)
 		@fact_throws BoundsError v1[-1]
 		@fact_throws BoundsError v1[0]
 		@fact_throws BoundsError v1[4]
 	end
+    m = Mat{4,4,Int}(
+        (1,2,3,4),
+        (5,6,7,8),
+        (9,10,11,12),
+        (13,14,15,16)
+    )
+    context("FixedMatrix") do
+        @fact m[1] --> 1
+        @fact m[2] --> 2
+        @fact m[10] --> 10
+        @fact m[2,2] --> 6
+        @fact m[3,4] --> 15
+        @fact m[1:4, 1] --> (1,5,9,13)
+        @fact m[1, 1:4] --> (1,2,3,4)
+        @fact_throws BoundsError m[-1]
+        @fact_throws BoundsError m[0]
+        @fact_throws BoundsError m[17]
+        @fact_throws BoundsError m[5,1]
+        @fact_throws BoundsError m[-1,1]
+        @fact_throws BoundsError m[0,0]
+    end
 
 end
 
