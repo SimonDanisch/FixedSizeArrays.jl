@@ -392,12 +392,7 @@ facts("Matrix") do
     @fact typeof(vfs) --> Vec4d
     @fact typeof(mfs) --> Mat4d
 end
-function Base.isapprox{FSA <: FixedArray}(a::FSA, b::Array)
-	for i=1:length(a)
-		!isapprox(a[i], b[i]) && return false
-	end
-	true
-end
+
 facts("Matrix Math") do
 	for i=1:4, j=1:4
 		v = rand(j)
