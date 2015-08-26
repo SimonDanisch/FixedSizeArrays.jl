@@ -69,7 +69,7 @@ dot{T}(a::NTuple{2,T}, b::NTuple{2,T}) = a[1]*b[1] + a[2]*b[2]
 dot{T}(a::NTuple{3,T}, b::NTuple{3,T}) = a[1]*b[1] + a[2]*b[2] + a[3]*b[3]
 dot{T}(a::NTuple{4,T}, b::NTuple{4,T}) = a[1]*b[1] + a[2]*b[2] + a[3]*b[3]+a[4]*b[4]
 
-cross{T}(a::FixedVector{2, T}, b::FixedVector{2, T}) = a[1]*b[2]-a[2]*b[1]
+#cross{T}(a::FixedVector{2, T}, b::FixedVector{2, T}) = a[1]*b[2]-a[2]*b[1] # not really used!?
 cross{T}(a::FixedVector{3, T}, b::FixedVector{3, T}) = typeof(a)(
     a[2]*b[3]-a[3]*b[2],
     a[3]*b[1]-a[1]*b[3],
