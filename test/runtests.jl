@@ -421,12 +421,16 @@ facts("Matrix Math") do
 				fmm = inv(mfs)
 				@fact isapprox(fmm, mm)  --> true
 			end
-		end
+		else
+            context("Matrix{$i, $j} * Matrix{$i, $j}") do
+                @fact_throws DimensionMismatch mfs * mfs
+            end
+        end
 
 		context("transpose M") do
 			mm = m'
-			#fmm = mfs'
-			#@fact isapprox(fmm, mm)  --> true
+			fmm = mfs'
+			@fact isapprox(fmm, mm)  --> true
 		end
 	end
 end
