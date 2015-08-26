@@ -51,6 +51,17 @@ facts("Array of FixedArrays") do
         @fact minimum(d) --> RGB(typemin(Float64))
     end
 
+    context("array ops") do
+        af = a + 1f0     
+        bf = b + 1f0
+        for elem in af 
+            @fact a[1] + 1f0 --> elem
+        end
+        for elem in bf 
+            @fact b[1] + 1f0 --> elem
+        end
+    end
+
 end
 
 
