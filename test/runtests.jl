@@ -185,6 +185,7 @@ v2 = Vec(6.0,5.0,4.0)
 
 facts("Indexing") do
 	context("FixedVector") do
+        @fact setindex(v1, 88.9, 1) --> Vec(88.9,2.0,3.0)
 		@fact v1[1] --> 1.0
 		@fact v1[2] --> 2.0
         @fact v1[3] --> 3.0
@@ -202,6 +203,12 @@ facts("Indexing") do
         (13,14,15,16)
     )
     context("FixedMatrix") do
+        @fact setindex(m, 42.0, 2,2) --> Mat{4,4,Int}(
+        (1,2,3,4),
+        (5,42.0,7,8),
+        (9,10,11,12),
+        (13,14,15,16)
+    )
         @fact m[1] --> 1
         @fact m[2] --> 2
         @fact m[10] --> 10
