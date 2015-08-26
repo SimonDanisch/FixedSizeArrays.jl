@@ -33,14 +33,4 @@ row{R, T}(a::Mat{R, 3, T}, j::Int) = (a.(1)[1][j], a.(1)[2][j], a.(1)[3][j])
 row{R, T}(a::Mat{R, 4, T}, j::Int) = (a.(1)[1][j], a.(1)[2][j], a.(1)[3][j], a.(1)[4][j],)
 
 
-immutable SetindexFunctor{T <: FixedArray, V, N} <: Func{1}
-	target::T
-	value::V
-	index::NTuple{N, Int}
-end
-
-function call(sf::SetindexFunctor, i::Int...)
-	sf.index == i && return sf.value
-	sf.target[i...]
-end
 setindex(a::FixedArray, value, index::Int...) = map(SetindexFunctor(a, value, index), typeof(a))
