@@ -52,6 +52,7 @@ facts("Constructor FixedVectorNoTuple") do
         context("$T") do
             r = rand(T)
             x = RGB{Int}[RGB(1) for i=1:10]
+            @fact RGB{Float32}(["0.222", "9.8822", "29.999"]) --> RGB{Float32}(0.222, 9.8822, 29.999)
             @fact typeof(map(RGB{Float32}, x))  --> Vector{RGB{Float32}}
             @fact RGB{T}(r)                     --> RGB(r,r,r)
             @fact RGB{T}([r,r,r])               --> RGB(r,r,r)
@@ -81,6 +82,9 @@ facts("Constructor ") do
                 rand_range2 = ET2(1):ET2(10)
                 rn = rand(rand_range, N)
                 v0 = VT(rn)
+                # parse constructor:
+                @fact VT{N, ET}(join(map(string, rn), " ")) --> v0
+                @fact VT{N, ET2}(join(map(string, rn), " ")) --> VT{N, ET2}(v0)
                 # multi constructor
                 v1 = VT{N, ET}(rn...)
                 @fact v1 --> v0
