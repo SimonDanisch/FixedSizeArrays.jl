@@ -14,7 +14,14 @@ include("ops.jl")
 include("array_of_fixedsize.jl")
 include("conversion.jl")
 
-
+# put them here due to #JuliaLang/julia#12814
+# most common FSA types
+immutable Vec{N, T} <: FixedVector{N, T}
+    _::NTuple{N, T}
+end
+immutable Point{N, T} <: FixedVector{N, T}
+    _::NTuple{N, T}
+end
 
 export FixedArray
 export FixedVector
@@ -22,7 +29,7 @@ export FixedMatrix
 export MutableFixedArray
 export MutableFixedVector
 export MutableFixedMatrix
-export Mat
+export Mat, Vec, Point
 
 export unit
 export normalize
