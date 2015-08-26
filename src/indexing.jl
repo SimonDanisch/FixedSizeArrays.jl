@@ -1,56 +1,33 @@
-@inline getindex{T,SZ}(A::FixedArray{T, 1, SZ}, i::Int) = A.(i)
-@inline getindex{T,N,SZ}(A::FixedArray{T, N, SZ}, inds::Real...) = A.(sub2ind(size(A)::NTuple{N, Int}, inds...))
+getindex{T <: FixedVector}(x::T, i::Union(Range, Integer)) = x.(1)[i]
 
-function getindex{T, SZ}(A::FixedArray{T, 2, SZ}, i::Real, j::UnitRange)
-    FixedVector{T, length(j)}(
-        [A[i, k] for k in j]...
-    )
-end
-function getindex{T, SZ}(A::FixedArray{T, 2, SZ}, j::UnitRange, i::Real)
-    FixedVector{T, length(j)}(
-        [A[k, i] for k in j]...
-    )
-end
+getindex{T <: FixedVectorNoTuple}(x::T, i::Integer) = x.(i)
 
-immutable IndexFunctorTuple{T, T2} <: Func{1}
-    indexes::T
-    target::T2
-end
-call(f::IndexFunctorTuple, i) = f.target[f.indexes[i]]
+
+getindex{N, M, T}(a::Mat{N, M, T}, i::Range, j::Int) = ntuple(IndexFunc(a, j), Val{length(i)})::NTuple{length(i), T}
+
+getindex{N, M, T}(a::Mat{N, M, T}, i::Int, j::Union(Range, Int)) = a.(1)[j][i]
+getindex{N, M, T}(a::Mat{N, M, T}, i::Int) = a[ind2sub((N,M), i)...]
+
+
+
 function getindex{T <: FixedArray, TuPl <: Tuple}(A::T, I::Type{TuPl})
     range = TuPl.parameters[1] #Of form Tuple{1:3}
     map(IndexFunctorTuple(range, A), FixedVector{eltype(A), length(range)})
 end
-immutable IndexFunctor{T} <: Func{1}
-    args1::T
-end
-call(f::IndexFunctor, i) = f.args1[i] 
-getindex(A::FixedArray, I::FixedArray) = map(IndexFunctor(A), I)
 
-#Wrapper 
-
-@generated function row{T, Column, Row}(A::FixedMatrix{T, Row, Column}, i::Integer)
-    fields = [:(A[i,$j]) for j=1:Column]
-    returntype = gen_fixedsizevector_type((Column,), A.mutable)
-    :($returntype($(fields...)))
-end
-@generated function column{T, Column, Row}(A::FixedMatrix{T, Row, Column}, j::Integer)
-    fields = [:(A[$i,j]) for i=1:Row]
-    returntype = gen_fixedsizevector_type((Row,), A.mutable)
-    :($returntype($(fields...)))
-end
-
-@generated function row{T, Column, Row, VT}(A::FixedMatrix{T, Row, Column}, i::Integer, t::Type{VT})
-    fields = [:(A[i,$j]) for j=1:Column]
-    :(VT($(fields...)))
-end
-@generated function column{T, Column, Row, VT}(A::FixedMatrix{T, Row, Column}, j::Integer, t::Type{VT})
-    fields = [:(A[$i,j]) for i=1:Row]
-    :(VT($(fields...)))
-end
+getindex(A::FixedArray, I::Union(NTuple, FixedArray)) = map(IndexFunctor(A), I)
 
 
-function row{T, N}(v::FixedVector{T, N})
-    convert(FixedMatrix{T, 1, N}, v)
-end
-column{T, N}(v::FixedVector{T, N}) = v
+row{N, T}(v::FixedVector{N, T}) = Mat{1, N, T}(v...)
+row{N, T}(v::FixedVector{N, T}, i::Int) = (v[i],)
+
+column{N, T}(v::FixedVector{N, T}) = v
+
+
+column{R, C, T}(a::Mat{R, C, T}, i::Union(Range, Int)) = a.(1)[i]
+
+row{R, C, T}(a::Mat{R, C, T}, j::Int) = ntuple(IndexFunc(a, j), Val{C})::NTuple{C, T}
+row{R, T}(a::Mat{R, 1, T}, j::Int) = (a.(1)[1][j],)
+row{R, T}(a::Mat{R, 2, T}, j::Int) = (a.(1)[1][j], a.(1)[2][j])
+row{R, T}(a::Mat{R, 3, T}, j::Int) = (a.(1)[1][j], a.(1)[2][j], a.(1)[3][j])
+row{R, T}(a::Mat{R, 4, T}, j::Int) = (a.(1)[1][j], a.(1)[2][j], a.(1)[3][j], a.(1)[4][j],)

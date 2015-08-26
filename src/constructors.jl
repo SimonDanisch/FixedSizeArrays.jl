@@ -1,145 +1,145 @@
+type_name(fsa) = :($(symbol(fsa.name)))
 
-# helper function for creating names.
-tuple_to_string(t::@compat(Tuple{Vararg{Any}}), sep::AbstractString) = foldl((v0,d)-> string(v0)*sep*string(d), t)
+function size_or{FSA <: FixedArray}(::Type{FSA}, SZ)
+    fsa = fixedsizearray_type(FSA)
+    s  = tuple(fsa.parameters[3].parameters...)
+    any(sz -> isa(sz, TypeVar), s) ? SZ : s
+end
+function eltype_or{FSA <: FixedArray}(::Type{FSA}, ElType)
+    fsa = fixedsizearray_type(FSA)
+    s   = fsa.parameters[1]
+    isa(s, TypeVar) ? ElType : s
+end
 
-# Different base names for different dimensionalities...this is definitely a trade off between commonly used names and homogenity.
-vecname(sz::@compat(Tuple{Integer, Integer, Vararg{Integer}}), mutable::Bool, basename::AbstractString="FSArray") = symbol((mutable?"M":"")*basename*tuple_to_string(sz, "x"))
-vecname(sz::@compat(Tuple{Integer, Integer}), mutable::Bool, basename::AbstractString="Matrix")              = symbol((mutable?"M":"")*basename*tuple_to_string(sz, "x"))
-vecname(sz::@compat(Tuple{Integer}), mutable::Bool, basename::AbstractString="Vec")                         = symbol((mutable?"M":"")*basename*string(first(sz)))
 
-
-function fixedarray_type_expr(typename::Symbol, SIZE::@compat(Tuple{Vararg{Integer}}), mutable::Bool, fields::Function=fieldname)
-    len = prod(SIZE)
-    fields_names        = [fields(i) for i=1:len]
-    fields_types        = [Expr(:(::), fields(i), :T) for i=1:len]
-    NDim                = length(SIZE)
-
-    singlevaluedconstr  = len == 1 ? :() : quote
-        $typename(x::Real) = $typename($(ntuple(_->:(x), len)...))
-        call{T}(::Type{$typename{T}}, x::Real) = (x = convert(T, x) ;$typename($(ntuple(_->:(x), len)...)))
-        call{T, S <: AbstractString}(::Type{$typename{T}}, x::Vector{S}) = $typename($(ntuple(i->:(parse(T, x[$i])), len)...))
-    end
-    SIZE = Tuple{SIZE...}
-    typ_expr = mutable ? quote
-        type $(typename){T} <: MutableFixedArray{T, $NDim, $SIZE}
-            $(fields_types...)
+@generated function call{FSA <: FixedArray, T1 <: FixedArray}(::Type{FSA}, a::T1, b...)
+    SZ      = size_or(FSA, nothing)
+    ElType  = eltype_or(FSA, eltype(T1))
+    a_expr  = :( a )
+    if SZ != nothing
+        if (prod(SZ) > (length(T1) + length(b)))
+            throw(DimensionMismatch("$FSA is too small, can not be constructed from array $a and $b arguments"))
+        elseif prod(SZ) < length(T1) && isempty(b) #shrinking constructor, e.g. Vec3(Vec4(...))
+            a_expr = :( a[1:$(prod(SZ))] )
         end
-        $singlevaluedconstr
-        
-    end : quote 
-        immutable $(typename){T} <: FixedArray{T, $NDim, $SIZE}
-            $(fields_types...)
+    end
+    if isempty(b)
+        if ElType != eltype(T1)
+            return :( $FSA(map($ElType, $a_expr)...) )
+        else
+            return :( $FSA($a_expr...) )
         end
-        $singlevaluedconstr
+    else
+        return :( $FSA(a..., b...) )
     end
 end
-# maps the dimension of vectors always to (length,)
-flatten_dimension(SIZE) = SIZE
-flatten_dimension(SIZE::Tuple{Int, Int}) = any(x->x==1, SIZE) ? prod(SIZE) : SIZE
 
-gen_fixedsizevector_type(SIZE, mutable::Bool) = gen_fixedsizevector_type((SIZE.parameters...), mutable)
-function gen_fixedsizevector_type(SIZE::@compat(Tuple{Vararg{Integer}}), mutable::Bool)
-    typename = vecname(SIZE, mutable)
-    # if already exists, there's nothing to be done here
-    isdefined(FixedSizeArrays, typename) && return typename
-    expr = fixedarray_type_expr(typename, SIZE, mutable)
-    #Call the type into existence
-    eval(FixedSizeArrays, expr)
-    #return name of type
-    typename
+immutable ParseFunctor{T, S <: AbstractString} <: Func{1}
+    t::Type{T}
+    a::Vector{S}
 end
-
-#General constructor for arbitrary fixedsizearrays
-@generated function call{T, NDim, SIZE}(t::Type{FixedArray{T, NDim, SIZE}}, data::T...)
-    N = length(data)
-    @assert prod(SIZE.parameters) == N "not the right dimension"
-    !t.abstract && return :(t(data...)) # return if type is known and not abstract
-    typename = gen_fixedsizevector_type(SIZE, t.mutable)
-    :($typename(data...))
-end
-immutable ConstFunctor{T} <: Func{1}
-    args::T
-end
-call(f::ConstFunctor, i) = f.args
+call{T}(pf::ParseFunctor{T}, i::Int) = parse(T, pf.a[i])
+call(pf::ParseFunctor{Nothing}, i::Int) = parse(pf.a[i])
 
 
 
-nvec{T <: AbstractArray}(x::T)        = FixedArray(x)
-nvec{T}(x::T...)                      = FixedArray{T, 1, (length(x),)}(x)
-nvec{T}(SIZE::@compat(Tuple{Vararg{Integer}}), x::T...) = FixedArray{T, length(SIZE), SIZE}(x)
-
-
-macro gen_fixed_size_vector(basename, fields, N, mutable)
-    # bring the sugar back
-    fields = Symbol[elem.args[1] for elem in fields.args]
-    fieldfunction = i->fields[i]
-    N      = (N.args[1]):(N.args[2])
-    expr   = [begin
-        typename = vecname((i,), mutable, basename)
-        fixedarray_type_expr(typename, (i,), mutable, fieldfunction) 
-    end for i in N]
-    esc(Expr(:block, expr...))
-end
-
-
-function gen_fixed_size_matrix(M, N, mutable)
-    # bring the sugar back
-    expr = []
-    for i in M, j in N
-        typename = vecname((i,j), mutable)
-        push!(expr, fixedarray_type_expr(typename, (i,j), mutable))
-        push!(expr, Expr(:export, typename))
+@generated function call{FSA <: FixedArray, T <: Array}(::Type{FSA}, a::T)
+    if eltype(a) <: AbstractString
+        ElType = eltype_or(FSA, Nothing)
+        return :(map(ParseFunctor($ElType, a), FSA)) # can't be defined in another method as it leads to lots of ambigouity with the default constructor
     end
-
-    eval(FixedSizeArrays, Expr(:block, expr...))
+    SZ     = size_or(FSA, :(size(a)))
+    ElType = eltype_or(FSA, eltype(a))
+    expr = :($FSA(fill_tuples((sz, i...)->$ElType(a[i...]), $SZ)))
+    if FSA <: FixedVectorNoTuple
+        expr = :($FSA(a...))
+    end
+    quote
+        $SZ != size(a) && throw(DimensionMismatch("size of $FSA is not fitting array $(typeof(a)), with size: $(size(a))"))
+        $expr
+    end
 end
 
-immutable RandFunc{T} <: Func{1} 
-    range::Range{T}
+call{FSA <: FixedVectorNoTuple}(::Type{FSA}, a::Tuple, b::Tuple...) = error("$FSA can't be constructed from $a")
+call{FSA <: FixedVectorNoTuple}(::Type{FSA}, a::Tuple) = FSA(a...)
+
+call{FSA <: FixedArray, T}(::Type{FSA}, a::T..., ) = FSA(a)
+
+
+
+@generated function call{FSA <: FixedArray, X}(::Type{FSA}, a::X)
+    SZ      = size_or(FSA, (1,))
+    ElType  = eltype_or(FSA, a)
+    Len     = prod(SZ)
+    T_N     = FSA
+    if a <: Tuple # a::Tuple is ambigous to default constructor, so need to do it here
+        tuple_expr = any(x-> x!=ElType, a.parameters) ? :( map($ElType, a) ) : :(a)
+        if FSA <: FixedVectorNoTuple
+            return :( $T_N($tuple_expr...) )
+        else
+            return :($T_N($tuple_expr))
+        end
+    end
+    if FSA <: FixedVectorNoTuple
+        return :($T_N($(ntuple(i-> :($ElType(a)), Len)...)))
+    else
+        expr = fill_tuples_expr((inds...)->:($ElType(a[1])), SZ)
+        return :($T_N($expr))
+    end
 end
-call{T}(rf::RandFunc{T}, x) = rand(rf.range)
+
+@generated function call{FSA <: FixedArray}(::Type{FSA}, a...)
+    SZ     = size_or(FSA, (length(a),))
+    ElType = eltype_or(FSA, promote_type(a...))
+    if FSA <: FixedVectorNoTuple
+        length(a) != prod(SZ) && throw(DimensionMismatch("can't construct $FSA with $(length(a)) arguments. Args: $a"))
+        return :($FSA(map($ElType, a)...))
+    else
+        all(x-> x <: Tuple, a) && return :( $FSA(a) ) # TODO be smarter about this
+        any(x-> x != ElType, a) && return :($FSA(map($ElType, a)))
+        return :($FSA(a))
+    end
+end
+
+
+const_fill(T, sym, SZ, inds...)        = :($T($sym[1]))
+flat_fill(T, sym, SZ, inds...)         = :($T($sym[$(sub2ind(SZ, inds...))]))
+array_fill(T, sym, SZ, inds...)        = :($T($sym[1][$(inds...)]))
+hierarchical_fill(T, sym, SZ, inds...) = :($T($sym[$(inds...)]))
+
+
+_fill_tuples_expr(inner::Function, SZ::Tuple{Int}, inds...) =
+    :(tuple($(ntuple(i->inner(i, inds...), SZ[1])...)))
+_fill_tuples_expr{N}(inner::Function, SZ::NTuple{N, Int}, inds...) =
+    :(tuple($(ntuple(i->_fill_tuples_expr(inner, SZ[1:end-1], i, inds...),SZ[end])...)))
+fill_tuples_expr(inner::Function, SZ::Tuple) = _fill_tuples_expr(inner, SZ)
+
+
+_fill_tuples(inner, originalSZ, SZ::Tuple{Int}, inds::Int...) =
+    ntuple(i->inner(SZ, i, inds...), Val{SZ[1]})
+_fill_tuples{N}(inner, originalSZ, SZ::NTuple{N, Int}, inds::Int...) =
+    ntuple(i->_fill_tuples(inner, originalSZ, SZ[1:end-1], i, inds...), Val{SZ[end]})
+fill_tuples{N}(inner, SZ::NTuple{N, Int}) = _fill_tuples(inner, SZ, SZ)
+
+
+
+
+zero{FSA <: FixedArray}(::Type{FSA}) = map(ConstFunctor(zero(eltype(FSA))), FSA)
+one{FSA <: FixedArray}(::Type{FSA})  = map(ConstFunctor(one(eltype(FSA))), FSA)
+eye{FSA <: FixedArray}(::Type{FSA})  = map(EyeFunc(size(FSA), eltype(FSA)), FSA)
+unit{FSA <: FixedVector}(::Type{FSA}, i::Integer) = map(UnitFunctor(i, eltype(FSA)), FSA)
 
 function rand{FSA <: FixedArray}(x::Type{FSA})
-    et = eltype(FSA)
-    if et <: FloatingPoint
-        map(RandFunc(zero(et):one(et)), FSA)
-    else
-        map(RandFunc(typemin(et):typemax(et)), FSA)
-    end
+    T = eltype(FSA)
+    T <: applicable(eps, T) && return map(RandFunctor(zero(T) : eps(T) : one(T)), FSA) # this case is basically for FixedPointNumbers
+    map(RandFunctor(typemin(T) : typemax(T)), FSA)
 end
-rand{FSA <: FixedArray}(x::Type{FSA}, range::Range) = map(RandFunc(range), FSA)
-
-zero{FSA <: FixedArray}(::Type{FSA})   = map(ConstFunctor(zero(eltype(FSA))), FSA)
-one{FSA <: FixedArray}(::Type{FSA})    = map(ConstFunctor(one(eltype(FSA))), FSA)
-
-immutable EyeFunc{NDim} <: Func{1}
-    size::NTuple{NDim, Int}
-    eltype::DataType
-end
-function call{T}(ef::EyeFunc{T}, x)
-    i,j = ind2sub(ef.size, x)
-    i==j?one(ef.eltype) : zero(ef.eltype)
-end
-eye{FSA <: FixedArray}(::Type{FSA}) = map(EyeFunc(size(FSA), eltype(FSA)), FSA)
-immutable UnitFunctor <: Func{1}
-    i::Int
-    eltype::DataType
-end
-function call(ef::UnitFunctor, x)
-    ef.i==x ? one(ef.eltype) : zero(ef.eltype)
-end
-unit{FSA <: FixedVector}(::Type{FSA}, i::Integer) = map(UnitFunctor(i, eltype(FSA)), FSA)
-export unit
-#=
-    Base.call{AT <: Array}(::Type{$(typename)}, A::AT) = $(typename)($([:(A[$i]) for i=1:len]...))
-    $(typename)($(fields_names...)) = $(typename)(promote($(fields_names...))...)
-    type $(mutabletypename){T} <: MutableFixedArray{T, $NDim, $SIZE}
-        $(fields_types...)
-        #$(mutabletypename)($(fields_names...)) = new($(fields_names...))
-    end
-    Base.call{AT <: Array}(::Type{$(mutabletypename)}, A::AT) = $(mutabletypename)($([:(A[$i]) for i=1:len]...))
-    $(mutabletypename)($(fields_names...)) = $(mutabletypename)(promote($(fields_names...))...)
-end
-=#
+rand{FSA <: FixedArray}(x::Type{FSA}, range::Range) = map(RandFunctor(range), FSA)
 
 
+#conversion
+convert{T <: Tuple}(::Type{T}, x::Real)                     =  ntuple(ConstFunctor(eltype(T)(x)), Val{length(T.parameters),})
+convert{T <: Tuple, FSA <: FixedArray}(::Type{T}, x::FSA)   = map(eltype(T), x.(1)[1:length(T.parameters)])
+convert{T <: FixedArray}(t::Type{T}, f::T)                  = f
+convert{FSA1 <: FixedArray}(t::Type{FSA1}, f::FixedArray) =
+    map(ConversionIndexFunctor(f, eltype_or(FSA1, eltype(typeof(f)))), FSA1)

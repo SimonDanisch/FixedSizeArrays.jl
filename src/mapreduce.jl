@@ -1,70 +1,54 @@
-#simple reduce function
-function reduce(f::Func{2}, a::FixedArray)
-    alength = length(a)
-    alength == 1 && return a[1]
-    s = f(a[1], a[2])
-    for i=3:alength
-        s = f(s, a[i])
+
+function reduce{FSA <: FixedArray}(f::Func{2}, a::FSA)
+    red = f(a[1], a[2])
+    @inbounds for i=3:length(a)
+        red = f(red, a[i])
     end
-    s
+    red
 end
-
-# either gives an expression to index into the fixedsizearray, or just inserts the constant
-accessor{T <: FixedArray}(arg::Type{T}, i::Integer, name::Symbol) = :($name[$i])
-accessor{T                      }(arg::Type{T}, i::Integer, name::Symbol) = :($name)
-
-
-#To simplify things, map_expression assumes that the argument names of the staged functions are f for the callable and a,b,c,.. for the other arguments.
-function map_expression{F <: Func, FSA <: FixedArray}(f::Type{F}, fsa::Type{FSA}, args...)
-    Cardinality = first(super(F).parameters)
-    @assert length(args) == Cardinality "cardinality of callable doesn't match arguments. Callable: $Cardinality, args: $(length(args))"
-    argnames = [:a, :b, :c, :d, :e, :f, :g] # must be the same as the arguments of map
-    #call f for every index in FSA, with all the args.
-    expr = ntuple(length(FSA)) do i 
-        quote
-            f( $(ntuple(j-> accessor(args[j], i, argnames[j]), Cardinality)...)) 
-        end
+function Base.reduce{R,C,T}(f::Base.Func{2}, a::Mat{R,C,T})
+    red = reduce(f, a.(1)[1])
+    @inbounds for i=2:C
+        red = f(red, reduce(f, a.(1)[i]))
     end
-    # the type FSA from map can't be used, because it contains the parameter already (e.g. FSA{Int}), which results in a conversion.
-    # map should return a fixedsize array with the return type of f, so the parameter has to be stripped of FSA.
-    type_name = :($(symbol(name(fsa)))) # custom types are not known in the Module FixedSizeArray, but in Main
-    #eval(type_name)
-    :(FSA($(expr...)))
+    red
 end
 
-@generated function map{FSA <: FixedArray, F <: Func{1}}(f::Union(Type{F}, F), a::Type{FSA})
-    :(FSA($([:(f($i)) for i=1:length(FSA)]...)))
-end
-@generated function map{FSA <: FixedArray, F <: Func{2}}(f::Union(Type{F}, F), a::Type{FSA})
-    #@assert ndims(FSA) == 2
-    :(FSA($([:(f($i, $j)) for i=1:size(FSA,1), j=1:size(FSA,2)]...)))
-end
-
-@generated function map{FSA <: FixedArray}(f::Func{1}, a::FSA)
-    map_expression(f, a, a)
-end
-@generated function map{FSA <: FixedArray}(f::Func{2}, a::FSA, b::FSA)
-    map_expression(f, a, a, b)
-end
-@generated function map{FSA <: FixedArray, REAL <: Real}(f::Func{2}, a::FSA, b::REAL)
-    map_expression(f, a, a, b)
-end
-@generated function map{FSA <: FixedArray, REAL <: Real}(f::Func{2}, a::REAL, b::FSA)
-    map_expression(f, b, a, b)
-end
-
-
-
-@generated function product(f, it...)
-    variables       = ntuple(fieldname, length(it))
-    iterator_access = Expr(:block, [:($(variables[i]) = it[$i]) for i=1:length(it)]...)
-    for_expression  = Expr(:for, 
-        iterator_access, 
-        :(f($(variables...)))
-    )
-    quote
-    $for_expression
-    nothing
+function reduce{FSA <: FixedArray}(f::Func{2}, a::FSA)
+    red = f(a[1], a[2])
+    for i=3:length(a)
+        red = f(red, a[i])
     end
+    red
 end
 
+index_expr{T <: Number}(::Type{T}, i::Int, inds::Int...) = :($(symbol("arg$i")))
+index_expr{T <: FixedArray}(::Type{T}, i::Int, inds::Int...) = :($(symbol("arg$i"))[$(inds...)])
+
+inner_expr{N}(args::NTuple{N, DataType}, inds::Int...) = :( F($(ntuple(i -> index_expr(args[i], i, inds...), N)...)) )
+
+# This solves the combinational explosion from FixedVectorNoTuple while staying fast.
+constructor_expr{T <: FixedArray}(::Type{T}, tuple_expr::Expr) = :(FSA($tuple_expr))
+constructor_expr{T <: FixedVectorNoTuple}(::Type{T}, tuple_expr::Expr) = :(FSA($(tuple_expr)...))
+
+
+@generated function map{FSA <: FixedArray}(F::Func{2}, arg1::FSA, arg2::FSA)
+    inner = fill_tuples_expr((inds...) -> inner_expr((arg1, arg2), inds...), size(FSA))
+    constructor_expr(FSA, inner)
+end
+@generated function map{FSA <: FixedArray}(F::Func{2}, arg1::FSA, arg2::Number)
+    inner = fill_tuples_expr((inds...) -> inner_expr((arg1, arg2), inds...), size(FSA))
+    constructor_expr(FSA, inner)
+end
+@generated function map{FSA <: FixedArray}(F::Func{2}, arg1::Number, arg2::FSA)
+    inner = fill_tuples_expr((inds...) -> inner_expr((arg1, arg2), inds...), size(FSA))
+    constructor_expr(FSA, inner)
+end
+@generated function map{FSA <: FixedArray}(F::Func, ::Type{FSA})
+    inner = fill_tuples_expr((inds...) -> :(F($(inds...))), size(FSA))
+    constructor_expr(FSA, inner)
+end
+@generated function map{FSA <: FixedArray}(F::Func{1}, arg1::FSA)
+    inner = fill_tuples_expr((inds...) -> :( F(arg1[$(inds...)]) ), size(FSA))
+    constructor_expr(FSA, inner)
+end
