@@ -36,5 +36,6 @@ export normalize
 export row
 export column
 export MatMulFunctor
+export setindex
 
 end
