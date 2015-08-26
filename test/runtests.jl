@@ -429,8 +429,8 @@ facts("Matrix Math") do
 
 		context("transpose M") do
 			mm = m'
-			#fmm = mfs'
-			#@fact isapprox(fmm, mm)  --> true
+			fmm = mfs'
+			@fact isapprox(fmm, mm)  --> true
 		end
 	end
 end
