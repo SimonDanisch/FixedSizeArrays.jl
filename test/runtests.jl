@@ -16,8 +16,10 @@ typealias Vec2d Vec{2, Float64}
 typealias Vec3d Vec{3, Float64}
 typealias Vec4d Vec{4, Float64}
 typealias Vec3f Vec{3, Float32}
+facts("FixedSizeArrays") do
 
-facts("Array of FixedArrays") do
+context("Array of FixedArrays") do
+
     N = 100
     a = Point{3, Float32}[Point{3, Float32}(0.7132) for i=1:N]
     b = RGB{Float32}[RGB{Float32}(52.293) for i=1:N]
@@ -59,7 +61,7 @@ facts("Array of FixedArrays") do
 end
 
 
-facts("Constructor FixedVectorNoTuple") do
+context("Constructor FixedVectorNoTuple") do
     for T=[Float32, Float64, Int, Uint, Uint32, Uint8]
         context("$T") do
             r = rand(T)
@@ -87,7 +89,7 @@ facts("Constructor FixedVectorNoTuple") do
 end
 
 # A little brutal, but hey.... Better redudantant tests, than not enough tests
-facts("Constructor ") do
+context("Constructor ") do
     for N=1:3:10
         context("construction, conversion, $N") do
             for VT=[Point, Vec, Normal], VT2=[Normal, Vec, Point], ET=[Float32, Int, Uint, Float64], ET2=[Float64, Uint, Int, Float32]
@@ -161,7 +163,7 @@ end
 
 
 
-facts("Constructors") do
+context("Constructors") do
 	context("FixedVector: unary, from FixedVector") do
 		@fact typeof(Vec3f(1,1,1))     --> Vec{3, Float32}
 		@fact typeof(Vec3f(1,1f0,1))   --> Vec{3, Float32}
@@ -183,7 +185,7 @@ v2 = Vec(6.0,5.0,4.0)
 v1 = Vec(1.0,2.0,3.0)
 v2 = Vec(6.0,5.0,4.0)
 
-facts("Indexing") do
+context("Indexing") do
 	context("FixedVector") do
         @fact setindex(v1, 88.9, 1) --> Vec(88.9,2.0,3.0)
 		@fact v1[1] --> 1.0
@@ -191,7 +193,9 @@ facts("Indexing") do
         @fact v1[3] --> 3.0
         @fact v1[1:3] --> (1.0, 2.0, 3.0)
         @fact v1[1:2] --> (1.0, 2.0)
-		@fact v1[1:1] --> (1.0,)
+        @fact v1[1:1] --> (1.0,)
+        @fact v1[(1,2)] --> (1.0,2.0)
+        @fact v1[(2,1)] --> (2.0,1.0)
 		@fact_throws BoundsError v1[-1]
 		@fact_throws BoundsError v1[0]
 		@fact_throws BoundsError v1[4]
@@ -227,7 +231,7 @@ facts("Indexing") do
 end
 
 
-facts("Ops") do
+context("Ops") do
 	context("Negation") do
 		@fact -v1 --> Vec(-1.0,-2.0,-3.0)
 		@fact isa(-v1, Vec3d) --> true
@@ -302,7 +306,7 @@ end
 
 
 # type conversion
-facts("Conversion 2") do
+context("Conversion 2") do
     @fact isa(convert(Vec3f,v1), Vec3f)  --> true
 
     @fact isa(convert(Vector{Float64}, v1), Vector{Float64})  --> true
@@ -320,21 +324,23 @@ zeromat = Mat2d((0.0,0.0),(0.0,0.0))
 
 
 
-@fact length(Mat2d) --> 4
-@fact length(zeromat) --> 4
 
-@fact size(Mat2d) --> (2,2)
-@fact size(zeromat) --> (2,2)
+context("Matrix") do
+    
+    @fact length(Mat2d) --> 4
+    @fact length(zeromat) --> 4
 
-@fact zero(Mat2d) --> zeromat
+    @fact size(Mat2d) --> (2,2)
+    @fact size(zeromat) --> (2,2)
 
-for i=1:4, j=1:4
-	x1 = rand(i,j)
-	@fact Mat(x1') --> Mat(x1)'
-end
+    @fact zero(Mat2d) --> zeromat
+
+    for i=1:4, j=1:4
+        x1 = rand(i,j)
+        @fact Mat(x1') --> Mat(x1)'
+    end
 
 
-facts("Matrix") do
     v = Vec(1.0,2.0,3.0,4.0)
     r = row(v)
     c = column(v)
@@ -400,7 +406,7 @@ facts("Matrix") do
     @fact typeof(mfs) --> Mat4d
 end
 
-facts("Matrix Math") do
+context("Matrix Math") do
 	for i=1:4, j=1:4
 		v = rand(j)
 		m = rand(i,j)
@@ -477,7 +483,7 @@ kfs = abs(ffs)
 lfs = abs(-ffs)
 
 
-facts("Vector Math") do
+context("Vector Math") do
     context("all") do
         @fact isapprox(acfs, ac)  --> true
         @fact isapprox(bcfs, bc)  --> true
@@ -498,7 +504,7 @@ facts("Vector Math") do
     end
 end
 
-facts("Equality") do
+context("Equality") do
     @fact Vec{3, Int}(1) --> Vec{3, Float64}(1)
     @fact Vec{2, Int}(1) --> not(Vec{3, Float64}(1))
     @fact Vec(1,2,3) --> Vec(1.0,2.0,3.0)
@@ -551,7 +557,7 @@ const binaryOps = (
 
 
 
-facts("mapping operators") do
+context("mapping operators") do
      context("binary: ") do
         test1 = (Vec(1,2,typemax(Int)), Mat((typemin(Int),2,5), (2,3,5), (-2,3,6)), Vec{4, Float32}(0.777))
         test2 = (Vec(1,0,typemax(Int)), Mat((typemin(Int),77,1), (2,typemax(Int),5), (-2,3,6)), Vec{4, Float32}(-23.2929))
@@ -595,7 +601,7 @@ facts("mapping operators") do
         end
     end
 end
-
+end
 
 
 FactCheck.exitstatus()
