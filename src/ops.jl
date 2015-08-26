@@ -155,7 +155,7 @@ end
 
 
 # Matrix
-(*){T, M, N, O, K}(a::FixedMatrix{M, N, T}, b::FixedMatrix{O, K, T}) = error("DimensionMissmatch: $N != $O in $(typeof(a)) and $(typeof(b))")
+(*){T, M, N, O, K}(a::FixedMatrix{M, N, T}, b::FixedMatrix{O, K, T}) = throw(DimensionMismatch("$N != $O in $(typeof(a)) and $(typeof(b))"))
 
 @generated function (*){T, M, N, K}(a::Mat{M, N, T}, b::Mat{N, K, T})
     expr = [
@@ -169,7 +169,7 @@ end
 
 @generated function (*){T, FSV <: FixedVector, R, C}(a::Mat{R, C, T}, b::FSV)
     N = length(b)
-    N != C && error("DimensionMissmatch: $N != $C for $a, $b")
+    N != C && throw(DimensionMismatch("$N != $C for $a, $b"))
     expr = [:(dot(row(a, $i), b.(1))) for i=1:R]
     if N == R # TODO, remove this and just always return FSV. Currently this would mean something like symbol(FSV.name.name), as FSV == FSV{N, F}
         return :(FSV(tuple($(expr...))))
@@ -180,7 +180,7 @@ end
 
 @generated function (*){T, FSV <: FixedVector, C}(a::FSV, b::Mat{1, C, T})
     N = length(a)
-    N != C && error("DimensionMissmatch: $N != $R for $(typeof(a)), $(typeof(b))")
+    N != C && throw(DimensionMismatch("DimensionMissmatch: $N != $R for $(typeof(a)), $(typeof(b))"))
     expr = [:(tuple($([:(a[$i]*b[$j]) for j=1:C]...))) for i=1:C]
     :(Mat(tuple($(expr...))))
 end
