@@ -10,12 +10,7 @@ getindex{N, M, T}(a::Mat{N, M, T}, i::Int) = a[ind2sub((N,M), i)...]
 
 
 
-function getindex{T <: FixedArray, TuPl <: Tuple}(A::T, I::Type{TuPl})
-    range = TuPl.parameters[1] #Of form Tuple{1:3}
-    map(IndexFunctorTuple(range, A), FixedVector{eltype(A), length(range)})
-end
-
-getindex(A::FixedArray, I::Union(NTuple, FixedArray)) = map(IndexFunctor(A), I)
+getindex(A::FixedArray, I::Tuple) = map(IndexFunctor(A), I)
 
 
 row{N, T}(v::FixedVector{N, T}) = Mat{1, N, T}(v...)
