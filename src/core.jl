@@ -59,9 +59,18 @@ next(A::FixedArray, state::Integer) 				= (A[state], state+1)
 done(A::FixedArray, state::Integer) 				= length(A) < state
 
 
+#Most common fixed size array types:
+immutable Vec{N, T} <: FixedVector{N, T}
+    _::NTuple{N, T}
+end
+immutable Point{N, T} <: FixedVector{N, T}
+    _::NTuple{N, T}
+end
 immutable Mat{Row, Column, T} <: FixedMatrix{Row, Column, T}
     _::NTuple{Column, NTuple{Row, T}}
 end
+
+
 
 function show{R,C,T}(io::IO, m::Mat{R,C,T})
 	println(io, typeof(m), "(")
