@@ -7,6 +7,7 @@ end
 immutable Point{N, T} <: FixedVector{N, T}
     _::NTuple{N, T}
 end
+
 immutable Normal{N, T} <: FixedVector{N, T}
     _::NTuple{N, T}
 end
@@ -89,8 +90,7 @@ facts("Constructor ") do
                 rn = rand(rand_range, N)
                 v0 = VT(rn)
                 # parse constructor:
-                @fact VT{N, ET}(join(map(string, rn), " ")) --> v0
-                @fact VT{N, ET2}(join(map(string, rn), " ")) --> VT{N, ET2}(v0)
+                @fact VT{N, ET}(map(string, rn)) --> v0
                 # multi constructor
                 v1 = VT{N, ET}(rn...)
                 @fact v1 --> v0
