@@ -8,29 +8,27 @@
 #### This package is 0.4 only
 #### Packages that use FixedSizeArrays:
 [GeometryTypes.jl](https://github.com/JuliaGeometry/GeometryTypes.jl)
-[ColorTypes.jl](https://github.com/SimonDanisch/ColorTypes.jl)
 
 #### Usage and advantages:
 FixedSizeArrays is giving any composite type array like behavior by inheriting from FixedSizeArrays.
 So you can do something like this:
 ```Julia
-immutable RGB{T} <: FixedSizeVector{T, 3}
+immutable RGB{T} <: FixedVectorNoTuple{T, 3}
 r::T
 g::T
 b::T
 end
-Vec3(0) # constructor with 1 argument already defined. Actually, this only works if you created them
-#  with @gen_fixed_size_vector, due to ambiguity issues :(
-rand(Vec3{Int})+sin(Vec3(0,2,2)) # a lot of array functions are already defined
-immutable Mat3x3{T} FixedMatrix{T, 3,3}
-v_1::T
-...
-v_9::T
+immutable Vec{N, T} <: FixedVector{N, T} # defined in GeometryTypes.jl
+    _::NTuple{N, T}
 end
-eye(Mat3x3{Float32}) * rand(Vec3{Float32}) # will also "just work"
+Vec{3, Float32}(0) # constructor with 1 argument already defined
+rand(Vec{3, Int})+sin(Vec(0,2,2)) # a lot of array functions are already defined
+#There is also a matrix type
+eye(Mat{3,3,Float32}) * rand(Vec{3, Float32}) # will also "just work"
+a = Vec(1,2,3)[1:2] # returns (1,2)
 ```
 This is expendable to a lot of other areas.
-You can define color types (see ColorTypes.jl) the same way, and arbitrary other point types like normals, vertices etc.
+You can define color types the same way, and arbitrary other point types like normals, vertices etc.
 As they all inherit from FixedSizeArray, it's very easy to handle them in the same way.
 I'm using this for my GPU array types, which can take any fixedsizearray, if its a color, a point or what not, because I can be sure that all the important functions are defined and the GPU can handle them. 
 If we are able to to compile Julia directly to OpenCL, FixedSizeArrays will hopefully directly map to native OpenCL types.
@@ -42,7 +40,6 @@ Without FixedSizeArrays, this would end up in a lot of types which would all nee
 
 
 #### Roadmap
-* use tuple types, best with the new getindex changes (JuliaLang/julia#10525) in julia 0.4
 * improve coverage
 * incorperate https://github.com/StephenVavasis/Modifyfield.jl
 * improve API and consistency
@@ -52,19 +49,21 @@ Without FixedSizeArrays, this would end up in a lot of types which would all nee
 - [ ] Core Array
 	- [x] basic array interface
 	- [ ] Inherit from DenseArray (a lot of warnings is caused by this)
-	- [ ] use tuples as a basis
+	- [x] use tuples as a basis
 - [ ] Indexing:
 	- [x] multidimensional access
 	- [x] colon access for matrices
-	- [ ] multidimensional colon access
+	- [x] multidimensional colon access
 	- [ ] setindex!
 	- [ ] setindex!/getindex for arrays of FSA (e.g. easy acces to single fields) 
 	- [ ] access via dimension type (Red -> redchannel)
 - [ ] Constructor
 	- [x] generic constructor for arbitrary Nvectors
 	- [x] fast constructor for arbitrary types
+	- [x] parsing constructor e.g Vec{3, Float32}(["23.", "23.", "0.23"])
 	- [x] different constructors for ease of use (zero, eye, from other FSAs, etc...) (could be more)
-- [ ] Functions
+	- [ ] clean up constructor code (very messy since its hard to write constructors for abstract types)
+- [x] Functions
 	- [x] all kinds of unary/binary operators
 	- [x] matrix multiplication 
 	- [x] matrix functions (inv, transpose, etc...) (could be more)
