@@ -16,41 +16,32 @@ function fixedsizearray_type{FSA <: FixedArray}(::Type{FSA})
     ff = FSA
     while ff.name.name != :FixedArray
         ff = super(ff)
-        if ff == Any
-            error("Uncommon type hierarchy encountered. Please report issue on Github")
-        end
     end
     ff
 end
 isfullyparametrized{T}(::Type{T}) = !any(x-> isa(x, TypeVar), T.parameters)
 
+eltype{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})         = T
+eltype{T <: FixedArray}(A::Type{T})                 = eltype(fixedsizearray_type(T))
+eltype{T <: FixedArray}(A::T)                       = eltype(T)
 
-eltype{T,N,SZ}(A::FixedArray{T,N,SZ}) 				= T
-eltype{T,N,SZ}(A::Type{FixedArray{T,N,SZ}}) 		= T
-eltype{T <: FixedArray}(A::Type{T})                 = eltype(super(T))
-
-length{T, L}(A::FixedVector{L, T})           		= L
-
-length{T, M, N}(A::FixedMatrix{M, N, T})           	= M*N
-length{T,N,SZ}(A::FixedArray{T,N,SZ})           	= prod(SZ.parameters)::Int
 length{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})         = prod(SZ.parameters)::Int
-#This is soo bad. But a non fully parametrized abstract type doesn't get catched by the above function
-length{T <: FixedArray}(A::Type{T})                 = isfullyparametrized(T) ? length(super(T)) : prod(super(A).parameters[3].parameters)
+length{T <: FixedArray}(A::Type{T})                 = length(fixedsizearray_type(T))
+length{T <: FixedArray}(A::T)           	        = length(T)
 
 
 endof{T,N,SZ}(A::FixedArray{T,N,SZ})                = length(A)
 
 
-ndims{T,N,SZ}(A::FixedArray{T,N,SZ})            	= N
 ndims{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})          = N
-ndims{T <: FixedArray}(A::Type{T})            		= ndims(super(T))
-
-size{T,N,SZ}(A::FixedArray{T,N,SZ})             	= (SZ.parameters...)::NTuple{N, Int}
-size{T,N,SZ}(A::FixedArray{T,N,SZ}, d::Integer) 	= SZ.parameters[d]::Int
+ndims{T <: FixedArray}(A::Type{T})            		= ndims(fixedsizearray_type(T))
+ndims{T <: FixedArray}(A::T)                        = ndims(T)
 
 size{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})           = (SZ.parameters...)::NTuple{N, Int}
-size{T <: FixedArray}(A::Type{T})            		= size(super(T))
+size{T <: FixedArray}(A::Type{T})                   = size(fixedsizearray_type(T))
+size{T <: FixedArray}(A::T)                         = size(T)
 
+size{T <: FixedArray}(A::T, d::Integer)             = size(T, d)
 size{T <: FixedArray}(A::Type{T}, d::Integer) 		= size(T)[d]::Int
 
 # Iterator
