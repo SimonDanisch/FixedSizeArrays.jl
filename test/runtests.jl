@@ -70,6 +70,7 @@ facts("Constructor FixedVectorNoTuple") do
             @fact typeof(RGB(r,r,r))            --> RGB{T}
             @fact typeof(RGB{T}(1))             --> RGB{T}
             @fact typeof(RGB{T}(1,2,3))         --> RGB{T}
+            @fact ndims(RGB{T}(1,2,3))          --> 1
 
             @fact typeof(RGB{T}(1f0))           --> RGB{T}
             @fact typeof(RGB{T}(1f0,2f0,3f0))   --> RGB{T}
@@ -97,6 +98,7 @@ facts("Constructor ") do
                 @fact typeof(v1) --> VT{N, ET}
                 @fact length(v1) --> N
                 @fact eltype(v1) --> ET
+                @fact ndims(v1) --> 1
 
                 @fact length(typeof(v1)) --> N
                 @fact eltype(typeof(v1)) --> ET
@@ -406,18 +408,18 @@ facts("Matrix Math") do
 		if i == j
 			context("Matrix{$i, $j} * Matrix{$i, $j}") do
 				mm = m * m
-				#fmm = mfs * mfs
-				#@fact isapprox(fmm, mm)  --> true
+				fmm = mfs * mfs
+				@fact isapprox(fmm, mm)  --> true
 			end
 			context("det(M)") do
 				mm = det(m)
-				#fmm = det(mfs)
-				#@fact isapprox(fmm, mm)  --> true
+				fmm = det(mfs)
+				@fact isapprox(fmm, mm)  --> true
 			end
 			context("inv(M)") do
 				mm = inv(m)
-				#fmm = inv(mfs)
-				#@fact isapprox(fmm, mm)  --> true
+				fmm = inv(mfs)
+				@fact isapprox(fmm, mm)  --> true
 			end
 		end
 
