@@ -30,6 +30,7 @@ export MutableFixedArray
 export MutableFixedVector
 export MutableFixedMatrix
 export Mat, Vec, Point
+export @fsa
 
 export unit
 export normalize
