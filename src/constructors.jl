@@ -143,3 +143,26 @@ convert{T <: Tuple, FSA <: FixedArray}(::Type{T}, x::FSA)   = map(eltype(T), x.(
 convert{T <: FixedArray}(t::Type{T}, f::T)                  = f
 convert{FSA1 <: FixedArray}(t::Type{FSA1}, f::FixedArray) =
     map(ConversionIndexFunctor(f, eltype_or(FSA1, eltype(typeof(f)))), FSA1)
+
+
+
+macro fsa(expr)
+    if expr.head == :vect
+        result = Expr(:call, :Vec, expr.args...)
+    elseif expr.head == :hcat
+        result = Expr(:call, :Mat, [Expr(:tuple, a) for a in expr.args]...)
+    elseif expr.head == :vcat
+        if isa(expr.args[1], Expr) && expr.args[1].head == :row
+            cols = [Any[] for _=1:length(expr.args[1].args)]
+            for row in expr.args
+                for (j, a) in enumerate(row.args)
+                    push!(cols[j], a)
+                end
+            end
+            result = Expr(:call, :Mat, Expr(:tuple, [Expr(:tuple, col...) for col in cols]...))
+        else
+            result = Expr(:call, :Vec, expr.args...)
+        end
+    end
+    esc(result)
+end

@@ -18,6 +18,23 @@ typealias Vec4d Vec{4, Float64}
 typealias Vec3f Vec{3, Float32}
 facts("FixedSizeArrays") do
 
+context("fsa macro") do 
+    a = 1
+    a1 = @fsa([a,2,3]) 
+    a2 = @fsa([a 2 3])
+    a3 = @fsa([a;2;3])
+    a4 = @fsa([a 2;3 4])
+    a5 = @fsa([a 2 3;4 5 6])
+    a6 = @fsa([a 2;3 4;5 6])
+
+    @fact a1 --> Vec(a,2,3)
+    @fact a2 --> Mat((a,),(2,),(3,))
+    @fact a3 --> Mat(((a,2,3),))
+    @fact a4 --> Mat(((a,3),(2,4)))
+    @fact a5 --> Mat(((a,4),(2,5),(3,6)))
+    @fact a6 --> Mat(((a,3,5),(2,4,6)))
+end
+
 context("Array of FixedArrays") do
 
     N = 100
