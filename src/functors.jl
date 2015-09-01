@@ -52,9 +52,7 @@ immutable RowFunctor{M}
     mat::M
 end
 call(r::RowFunctor, i::Int) = row(r.mat, i)
-function ctranspose{R, C, T}(a::Mat{R, C, T})
-    Mat(ntuple(RowFunctor(a), Val{R}))
-end
+
 
 
 immutable SetindexFunctor{T <: FixedArray, V, N} <: Func{1}

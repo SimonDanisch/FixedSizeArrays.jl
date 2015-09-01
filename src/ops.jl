@@ -61,6 +61,9 @@ for op in binaryOps
     end)
 end
 
+function ctranspose{R, C, T}(a::Mat{R, C, T})
+    Mat(ntuple(RowFunctor(a), Val{R}))
+end
 
 dot{T <: FixedArray}(a::T, b::T) = sum(a.*b)
 

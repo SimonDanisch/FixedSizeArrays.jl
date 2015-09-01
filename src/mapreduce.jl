@@ -6,9 +6,9 @@ function reduce{FSA <: FixedArray}(f::Func{2}, a::FSA)
     end
     red
 end
-function Base.reduce{R,C,T}(f::Base.Func{2}, a::Mat{R,C,T})
+function Base.reduce(f::Base.Func{2}, a::FixedMatrix)
     red = reduce(f, a.(1)[1])
-    @inbounds for i=2:C
+    @inbounds for i=2:size(a, 2)
         red = f(red, reduce(f, a.(1)[i]))
     end
     red
