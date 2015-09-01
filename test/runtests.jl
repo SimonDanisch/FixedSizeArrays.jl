@@ -316,6 +316,14 @@ context("Ops") do
         @fact isa(cross(v1,v2),Vec3d)  --> true
     end
 
+    context("hypot") do
+        a = Vec{2,Int}(1,2)
+        b = Vec{2,Float64}(1.,2.)
+        @fact hypot(a) --> 2.23606797749979
+        @fact hypot(b) --> 2.23606797749979
+        @fact hypot(a) == hypot(b) --> true
+    end
+
 end
 
 
@@ -554,7 +562,7 @@ const unaryOps = (
     erfc, erfcx, erfi, dawson,
 
     #trunc, round, ceil, floor, #see JuliaLang/julia#12163
-    significand, lgamma, hypot,
+    significand, lgamma,
     gamma, lfact, frexp, modf, airy, airyai,
     airyprime, airyaiprime, airybi, airybiprime,
     besselj0, besselj1, bessely0, bessely1,

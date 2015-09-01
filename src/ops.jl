@@ -10,7 +10,7 @@ const unaryOps = (:-, :~, :conj, :abs,
                   :log, :log2, :log10, :log1p, :exponent, :exp,
                   :exp2, :expm1, :cbrt, :sqrt, :erf,
                   :erfc, :erfcx, :erfi, :dawson, :ceil, :floor,
-                  :trunc, :round, :significand, :lgamma, :hypot,
+                  :trunc, :round, :significand, :lgamma,
                   :gamma, :lfact, :frexp, :modf, :airy, :airyai,
                   :airyprime, :airyaiprime, :airybi, :airybiprime,
                   :besselj0, :besselj1, :bessely0, :bessely1,
@@ -215,3 +215,5 @@ function (==)(a::FixedArray, b::AbstractArray)
 end
 
 (==)(a::AbstractArray, b::FixedArray) = b == a
+
+@inline Base.hypot{T}(v::FixedVector{2,T}) = hypot(v[1],v[2])
