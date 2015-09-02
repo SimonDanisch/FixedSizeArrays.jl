@@ -427,8 +427,10 @@ context("Matrix Math") do
 	for i=1:4, j=1:4
 		v = rand(j)
 		m = rand(i,j)
+		mc = rand(i,j) + im*rand(i,j)
 		vfs = Vec(v)
 		mfs = Mat(m)
+        mfsc = Mat(mc)
 
 		context("Matrix{$i, $j} * Vector{$j}") do
 			vm = m * v
@@ -451,6 +453,18 @@ context("Matrix Math") do
 				fmm = inv(mfs)
 				@fact isapprox(fmm, mm)  --> true
 			end
+			if i <= 2
+			    context("expm(M)") do
+			        mm = expm(m)
+				    fmm = expm(mfs)
+				    @fact isapprox(fmm, mm)  --> true
+
+				    mm = expm(mc)
+				    fmm = expm(mfsc)
+				    @fact isapprox(fmm, mm)  --> true
+			    end
+			end
+			
 		else
             context("Matrix{$i, $j} * Matrix{$i, $j}") do
                 @fact_throws DimensionMismatch mfs * mfs
