@@ -18,9 +18,9 @@ typealias Vec4d Vec{4, Float64}
 typealias Vec3f Vec{3, Float32}
 facts("FixedSizeArrays") do
 
-context("fsa macro") do 
+context("fsa macro") do
     a = 1
-    a1 = @fsa([a,2,3]) 
+    a1 = @fsa([a,2,3])
     a2 = @fsa([a 2 3])
     a3 = @fsa([a;2;3])
     a4 = @fsa([a 2;3 4])
@@ -65,12 +65,12 @@ context("Array of FixedArrays") do
     end
 
     context("array ops") do
-        af = a + 1f0     
+        af = a + 1f0
         bf = b + 1f0
-        for elem in af 
+        for elem in af
             @fact a[1] + 1f0 --> elem
         end
-        for elem in bf 
+        for elem in bf
             @fact b[1] + 1f0 --> elem
         end
     end
@@ -343,7 +343,7 @@ zeromat = Mat2d((0.0,0.0),(0.0,0.0))
 
 
 context("Matrix") do
-    
+
     @fact length(Mat2d) --> 4
     @fact length(zeromat) --> 4
 
@@ -453,18 +453,16 @@ context("Matrix Math") do
 				fmm = inv(mfs)
 				@fact isapprox(fmm, mm)  --> true
 			end
-			if i <= 2
-			    context("expm(M)") do
-			        mm = expm(m)
-				    fmm = expm(mfs)
-				    @fact isapprox(fmm, mm)  --> true
+			context("expm(M)") do
+				mm = expm(m)
+				fmm = expm(mfs)
+				@fact isapprox(fmm, mm)  --> true
 
-				    mm = expm(mc)
-				    fmm = expm(mfsc)
-				    @fact isapprox(fmm, mm)  --> true
-			    end
+				mm = expm(mc)
+				fmm = expm(mfsc)
+				@fact isapprox(fmm, mm)  --> true
 			end
-			
+
 		else
             context("Matrix{$i, $j} * Matrix{$i, $j}") do
                 @fact_throws DimensionMismatch mfs * mfs
