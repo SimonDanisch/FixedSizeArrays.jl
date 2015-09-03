@@ -1,3 +1,4 @@
+dot
 # operations
 const unaryOps = (:-, :~, :conj, :abs,
                   :sin, :cos, :tan, :sinh, :cosh, :tanh,
@@ -55,25 +56,39 @@ for op in binaryOps
     functor_name, functor_expr = gen_functor(op, 2)
     eval(quote
         $functor_expr
-        $op{T <: FixedArray}(x::T,    y::T)    = map($functor_name(), x, y)
-        $op{T <: FixedArray}(x::Real, y::T)    = map($functor_name(), x, y)
-        $op{T <: FixedArray}(x::T,    y::Real) = map($functor_name(), x, y)
+        $op{T1 <: FixedArray, T2 <: FixedArray}(x::T1, y::T2) = $op(promote(x, y)...)
+        $op{T <: FixedArray}(x::T,    y::T)      = map($functor_name(), x, y)
+        $op{T <: FixedArray}(x::Number, y::T)    = map($functor_name(), x, y)
+        $op{T <: FixedArray}(x::T,    y::Number) = map($functor_name(), x, y)
     end)
 end
 
-function ctranspose{R, C, T}(a::Mat{R, C, T})
-    Mat(ntuple(RowFunctor(a), Val{R}))
+
+@generated function promote{T1 <: FixedVector, T2 <: FixedVector}(a::T1, b::T2)
+    length(T1) != length(T2) && throw(DimensionMismatch("length $(length(T1)) must match length $(length(T2))")) 
+    ET = promote_type(eltype(T1), eltype(T2))
+    T = :(Main.$(T1.name.name){$(length(T1)), $ET})
+    :( $T(a), $T(b) )
+end
+function promote{R, C, T1, T2}(a::Mat{R, C, T1}, b::Mat{R, C, T2})
+    T = promote_type(T1, T2)
+    Mat{R,C,T}(a), Mat{R,C,T}(b)
 end
 
-dot{T <: FixedArray}(a::T, b::T) = sum(a.*b)
 
-dot{T}(a::NTuple{1,T}, b::NTuple{1,T}) = a[1]*b[1]
-dot{T}(a::NTuple{2,T}, b::NTuple{2,T}) = a[1]*b[1] + a[2]*b[2]
-dot{T}(a::NTuple{3,T}, b::NTuple{3,T}) = a[1]*b[1] + a[2]*b[2] + a[3]*b[3]
-dot{T}(a::NTuple{4,T}, b::NTuple{4,T}) = a[1]*b[1] + a[2]*b[2] + a[3]*b[3]+a[4]*b[4]
+function ctranspose{R, C, T}(a::Mat{R, C, T})
+    Mat(ntuple(CRowFunctor(a), Val{R}))
+end
+
+dot{T <: FixedArray}(a::T, b::T) = sum(a'.*b)
+
+dot{T}(a::NTuple{1,T}, b::NTuple{1,T}) = a[1]'*b[1]
+dot{T}(a::NTuple{2,T}, b::NTuple{2,T}) = a[1]'*b[1] + a[2]'*b[2]
+dot{T}(a::NTuple{3,T}, b::NTuple{3,T}) = a[1]'*b[1] + a[2]'*b[2] + a[3]'*b[3]
+dot{T}(a::NTuple{4,T}, b::NTuple{4,T}) = a[1]'*b[1] + a[2]'*b[2] + a[3]'*b[3]+a[4]'*b[4]
 
 #cross{T}(a::FixedVector{2, T}, b::FixedVector{2, T}) = a[1]*b[2]-a[2]*b[1] # not really used!?
-cross{T}(a::FixedVector{3, T}, b::FixedVector{3, T}) = typeof(a)(
+cross{T<:Real}(a::FixedVector{3, T}, b::FixedVector{3, T}) = typeof(a)(
     a[2]*b[3]-a[3]*b[2],
     a[3]*b[1]-a[1]*b[3],
     a[1]*b[2]-a[2]*b[1]
@@ -155,6 +170,46 @@ function inv{T}(A::Mat{4, 4, T})
         (A[1,2]*A[2,3]*A[3,1] - A[1,3]*A[2,2]*A[3,1] + A[1,3]*A[2,1]*A[3,2] - A[1,1]*A[2,3]*A[3,2] - A[1,2]*A[2,1]*A[3,3] + A[1,1]*A[2,2]*A[3,3]) / determinant)
     )
 end
+
+### expm
+
+
+expm{T}(A::Mat{1, 1, T}) = Mat{1, 1, T}(((expm(A[1,1]),),))
+function expm{T<:Complex}(A::Mat{2, 2, T})
+ 	a = A[1,1]
+	b = A[1,2]
+	c = A[2,1]
+	d = A[2,2]
+
+	z = sqrt((a-d)*(a-d) + 4.0*b*c )
+	e = exp(a/2.0 + d/2.0 - z/2.0)
+	f = exp(a/2.0 + d/2.0 + z/2.0)
+
+    Mat{2, 2, T}(
+        ( -(e*(a - d - z))/(2.0* z) + (f*(a - d + z))/(2.0* z), -((e * c)/z) + (f * c)/z),
+        ( -((e * b)/z) + (f * b)/z,	-(e*(-a + d - z))/(2.0* z) + (f*(-a + d + z))/(2.0* z))
+    )
+end
+
+# presumably better without resorting to complex numbers, but for now...
+function expm{T<:Real}(A::Mat{2, 2, T})
+ 	a = A[1,1]
+	b = A[1,2]
+	c = A[2,1]
+	d = A[2,2]
+
+	z = sqrt(Complex((a-d)*(a-d) + 4.0*b*c))
+	e = exp(a/2.0 + d/2.0 - z/2.0)
+	f = exp(a/2.0 + d/2.0 + z/2.0)
+
+    Mat{2, 2, T}(
+        ( real(-(e*(a - d - z))/(2.0* z) + (f*(a - d + z))/(2.0* z)), real(-((e * c)/z) + (f * c)/z)),
+        ( real(-((e * b)/z) + (f * b)/z), real(-(e*(-a + d - z))/(2.0* z) + (f*(-a + d + z))/(2.0* z)))
+    )
+end
+
+
+
 
 
 # Matrix

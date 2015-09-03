@@ -201,6 +201,9 @@ end
 v2 = Vec(6.0,5.0,4.0)
 v1 = Vec(1.0,2.0,3.0)
 v2 = Vec(6.0,5.0,4.0)
+v1c = Vec(6.0+3.im,5.0-2im,4.0+0.im)
+v2c = v1 + v2*im
+v2c = Vec(1.0 + 6.0im, 2.0 + 5.0im, 3.0 + 4.0im)
 
 context("Indexing") do
 	context("FixedVector") do
@@ -319,6 +322,11 @@ context("Ops") do
 end
 
 
+context("Complex Ops") do
+	context("dot product") do
+		@fact dot(v1c,v2c) --> dot([6.0+3.im,5.0-2im,4.0+0.im], [1.0,2.0,3.0] + [6.0,5.0,4.0]*im)
+	end
+end
 
 
 
@@ -427,8 +435,10 @@ context("Matrix Math") do
 	for i=1:4, j=1:4
 		v = rand(j)
 		m = rand(i,j)
+		mc = rand(i,j) + im*rand(i,j)
 		vfs = Vec(v)
 		mfs = Mat(m)
+        mfsc = Mat(mc)
 
 		context("Matrix{$i, $j} * Vector{$j}") do
 			vm = m * v
@@ -451,6 +461,18 @@ context("Matrix Math") do
 				fmm = inv(mfs)
 				@fact isapprox(fmm, mm)  --> true
 			end
+			if i <= 2
+			    context("expm(M)") do
+			        mm = expm(m)
+				    fmm = expm(mfs)
+				    @fact isapprox(fmm, mm)  --> true
+
+				    mm = expm(mc)
+				    fmm = expm(mfsc)
+				    @fact isapprox(fmm, mm)  --> true
+			    end
+			end
+			
 		else
             context("Matrix{$i, $j} * Matrix{$i, $j}") do
                 @fact_throws DimensionMismatch mfs * mfs
@@ -460,6 +482,12 @@ context("Matrix Math") do
 		context("transpose M") do
 			mm = m'
 			fmm = mfs'
+			@fact isapprox(fmm, mm)  --> true
+		end
+		
+		context("ctranspose M") do
+			mm = mc'
+			fmm = mfsc'
 			@fact isapprox(fmm, mm)  --> true
 		end
 	end

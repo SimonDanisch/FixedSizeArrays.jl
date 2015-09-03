@@ -53,6 +53,10 @@ immutable RowFunctor{M}
 end
 call(r::RowFunctor, i::Int) = row(r.mat, i)
 
+immutable CRowFunctor{M}
+    mat::M
+end
+call(r::CRowFunctor, i::Int) = crow(r.mat, i)
 
 
 immutable SetindexFunctor{T <: FixedArray, V, N} <: Func{1}
@@ -62,6 +66,6 @@ immutable SetindexFunctor{T <: FixedArray, V, N} <: Func{1}
 end
 
 function call(sf::SetindexFunctor, i::Int...)
-    sf.index == i && return sf.value
+    sf.index == i && return eltype(sf.target)(sf.value)
     sf.target[i...]
 end
