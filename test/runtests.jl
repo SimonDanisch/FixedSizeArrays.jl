@@ -178,8 +178,6 @@ context("Constructor ") do
 end
 
 
-
-
 context("Constructors") do
 	context("FixedVector: unary, from FixedVector") do
 		@fact typeof(Vec3f(1,1,1))     --> Vec{3, Float32}

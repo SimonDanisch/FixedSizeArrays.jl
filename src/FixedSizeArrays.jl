@@ -7,7 +7,6 @@ import Base.Func
 include("core.jl")
 include("functors.jl")
 include("constructors.jl")
-include("mapreduce.jl")
 
 # put them here due to #JuliaLang/julia#12814
 # needs to be befor indexing and ops, but after constructors
@@ -22,6 +21,7 @@ immutable Point{N, T} <: FixedVector{N, T}
     _::NTuple{N, T}
 end
 
+include("mapreduce.jl")
 include("indexing.jl")
 include("ops.jl")
 include("array_of_fixedsize.jl")
