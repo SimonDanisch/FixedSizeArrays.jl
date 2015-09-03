@@ -66,6 +66,6 @@ immutable SetindexFunctor{T <: FixedArray, V, N} <: Func{1}
 end
 
 function call(sf::SetindexFunctor, i::Int...)
-    sf.index == i && return sf.value
+    sf.index == i && return eltype(sf.target)(sf.value)
     sf.target[i...]
 end

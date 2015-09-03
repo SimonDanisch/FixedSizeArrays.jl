@@ -202,7 +202,7 @@ v2 = Vec(6.0,5.0,4.0)
 v1 = Vec(1.0,2.0,3.0)
 v2 = Vec(6.0,5.0,4.0)
 v1c = Vec(6.0+3.im,5.0-2im,4.0+0.im)
-#v2c = v1 + v2*im
+v2c = v1 + v2*im
 v2c = Vec(1.0 + 6.0im, 2.0 + 5.0im, 3.0 + 4.0im)
 
 context("Indexing") do

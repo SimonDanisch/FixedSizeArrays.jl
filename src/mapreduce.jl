@@ -28,9 +28,14 @@ index_expr{T <: FixedArray}(::Type{T}, i::Int, inds::Int...) = :($(symbol("arg$i
 inner_expr{N}(args::NTuple{N, DataType}, inds::Int...) = :( F($(ntuple(i -> index_expr(args[i], i, inds...), N)...)) )
 
 # This solves the combinational explosion from FixedVectorNoTuple while staying fast.
-constructor_expr{T <: FixedArray}(::Type{T}, tuple_expr::Expr) = :(FSA($tuple_expr))
-constructor_expr{T <: FixedVectorNoTuple}(::Type{T}, tuple_expr::Expr) = :(FSA($(tuple_expr)...))
-
+function constructor_expr{T <: FixedArray}(::Type{T}, tuple_expr::Expr)
+    BaseName = T.name.name
+    :(Main.$BaseName($tuple_expr))
+end
+function constructor_expr{T <: FixedVectorNoTuple}(::Type{T}, tuple_expr::Expr)
+    BaseName = T.name.name
+    :(Main.$BaseName($(tuple_expr)...))
+end
 
 @generated function map{FSA <: FixedArray}(F::Func{2}, arg1::FSA, arg2::FSA)
     inner = fill_tuples_expr((inds...) -> inner_expr((arg1, arg2), inds...), size(FSA))

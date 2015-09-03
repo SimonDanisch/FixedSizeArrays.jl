@@ -56,11 +56,25 @@ for op in binaryOps
     functor_name, functor_expr = gen_functor(op, 2)
     eval(quote
         $functor_expr
-        $op{T <: FixedArray}(x::T,    y::T)    = map($functor_name(), x, y)
+        $op{T1 <: FixedArray, T2 <: FixedArray}(x::T1, y::T2) = $op(promote(x, y)...)
+        $op{T <: FixedArray}(x::T,    y::T)      = map($functor_name(), x, y)
         $op{T <: FixedArray}(x::Number, y::T)    = map($functor_name(), x, y)
         $op{T <: FixedArray}(x::T,    y::Number) = map($functor_name(), x, y)
     end)
 end
+
+
+@generated function promote{T1 <: FixedVector, T2 <: FixedVector}(a::T1, b::T2)
+    length(T1) != length(T2) && throw(DimensionMismatch("length $(length(T1)) must match length $(length(T2))")) 
+    ET = promote_type(eltype(T1), eltype(T2))
+    T = :(Main.$(T1.name.name){$(length(T1)), $ET})
+    :( $T(a), $T(b) )
+end
+function promote{R, C, T1, T2}(a::Mat{R, C, T1}, b::Mat{R, C, T2})
+    T = promote_type(T1, T2)
+    Mat{R,C,T}(a), Mat{R,C,T}(b)
+end
+
 
 function ctranspose{R, C, T}(a::Mat{R, C, T})
     Mat(ntuple(CRowFunctor(a), Val{R}))
