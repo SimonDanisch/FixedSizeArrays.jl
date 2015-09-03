@@ -53,6 +53,10 @@ immutable RowFunctor{M}
 end
 call(r::RowFunctor, i::Int) = row(r.mat, i)
 
+immutable CRowFunctor{M}
+    mat::M
+end
+call(r::CRowFunctor, i::Int) = crow(r.mat, i)
 
 
 immutable SetindexFunctor{T <: FixedArray, V, N} <: Func{1}

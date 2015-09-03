@@ -1,3 +1,4 @@
+dot
 # operations
 const unaryOps = (:-, :~, :conj, :abs,
                   :sin, :cos, :tan, :sinh, :cosh, :tanh,
@@ -56,24 +57,24 @@ for op in binaryOps
     eval(quote
         $functor_expr
         $op{T <: FixedArray}(x::T,    y::T)    = map($functor_name(), x, y)
-        $op{T <: FixedArray}(x::Real, y::T)    = map($functor_name(), x, y)
-        $op{T <: FixedArray}(x::T,    y::Real) = map($functor_name(), x, y)
+        $op{T <: FixedArray}(x::Number, y::T)    = map($functor_name(), x, y)
+        $op{T <: FixedArray}(x::T,    y::Number) = map($functor_name(), x, y)
     end)
 end
 
 function ctranspose{R, C, T}(a::Mat{R, C, T})
-    Mat(ntuple(RowFunctor(a), Val{R}))
+    Mat(ntuple(CRowFunctor(a), Val{R}))
 end
 
-dot{T <: FixedArray}(a::T, b::T) = sum(a.*b)
+dot{T <: FixedArray}(a::T, b::T) = sum(a'.*b)
 
-dot{T}(a::NTuple{1,T}, b::NTuple{1,T}) = a[1]*b[1]
-dot{T}(a::NTuple{2,T}, b::NTuple{2,T}) = a[1]*b[1] + a[2]*b[2]
-dot{T}(a::NTuple{3,T}, b::NTuple{3,T}) = a[1]*b[1] + a[2]*b[2] + a[3]*b[3]
-dot{T}(a::NTuple{4,T}, b::NTuple{4,T}) = a[1]*b[1] + a[2]*b[2] + a[3]*b[3]+a[4]*b[4]
+dot{T}(a::NTuple{1,T}, b::NTuple{1,T}) = a[1]'*b[1]
+dot{T}(a::NTuple{2,T}, b::NTuple{2,T}) = a[1]'*b[1] + a[2]'*b[2]
+dot{T}(a::NTuple{3,T}, b::NTuple{3,T}) = a[1]'*b[1] + a[2]'*b[2] + a[3]'*b[3]
+dot{T}(a::NTuple{4,T}, b::NTuple{4,T}) = a[1]'*b[1] + a[2]'*b[2] + a[3]'*b[3]+a[4]'*b[4]
 
 #cross{T}(a::FixedVector{2, T}, b::FixedVector{2, T}) = a[1]*b[2]-a[2]*b[1] # not really used!?
-cross{T}(a::FixedVector{3, T}, b::FixedVector{3, T}) = typeof(a)(
+cross{T<:Real}(a::FixedVector{3, T}, b::FixedVector{3, T}) = typeof(a)(
     a[2]*b[3]-a[3]*b[2],
     a[3]*b[1]-a[1]*b[3],
     a[1]*b[2]-a[2]*b[1]
