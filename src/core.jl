@@ -27,8 +27,8 @@ eltype{T <: FixedArray}(A::T)                       = eltype(T)
 
 length{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})         = prod(SZ.parameters)::Int
 length{T <: FixedArray}(A::Type{T})                 = length(fixedsizearray_type(T))
-length{T <: FixedArray}(A::T)                       = length(T)
-
+length{C,T}(::FixedVector{C,T})                     = C
+length{R,C,T}(::FixedMatrix{R,C,T})                 = R*C
 
 endof{T,N,SZ}(A::FixedArray{T,N,SZ})                = length(A)
 
