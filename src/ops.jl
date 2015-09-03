@@ -1,4 +1,3 @@
-dot
 # operations
 const unaryOps = (:-, :~, :conj, :abs,
                   :sin, :cos, :tan, :sinh, :cosh, :tanh,
