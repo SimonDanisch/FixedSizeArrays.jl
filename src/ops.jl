@@ -173,6 +173,8 @@ end
 
 ### expm
 
+# default version using conversion to and from Matrix type
+expm{N,T}(m::Mat{N,N,T}) = Mat{N,N,T}(expm(convert(Matrix{T}, m)))
 
 expm{T}(A::Mat{1, 1, T}) = Mat{1, 1, T}(((expm(A[1,1]),),))
 function expm{T<:Complex}(A::Mat{2, 2, T})
