@@ -24,8 +24,10 @@ end
         end
     end
     if isempty(b)
-        if ElType != eltype(T1)
+        if ElType != eltype(T1) && FSA <: T1
             return :( map($ElType, $a_expr) )
+        elseif ElType == eltype(T1) && !(FSA <: T1)
+            return :( $FSA($a_expr...) )
         else
             return :( $FSA($a_expr...) )
         end
