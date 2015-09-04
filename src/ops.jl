@@ -63,15 +63,9 @@ for op in binaryOps
 end
 
 
-@generated function promote{T1 <: FixedVector, T2 <: FixedVector}(a::T1, b::T2)
-    length(T1) != length(T2) && throw(DimensionMismatch("length $(length(T1)) must match length $(length(T2))")) 
-    ET = promote_type(eltype(T1), eltype(T2))
-    T = :(Main.$(T1.name.name){$(length(T1)), $ET})
-    :( $T(a), $T(b) )
-end
-function promote{R, C, T1, T2}(a::Mat{R, C, T1}, b::Mat{R, C, T2})
-    T = promote_type(T1, T2)
-    Mat{R,C,T}(a), Mat{R,C,T}(b)
+function promote{T1 <: FixedArray, T2 <: FixedArray}(a::T1, b::T2)
+    T = promote_type(eltype(T1), eltype(T2))
+    map(T, a), map(T, b)
 end
 
 
