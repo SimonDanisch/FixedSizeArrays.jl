@@ -52,4 +52,6 @@ export column
 export MatMulFunctor
 export setindex
 
+#include("precompile_funs.jl")
+
 end
