@@ -16,6 +16,10 @@ typealias Vec2d Vec{2, Float64}
 typealias Vec3d Vec{3, Float64}
 typealias Vec4d Vec{4, Float64}
 typealias Vec3f Vec{3, Float32}
+typealias Mat2d Mat{2,2, Float64}
+typealias Mat3d Mat{3,3, Float64}
+typealias Mat4d Mat{4,4, Float64}
+
 facts("FixedSizeArrays") do
 
 context("fsa macro") do
@@ -107,6 +111,38 @@ end
 
 # A little brutal, but hey.... Better redudantant tests, than not enough tests
 context("Constructor ") do
+    context("Rand") do
+        @fact typeof(rand(Vec4d)) --> Vec4d 
+        @fact typeof(rand(Mat4d)) --> Mat4d
+
+        @fact typeof(rand(Mat{4,2, Int})) --> Mat{4,2, Int}
+        @fact typeof(rand(Vec{7, Int})) --> Vec{7, Int}
+
+    end
+    context("Zero") do
+        @fact typeof(zero(Vec4d)) --> Vec4d 
+        @fact typeof(zero(Mat4d)) --> Mat4d
+
+        @fact typeof(zero(Mat{4,2, Int})) --> Mat{4,2, Int}
+        @fact typeof(zero(Vec{7, Int})) --> Vec{7, Int}
+    end
+
+    context("eye") do
+        @fact typeof(eye(Mat4d)) --> Mat4d
+        @fact typeof(eye(Mat{4,2, Int})) --> Mat{4,2, Int}
+    end
+
+    context("unit") do
+        u4 = unit(Vec4d, 1)
+        u7 = unit(Vec{7, Int}, 7)
+        @fact typeof(u4) --> Vec4d
+        @fact typeof(u7) --> Vec{7, Int}
+        @fact u4[1] --> 1.0
+        @fact u4[2:end] --> (0.,0.,0.)
+
+        @fact u7[end] --> 1
+        @fact u7[1:end-1] --> (0,0,0,0,0,0)
+    end
     for N=1:3:10
         context("construction, conversion, $N") do
             for VT=[Point, Vec, Normal], VT2=[Normal, Vec, Point], ET=[Float32, Int, Uint, Float64], ET2=[Float64, Uint, Int, Float32]
@@ -347,9 +383,7 @@ end
 # matrix operations
 
 #typealias Mat1d Matrix1x1{Float64}
-typealias Mat2d Mat{2,2, Float64}
-typealias Mat3d Mat{3,3, Float64}
-typealias Mat4d Mat{4,4, Float64}
+
 
 zeromat = Mat2d((0.0,0.0),(0.0,0.0))
 
