@@ -25,7 +25,7 @@ end
     end
     if isempty(b)
         if ElType != eltype(T1)
-            return :( $FSA(map($ElType, $a_expr)...) )
+            return :( map($ElType, $a_expr) )
         else
             return :( $FSA($a_expr...) )
         end
@@ -131,7 +131,7 @@ unit{FSA <: FixedVector}(::Type{FSA}, i::Integer) = map(UnitFunctor(i, eltype(FS
 
 function rand{FSA <: FixedArray}(x::Type{FSA})
     T = eltype(FSA)
-    T <: applicable(eps, T) && return map(RandFunctor(zero(T) : eps(T) : one(T)), FSA) # this case is basically for FixedPointNumbers
+    applicable(eps, T) && return map(RandFunctor(zero(T) : eps(T) : one(T)), FSA) # this case is basically for FixedPointNumbers
     map(RandFunctor(typemin(T) : typemax(T)), FSA)
 end
 rand{FSA <: FixedArray}(x::Type{FSA}, range::Range) = map(RandFunctor(range), FSA)
