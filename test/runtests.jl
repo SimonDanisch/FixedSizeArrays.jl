@@ -126,8 +126,6 @@ end
 context("Constructor ") do
     context("Rand") do
         #Win32 seems to fail for rand(Vec4d)
-        rand(.0:eps(Float64):1.0)
-        rand()
         @fact typeof(rand(Vec4d)) --> Vec4d 
         @fact typeof(rand(Mat4d)) --> Mat4d
 
