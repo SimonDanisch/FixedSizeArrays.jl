@@ -81,7 +81,6 @@ context("Array of FixedArrays") do
 
 end
 
-
 context("Constructor FixedVectorNoTuple") do
     for T=[Float32, Float64, Int, Uint, Uint32, Uint8]
         context("$T") do

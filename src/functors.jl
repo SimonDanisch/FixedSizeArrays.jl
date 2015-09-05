@@ -8,7 +8,6 @@ immutable ConstFunctor{T} <: Base.Func{1}
 end
 call(f::ConstFunctor, i...) = f.args
 
-
 immutable EyeFunc{N} <: Func{1}
     size::NTuple{N, Int}
     eltype::DataType
@@ -22,7 +21,6 @@ immutable UnitFunctor <: Func{1}
     eltype::DataType
 end
 call(ef::UnitFunctor, i) = ef.i==i ? one(ef.eltype) : zero(ef.eltype)
-
 
 immutable ConversionIndexFunctor{T, T2} <: Func{1}
     args1::T
@@ -57,7 +55,6 @@ immutable CRowFunctor{M}
     mat::M
 end
 call(r::CRowFunctor, i::Int) = crow(r.mat, i)
-
 
 immutable SetindexFunctor{T <: FixedArray, V, N} <: Func{1}
     target::T

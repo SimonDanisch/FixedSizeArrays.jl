@@ -1,5 +1,3 @@
-type_name(fsa) = :($(symbol(fsa.name)))
-
 function size_or{FSA <: FixedArray}(::Type{FSA}, SZ)
     fsa = fixedsizearray_type(FSA)
     s  = tuple(fsa.parameters[3].parameters...)
@@ -11,6 +9,18 @@ function eltype_or{FSA <: FixedArray}(::Type{FSA}, ElType)
     isa(s, TypeVar) ? ElType : s
 end
 
+_fill_tuples_expr(inner::Function, SZ::Tuple{Int}, inds...) =
+    :(tuple($(ntuple(i->inner(i, inds...), SZ[1])...)))
+_fill_tuples_expr{N}(inner::Function, SZ::NTuple{N, Int}, inds...) =
+    :(tuple($(ntuple(i->_fill_tuples_expr(inner, SZ[1:end-1], i, inds...),SZ[end])...)))
+fill_tuples_expr(inner::Function, SZ::Tuple) = _fill_tuples_expr(inner, SZ)
+
+
+_fill_tuples(inner, originalSZ, SZ::Tuple{Int}, inds::Int...) =
+    ntuple(i->inner(SZ, i, inds...), Val{SZ[1]})
+_fill_tuples{N}(inner, originalSZ, SZ::NTuple{N, Int}, inds::Int...) =
+    ntuple(i->_fill_tuples(inner, originalSZ, SZ[1:end-1], i, inds...), Val{SZ[end]})
+fill_tuples{N}(inner, SZ::NTuple{N, Int}) = _fill_tuples(inner, SZ, SZ)
 
 @generated function call{FSA <: FixedArray, T1 <: FixedArray}(::Type{FSA}, a::T1, b...)
     SZ      = size_or(FSA, nothing)
@@ -43,8 +53,6 @@ end
 call{T}(pf::ParseFunctor{T}, i::Int) = parse(T, pf.a[i])
 call(pf::ParseFunctor{Nothing}, i::Int) = parse(pf.a[i])
 
-
-
 @generated function call{FSA <: FixedArray, T <: Array}(::Type{FSA}, a::T)
     if eltype(a) <: AbstractString
         ElType = eltype_or(FSA, Nothing)
@@ -64,7 +72,6 @@ end
 
 call{FSA <: FixedVectorNoTuple}(::Type{FSA}, a::Tuple, b::Tuple...) = error("$FSA can't be constructed from $a")
 call{FSA <: FixedVectorNoTuple}(::Type{FSA}, a::Tuple) = FSA(a...)
-
 call{FSA <: FixedArray, T}(::Type{FSA}, a::T..., ) = FSA(a)
 
 
@@ -104,27 +111,6 @@ end
 end
 
 
-const_fill(T, sym, SZ, inds...)        = :($T($sym[1]))
-flat_fill(T, sym, SZ, inds...)         = :($T($sym[$(sub2ind(SZ, inds...))]))
-array_fill(T, sym, SZ, inds...)        = :($T($sym[1][$(inds...)]))
-hierarchical_fill(T, sym, SZ, inds...) = :($T($sym[$(inds...)]))
-
-
-_fill_tuples_expr(inner::Function, SZ::Tuple{Int}, inds...) =
-    :(tuple($(ntuple(i->inner(i, inds...), SZ[1])...)))
-_fill_tuples_expr{N}(inner::Function, SZ::NTuple{N, Int}, inds...) =
-    :(tuple($(ntuple(i->_fill_tuples_expr(inner, SZ[1:end-1], i, inds...),SZ[end])...)))
-fill_tuples_expr(inner::Function, SZ::Tuple) = _fill_tuples_expr(inner, SZ)
-
-
-_fill_tuples(inner, originalSZ, SZ::Tuple{Int}, inds::Int...) =
-    ntuple(i->inner(SZ, i, inds...), Val{SZ[1]})
-_fill_tuples{N}(inner, originalSZ, SZ::NTuple{N, Int}, inds::Int...) =
-    ntuple(i->_fill_tuples(inner, originalSZ, SZ[1:end-1], i, inds...), Val{SZ[end]})
-fill_tuples{N}(inner, SZ::NTuple{N, Int}) = _fill_tuples(inner, SZ, SZ)
-
-
-
 
 zero{FSA <: FixedArray}(::Type{FSA}) = map(ConstFunctor(zero(eltype(FSA))), FSA)
 one{FSA <: FixedArray}(::Type{FSA})  = map(ConstFunctor(one(eltype(FSA))), FSA)
@@ -138,16 +124,15 @@ function rand{FSA <: FixedArray}(x::Type{FSA})
 end
 rand{FSA <: FixedArray}(x::Type{FSA}, range::Range) = map(RandFunctor(range), FSA)
 
-
-#conversion
-convert{T <: Tuple}(::Type{T}, x::Real)                     =  ntuple(ConstFunctor(eltype(T)(x)), Val{length(T.parameters),})
-convert{T <: Tuple, FSA <: FixedArray}(::Type{T}, x::FSA)   = map(eltype(T), x.(1)[1:length(T.parameters)])
-convert{T <: FixedArray}(t::Type{T}, f::T)                  = f
-convert{FSA1 <: FixedArray}(t::Type{FSA1}, f::FixedArray) =
-    map(ConversionIndexFunctor(f, eltype_or(FSA1, eltype(typeof(f)))), FSA1)
-
-
-
+"""
+Marco `fsa` helps to create fixed size arrays like Julia arrays.
+E.g.
+```
+@fsa([1 2 3;4 5 6])
+@fsa([a,2,3]) # you can also use variables
+@fsa([a 2 3])
+```
+"""
 macro fsa(expr)
     if expr.head == :vect
         result = Expr(:call, :Vec, expr.args...)

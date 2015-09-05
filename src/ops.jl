@@ -62,19 +62,18 @@ for op in binaryOps
     end)
 end
 
-
 function promote{T1 <: FixedArray, T2 <: FixedArray}(a::T1, b::T2)
     T = promote_type(eltype(T1), eltype(T2))
     map(T, a), map(T, b)
 end
 
-
 function ctranspose{R, C, T}(a::Mat{R, C, T})
     Mat(ntuple(CRowFunctor(a), Val{R}))
 end
 
-dot{T <: FixedArray}(a::T, b::T) = sum(a'.*b)
+@inline Base.hypot{T}(v::FixedVector{2,T}) = hypot(v[1],v[2])
 
+dot{T <: FixedArray}(a::T, b::T) = sum(a'.*b)
 dot{T}(a::NTuple{1,T}, b::NTuple{1,T}) = a[1]'*b[1]
 dot{T}(a::NTuple{2,T}, b::NTuple{2,T}) = a[1]'*b[1] + a[2]'*b[2]
 dot{T}(a::NTuple{3,T}, b::NTuple{3,T}) = a[1]'*b[1] + a[2]'*b[2] + a[3]'*b[3]
@@ -156,7 +155,6 @@ function inv{T}(A::Mat{4, 4, T})
         (A[1,3]*A[2,2]*A[4,1] - A[1,2]*A[2,3]*A[4,1] - A[1,3]*A[2,1]*A[4,2] + A[1,1]*A[2,3]*A[4,2] + A[1,2]*A[2,1]*A[4,3] - A[1,1]*A[2,2]*A[4,3]) / determinant),
 
 
-
         ((A[1,4]*A[2,3]*A[3,2] - A[1,3]*A[2,4]*A[3,2] - A[1,4]*A[2,2]*A[3,3] + A[1,2]*A[2,4]*A[3,3] + A[1,3]*A[2,2]*A[3,4] - A[1,2]*A[2,3]*A[3,4]) / determinant,
         (A[1,3]*A[2,4]*A[3,1] - A[1,4]*A[2,3]*A[3,1] + A[1,4]*A[2,1]*A[3,3] - A[1,1]*A[2,4]*A[3,3] - A[1,3]*A[2,1]*A[3,4] + A[1,1]*A[2,3]*A[3,4]) / determinant,
         (A[1,4]*A[2,2]*A[3,1] - A[1,2]*A[2,4]*A[3,1] - A[1,4]*A[2,1]*A[3,2] + A[1,1]*A[2,4]*A[3,2] + A[1,2]*A[2,1]*A[3,4] - A[1,1]*A[2,2]*A[3,4]) / determinant,
@@ -165,7 +163,6 @@ function inv{T}(A::Mat{4, 4, T})
 end
 
 ### expm
-
 # default version using conversion to and from Matrix type
 expm{N,T}(m::Mat{N,N,T}) = Mat{N,N,T}(expm(convert(Matrix{T}, m)))
 
@@ -203,10 +200,6 @@ function expm{T<:Real}(A::Mat{2, 2, T})
     )
 end
 
-
-
-
-
 # Matrix
 (*){T, M, N, O, K}(a::FixedMatrix{M, N, T}, b::FixedMatrix{O, K, T}) = throw(DimensionMismatch("$N != $O in $(typeof(a)) and $(typeof(b))"))
 
@@ -215,8 +208,7 @@ end
         :(tuple(
             $([:( dot(row(a, $k), column(b, $m)) ) for k=1:K]...)
         ))
-        for m=1:M
-    ]
+    for m=1:M]
     :(Mat(tuple($(expr...))))
 end
 
@@ -230,7 +222,6 @@ end
         return :(Mat(tuple(tuple($(expr...)))))
     end
 end
-
 @generated function (*){T, FSV <: FixedVector, C}(a::FSV, b::Mat{1, C, T})
     N = length(a)
     N != C && throw(DimensionMismatch("DimensionMissmatch: $N != $R for $(typeof(a)), $(typeof(b))"))
@@ -239,7 +230,6 @@ end
 end
 
 (*){FSV <: FixedVector}(a::FSV, b::FSV) = Mat{1, 1, eltype(FSV)}(dot(a,b))
-
 
 function (==)(a::FixedVectorNoTuple, b::FixedVectorNoTuple)
     s_a = size(a)
@@ -266,4 +256,4 @@ end
 
 (==)(a::AbstractArray, b::FixedArray) = b == a
 
-@inline Base.hypot{T}(v::FixedVector{2,T}) = hypot(v[1],v[2])
+
