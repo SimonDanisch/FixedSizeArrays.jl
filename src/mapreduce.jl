@@ -35,9 +35,7 @@ function constructor_expr{T <: FixedVector}(::Type{T}, tuple_expr::Expr)
         $BaseName{length(t), eltype(t), $(parameter_rest...)}(t)
     end
 end
-function constructor_expr{T <: Mat}(::Type{T}, tuple_expr::Expr)
-    :( Mat($(tuple_expr)) )
-end
+constructor_expr{T <: Mat}(::Type{T}, tuple_expr::Expr) = :( Mat($(tuple_expr)) )
 function constructor_expr{T <: FixedVectorNoTuple}(::Type{T}, tuple_expr::Expr)
     BaseName = parse(string("Main.", T.name))
     quote

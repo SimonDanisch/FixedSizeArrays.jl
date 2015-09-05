@@ -72,7 +72,7 @@ end
 
 call{FSA <: FixedVectorNoTuple}(::Type{FSA}, a::Tuple, b::Tuple...) = error("$FSA can't be constructed from $a")
 call{FSA <: FixedVectorNoTuple}(::Type{FSA}, a::Tuple) = FSA(a...)
-call{FSA <: FixedArray, T}(::Type{FSA}, a::T..., ) = FSA(a)
+call{FSA <: FixedArray, T}(::Type{FSA}, a::T...) = FSA(a)
 
 
 
@@ -117,15 +117,11 @@ one{FSA <: FixedArray}(::Type{FSA})  = map(ConstFunctor(one(eltype(FSA))), FSA)
 eye{FSA <: FixedArray}(::Type{FSA})  = map(EyeFunc(size(FSA), eltype(FSA)), FSA)
 unit{FSA <: FixedVector}(::Type{FSA}, i::Integer) = map(UnitFunctor(i, eltype(FSA)), FSA)
 
-function rand{FSA <: FixedArray}(x::Type{FSA})
-    T = eltype(FSA)
-    applicable(eps, T) && return rand(FSA, zero(T) : eps(T) : one(T)) # this case is basically for FixedPointNumbers
-    rand(FSA, typemin(T) : typemax(T))
-end
-rand{FSA <: FixedArray}(x::Type{FSA}, range::Range) = map(RandFunctor(range), FSA)
+rand{FSA <: FixedArray}(x::Type{FSA}) = map(RandFunctor(eltype(FSA)), FSA)
+rand{FSA <: FixedArray}(x::Type{FSA}, range::Range) = (T = eltype(FSA) ; map(RandFunctor(T(first(range)):T(step(range)):T(last(range))), FSA)) # there's no easy way to convert eltypes of ranges (I think)
 
 """
-Marco `fsa` helps to create fixed size arrays like Julia arrays.
+Macro `fsa` helps to create fixed size arrays like Julia arrays.
 E.g.
 ```
 @fsa([1 2 3;4 5 6])

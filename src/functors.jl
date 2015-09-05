@@ -1,7 +1,7 @@
 immutable RandFunctor{T} <: Func{1}
-    range::Range{T}
+    typ::T
 end
-call{T}(rf::RandFunctor{T}, i...) = rand(rf.range)
+call{T}(rf::RandFunctor{T}, i...) = rand(rf.typ)
 
 immutable ConstFunctor{T} <: Base.Func{1}
     args::T
