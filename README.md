@@ -5,6 +5,8 @@
 [![Build Status](https://travis-ci.org/SimonDanisch/FixedSizeArrays.jl.svg?branch=master)](https://travis-ci.org/SimonDanisch/FixedSizeArrays.jl)
 [![Coverage Status](https://coveralls.io/repos/SimonDanisch/FixedSizeArrays.jl/badge.svg?branch=master)](https://coveralls.io/r/SimonDanisch/FixedSizeArrays.jl?branch=master)
 [![codecov.io](http://codecov.io/github/SimonDanisch/FixedSizeArrays.jl/coverage.svg?branch=master)](http://codecov.io/github/SimonDanisch/FixedSizeArrays.jl?branch=master)
+[![Build status](https://ci.appveyor.com/api/projects/status/k6bqy1h4jk322cg6/branch/master?svg=true)](https://ci.appveyor.com/project/SimonDanisch/fixedsizearrays-jl/branch/master)
+
 #### This package is 0.4 only
 #### Packages that use FixedSizeArrays:
 [GeometryTypes.jl](https://github.com/JuliaGeometry/GeometryTypes.jl)
