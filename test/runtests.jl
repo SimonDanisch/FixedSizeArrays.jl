@@ -81,7 +81,6 @@ context("Array of FixedArrays") do
 
 end
 
-
 context("Constructor FixedVectorNoTuple") do
     for T=[Float32, Float64, Int, Uint, Uint32, Uint8]
         context("$T") do
@@ -112,11 +111,17 @@ end
 # A little brutal, but hey.... Better redudantant tests, than not enough tests
 context("Constructor ") do
     context("Rand") do
+        #Win32 seems to fail for rand(Vec4d)
+        rand(.0:eps(Float64):1.0)
+        rand()
         @fact typeof(rand(Vec4d)) --> Vec4d 
         @fact typeof(rand(Mat4d)) --> Mat4d
 
         @fact typeof(rand(Mat{4,2, Int})) --> Mat{4,2, Int}
         @fact typeof(rand(Vec{7, Int})) --> Vec{7, Int}
+        @fact typeof(rand(Vec{7, Int}, 1:7)) --> Vec{7, Int}
+        @fact typeof(rand(Mat4d, -20f0:0.192f0:230f0)) --> Mat4d
+        @fact typeof(rand(Mat{4,21,Float32}, -20f0:0.192f0:230f0)) --> Mat{4,21,Float32}
 
     end
     context("Zero") do
