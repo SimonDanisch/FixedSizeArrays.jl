@@ -77,9 +77,23 @@ context("Array of FixedArrays") do
         for elem in bf
             @fact b[1] + 1f0 --> elem
         end
+        af = a .+ 1f0
+        bf = b .+ 1f0
+        for elem in af
+            @fact a[1] + 1f0 --> elem
+        end
+        for elem in bf
+            @fact b[1] + 1f0 --> elem
+        end
     end
-
+    context("Show") do
+        m = [rand(Mat4d) for i=1:2]
+        println(a)
+        println(b)
+        println(m)
+    end
 end
+
 
 context("Constructor FixedVectorNoTuple") do
     for T=[Float32, Float64, Int, Uint, Uint32, Uint8]
