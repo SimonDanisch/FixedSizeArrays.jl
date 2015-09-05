@@ -133,8 +133,8 @@ unit{FSA <: FixedVector}(::Type{FSA}, i::Integer) = map(UnitFunctor(i, eltype(FS
 
 function rand{FSA <: FixedArray}(x::Type{FSA})
     T = eltype(FSA)
-    applicable(eps, T) && return map(RandFunctor(zero(T) : eps(T) : one(T)), FSA) # this case is basically for FixedPointNumbers
-    map(RandFunctor(typemin(T) : typemax(T)), FSA)
+    applicable(eps, T) && return rand(FSA, zero(T) : eps(T) : one(T)) # this case is basically for FixedPointNumbers
+    rand(FSA, typemin(T) : typemax(T))
 end
 rand{FSA <: FixedArray}(x::Type{FSA}, range::Range) = map(RandFunctor(range), FSA)
 
