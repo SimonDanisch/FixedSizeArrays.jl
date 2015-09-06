@@ -19,3 +19,6 @@ function isapprox{FSA <: FixedArray}(a::FSA, b::Array)
     end
     true
 end
+
+(.+){T<:FixedArray, ND}(a::Array{T, ND}, x::T) = T[elem .+ x for elem in a]
+(+){T<:FixedArray, ND}(a::Array{T, ND}, x::T) = a .+ x

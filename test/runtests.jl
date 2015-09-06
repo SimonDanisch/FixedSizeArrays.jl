@@ -71,19 +71,18 @@ context("Array of FixedArrays") do
     context("array ops") do
         af = a + 1f0
         bf = b + 1f0
-        for elem in af
-            @fact a[1] + 1f0 --> elem
-        end
-        for elem in bf
-            @fact b[1] + 1f0 --> elem
-        end
-        af = a .+ 1f0
-        bf = b .+ 1f0
-        for elem in af
-            @fact a[1] + 1f0 --> elem
-        end
-        for elem in bf
-            @fact b[1] + 1f0 --> elem
+        aff = a + Point{3, Float32}(1)
+        bff = b + RGB{Float32}(1)
+        afd = a .+ 1f0
+        bfd = b .+ 1f0
+
+        for i=1:N
+            @fact a[1] + 1f0 --> af[i]
+            @fact b[1] + 1f0 --> bf[i]
+            @fact a[1] + 1f0 --> aff[i]
+            @fact b[1] + 1f0 --> bff[i]
+            @fact a[1] + 1f0 --> afd[i]
+            @fact b[1] + 1f0 --> bfd[i]
         end
     end
     context("Show") do
