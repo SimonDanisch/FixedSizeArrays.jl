@@ -162,43 +162,6 @@ function inv{T}(A::Mat{4, 4, T})
     )
 end
 
-### expm
-# default version using conversion to and from Matrix type
-expm{N,T}(m::Mat{N,N,T}) = Mat{N,N,T}(expm(convert(Matrix{T}, m)))
-
-expm{T}(A::Mat{1, 1, T}) = Mat{1, 1, T}(((expm(A[1,1]),),))
-function expm{T<:Complex}(A::Mat{2, 2, T})
- 	a = A[1,1]
-	b = A[1,2]
-	c = A[2,1]
-	d = A[2,2]
-
-	z = sqrt((a-d)*(a-d) + 4.0*b*c )
-	e = exp(a/2.0 + d/2.0 - z/2.0)
-	f = exp(a/2.0 + d/2.0 + z/2.0)
-
-    Mat{2, 2, T}(
-        ( -(e*(a - d - z))/(2.0* z) + (f*(a - d + z))/(2.0* z), -((e * c)/z) + (f * c)/z),
-        ( -((e * b)/z) + (f * b)/z,	-(e*(-a + d - z))/(2.0* z) + (f*(-a + d + z))/(2.0* z))
-    )
-end
-
-# presumably better without resorting to complex numbers, but for now...
-function expm{T<:Real}(A::Mat{2, 2, T})
- 	a = A[1,1]
-	b = A[1,2]
-	c = A[2,1]
-	d = A[2,2]
-
-	z = sqrt(Complex((a-d)*(a-d) + 4.0*b*c))
-	e = exp(a/2.0 + d/2.0 - z/2.0)
-	f = exp(a/2.0 + d/2.0 + z/2.0)
-
-    Mat{2, 2, T}(
-        ( real(-(e*(a - d - z))/(2.0* z) + (f*(a - d + z))/(2.0* z)), real(-((e * c)/z) + (f * c)/z)),
-        ( real(-((e * b)/z) + (f * b)/z), real(-(e*(-a + d - z))/(2.0* z) + (f*(-a + d + z))/(2.0* z)))
-    )
-end
 
 # Matrix
 (*){T, M, N, O, K}(a::FixedMatrix{M, N, T}, b::FixedMatrix{O, K, T}) = throw(DimensionMismatch("$N != $O in $(typeof(a)) and $(typeof(b))"))
