@@ -1,20 +1,13 @@
-immutable RandFunctor{T} <: Func{1}
-    typ::T
-end
-call{T}(rf::RandFunctor{T}, i...) = rand(rf.typ)
+immutable RandFunctor{T} <: Func{1} end
+@inline call{T}(rf::Type{RandFunctor{T}}, i...) = rand(T)
 
 immutable ConstFunctor{T} <: Base.Func{1}
     args::T
 end
 call(f::ConstFunctor, i...) = f.args
 
-immutable EyeFunc{N} <: Func{1}
-    size::NTuple{N, Int}
-    eltype::DataType
-end
-function call{T}(ef::EyeFunc{T}, i::Int, j::Int)
-    i==j ? one(ef.eltype) : zero(ef.eltype)
-end
+immutable EyeFunc{T} <: Func{1} end
+@inline call{T}(ef::Type{EyeFunc{T}}, i::Int, j::Int) = (i==j ? one(T) : zero(T))
 
 immutable UnitFunctor <: Func{1}
     i::Int

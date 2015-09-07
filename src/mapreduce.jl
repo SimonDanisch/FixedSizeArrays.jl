@@ -5,18 +5,10 @@ function reduce{FSA <: FixedArray}(f, a::FSA)
     end
     red
 end
-function Base.reduce(f::Base.Func{2}, a::FixedMatrix)
+function reduce(f::Base.Func{2}, a::Mat)
     red = reduce(f, a.(1)[1])
     @inbounds for i=2:size(a, 2)
         red = f(red, reduce(f, a.(1)[i]))
-    end
-    red
-end
-
-function reduce{FSA <: FixedArray}(f, a::FSA)
-    red = f(a[1], a[2])
-    for i=3:length(a)
-        red = f(red, a[i])
     end
     red
 end
@@ -31,19 +23,26 @@ function constructor_expr{T <: FixedVector}(::Type{T}, tuple_expr::Expr)
     BaseName = parse(string("Main.", T.name))
     parameter_rest = T.parameters[3:end]
     quote
+        $(Expr(:boundscheck, false))
+        $(Expr(:meta, :inline))
         t = $(tuple_expr)
         $BaseName{length(t), eltype(t), $(parameter_rest...)}(t)
     end
 end
-constructor_expr{T <: Mat}(::Type{T}, tuple_expr::Expr) = :( Mat($(tuple_expr)) )
+constructor_expr{T <: Mat}(::Type{T}, tuple_expr::Expr) = quote 
+    $(Expr(:boundscheck, false))
+    $(Expr(:meta, :inline))
+    Mat($(tuple_expr))
+end
 function constructor_expr{T <: FixedVectorNoTuple}(::Type{T}, tuple_expr::Expr)
     BaseName = parse(string("Main.", T.name))
     quote
+        $(Expr(:boundscheck, false))
+        $(Expr(:meta, :inline))
         t = $(tuple_expr)
         $BaseName{eltype(t)}(t...)
     end
 end
-
 @generated function map{FSA <: FixedArray}(F, arg1::FSA, arg2::FSA)
     inner = fill_tuples_expr((inds...) -> inner_expr((arg1, arg2), inds...), size(FSA))
     constructor_expr(FSA, inner)
@@ -58,8 +57,9 @@ end
 end
 @generated function map{FSA <: FixedArray}(F, ::Type{FSA})
     inner = fill_tuples_expr((inds...) -> :(F($(inds...))), size(FSA))
-    constructor_expr(FSA, inner)
+    :( FSA($inner) )
 end
+
 @generated function map{FSA <: FixedArray}(F, arg1::FSA)
     inner = fill_tuples_expr((inds...) -> :( F(arg1[$(inds...)]) ), size(FSA))
     constructor_expr(FSA, inner)

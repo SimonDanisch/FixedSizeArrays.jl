@@ -13,6 +13,9 @@ include("constructors.jl")
 immutable Mat{Row, Column, T} <: FixedMatrix{Row, Column, T}
     _::NTuple{Column, NTuple{Row, T}}
 end
+@inline eltype{R,C,T}(A::Mat{R,C,T}) = T
+@inline eltype{R,C,T}(A::Type{Mat{R,C,T}}) = T
+
 # most common FSA types
 immutable Vec{N, T} <: FixedVector{N, T}
     _::NTuple{N, T}

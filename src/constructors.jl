@@ -112,13 +112,13 @@ end
 
 
 
-zero{FSA <: FixedArray}(::Type{FSA}) = map(ConstFunctor(zero(eltype(FSA))), FSA)
-one{FSA <: FixedArray}(::Type{FSA})  = map(ConstFunctor(one(eltype(FSA))), FSA)
-eye{FSA <: FixedArray}(::Type{FSA})  = map(EyeFunc(size(FSA), eltype(FSA)), FSA)
-unit{FSA <: FixedVector}(::Type{FSA}, i::Integer) = map(UnitFunctor(i, eltype(FSA)), FSA)
+@inline zero{FSA <: FixedArray}(::Type{FSA}) = map(ConstFunctor(zero(eltype(FSA))), FSA)
+@inline one{FSA <: FixedArray}(::Type{FSA})  = map(ConstFunctor(one(eltype(FSA))), FSA)
+@inline eye{FSA <: FixedArray}(::Type{FSA})  = map(EyeFunc{eltype(FSA)}, FSA)
+@inline unit{FSA <: FixedVector}(::Type{FSA}, i::Integer) = map(UnitFunctor(i, eltype(FSA)), FSA)
 
-rand{FSA <: FixedArray}(x::Type{FSA}) = map(RandFunctor(eltype(FSA)), FSA)
-rand{FSA <: FixedArray}(x::Type{FSA}, range::Range) = (T = eltype(FSA) ; map(RandFunctor(T(first(range)):T(step(range)):T(last(range))), FSA)) # there's no easy way to convert eltypes of ranges (I think)
+@inline rand{FSA <: FixedArray}(x::Type{FSA}) = map(RandFunctor{eltype(FSA)}, FSA)
+@inline rand{FSA <: FixedArray}(x::Type{FSA}, range::Range) = (T = eltype(FSA) ; map(RandFunctor{T(first(range)):T(step(range)):T(last(range))}, FSA)) # there's no easy way to convert eltypes of ranges (I think)
 
 """
 Macro `fsa` helps to create fixed size arrays like Julia arrays.
