@@ -548,9 +548,11 @@ context("Matrix Math") do
 	context("expm(Mat{3,3})") do
 	    for i in 1:10
             m = 1. *rand(-8:8,3,3)/4
+            @fact norm(Matrix(expm(Mat(m))) -  expm(m)) <= 1E-9 --> true
             m = m + m'
             @fact norm(Matrix(expm(Mat(m))) -  expm(m)) <= 1E-9 --> true
             m = 1. *rand(-1:1,3,3) # eigenvalues equal with high probability to reach all branches
+            @fact norm(Matrix(expm(Mat(m))) -  expm(m)) <= 1E-9 --> true
             m = m + m'
             @fact norm(Matrix(expm(Mat(m))) -  expm(m)) <= 1E-7 --> true 
         end
