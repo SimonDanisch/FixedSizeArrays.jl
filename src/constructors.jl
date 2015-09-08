@@ -1,13 +1,27 @@
-function size_or{FSA <: FixedArray}(::Type{FSA}, SZ)
-    fsa = fixedsizearray_type(FSA)
-    s  = tuple(fsa.parameters[3].parameters...)
-    any(sz -> isa(sz, TypeVar), s) ? SZ : s
-end
-function eltype_or{FSA <: FixedArray}(::Type{FSA}, ElType)
-    fsa = fixedsizearray_type(FSA)
-    s   = fsa.parameters[1]
-    isa(s, TypeVar) ? ElType : s
-end
+size_or{T,ND,SZ}(::Type{FixedArray{T, ND,               SZ}}, OR) = _size(SZ)
+size_or{ND,SZ}(::Type{FixedArray{TypeVar(:T), ND,       SZ}}, OR) = _size(SZ)
+size_or{T,SZ}(::Type{FixedArray{T, TypeVar(:N),         SZ}}, OR) = _size(SZ)
+size_or{SZ}(::Type{FixedArray{TypeVar(:T), TypeVar(:N), SZ}}, OR) = _size(SZ)
+
+size_or(::Type{FixedArray{TypeVar(:T), TypeVar(:N), Tuple{TypeVar(:N)}}}, OR) = OR
+size_or{ND}(::Type{FixedArray{TypeVar(:T), ND,      Tuple{TypeVar(:N)}}}, OR) = OR
+size_or{T}(::Type{FixedArray{T, TypeVar(:N),        Tuple{TypeVar(:N)}}}, OR) = OR
+size_or{T,ND}(::Type{FixedArray{T, ND,              Tuple{TypeVar(:N)}}}, OR) = OR
+
+size_or{FSA <: FixedArray}(::Type{FSA}, OR) = size_or(super(FSA), OR)
+
+eltype_or{T,ND,SZ}(::Type{FixedArray{T, ND, SZ}},                    OR) = T
+eltype_or{T,SZ}(::Type{FixedArray{T, TypeVar(:N), SZ}},              OR) = T
+eltype_or{T,ND}(::Type{FixedArray{T, ND, Tuple{TypeVar(:N)}}},       OR) = T
+eltype_or{T}(::Type{FixedArray{T, TypeVar(:N), Tuple{TypeVar(:N)}}}, OR) = T
+
+eltype_or(::Type{FixedArray{TypeVar(:T), TypeVar(:N), Tuple{TypeVar(:N)}}}, OR) = OR
+eltype_or{ND}(::Type{FixedArray{TypeVar(:T), ND, Tuple{TypeVar(:N)}}},      OR) = OR
+eltype_or{SZ}(::Type{FixedArray{TypeVar(:T), TypeVar(:N), SZ}},             OR) = OR
+eltype_or{ND,SZ}(::Type{FixedArray{TypeVar(:T), ND, SZ}},                   OR) = OR
+
+eltype_or{FSA <: FixedArray}(::Type{FSA}, OR) = eltype_or(super(FSA), OR)
+
 
 _fill_tuples_expr(inner::Function, SZ::Tuple{Int}, inds...) =
     :(tuple($(ntuple(i->inner(i, inds...), SZ[1])...)))

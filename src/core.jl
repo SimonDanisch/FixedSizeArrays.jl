@@ -56,3 +56,4 @@ done(A::FixedArray, state::Integer)                 = length(A) < state
 
 
 
+

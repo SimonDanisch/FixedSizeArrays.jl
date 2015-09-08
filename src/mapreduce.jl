@@ -1,11 +1,11 @@
-function reduce{FSA <: FixedArray}(f, a::FSA)
-    red = f(a[1], a[2])
+@inline function reduce{FSA <: FixedArray}(f, a::FSA)
+    @inbounds red = f(a[1], a[2])
     @inbounds for i=3:length(a)
         red = f(red, a[i])
     end
     red
 end
-function reduce(f::Base.Func{2}, a::Mat)
+@inline function reduce(f::Base.Func{2}, a::Mat)
     red = reduce(f, a.(1)[1])
     @inbounds for i=2:size(a, 2)
         red = f(red, reduce(f, a.(1)[i]))
@@ -20,13 +20,10 @@ inner_expr{N}(args::NTuple{N, DataType}, inds::Int...) = :( F($(ntuple(i -> inde
 
 # This solves the combinational explosion from FixedVectorNoTuple while staying fast.
 function constructor_expr{T <: FixedVector}(::Type{T}, tuple_expr::Expr)
-    BaseName = parse(string("Main.", T.name))
-    parameter_rest = T.parameters[3:end]
     quote
         $(Expr(:boundscheck, false))
         $(Expr(:meta, :inline))
-        t = $(tuple_expr)
-        $BaseName{length(t), eltype(t), $(parameter_rest...)}(t)
+        FSA($(tuple_expr))
     end
 end
 constructor_expr{T <: Mat}(::Type{T}, tuple_expr::Expr) = quote 
@@ -35,12 +32,10 @@ constructor_expr{T <: Mat}(::Type{T}, tuple_expr::Expr) = quote
     Mat($(tuple_expr))
 end
 function constructor_expr{T <: FixedVectorNoTuple}(::Type{T}, tuple_expr::Expr)
-    BaseName = parse(string("Main.", T.name))
     quote
         $(Expr(:boundscheck, false))
         $(Expr(:meta, :inline))
-        t = $(tuple_expr)
-        $BaseName{eltype(t)}(t...)
+        FSA($(tuple_expr)...)
     end
 end
 @generated function map{FSA <: FixedArray}(F, arg1::FSA, arg2::FSA)
