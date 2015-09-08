@@ -5,6 +5,13 @@
     end
     red
 end
+@inline function reduce{FSA <: Tuple}(f, a::FSA)
+    @inbounds red = f(a[1], a[2])
+    @inbounds for i=3:length(a)
+        red = f(red, a[i])
+    end
+    red
+end
 @inline function reduce(f::Base.Func{2}, a::Mat)
     red = reduce(f, a.(1)[1])
     @inbounds for i=2:size(a, 2)
