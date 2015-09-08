@@ -3,7 +3,14 @@ import ImmutableArrays
 using Benchmarks
 
 macro mybench(expr)
-	:(println(Statistics(@benchmark $(esc(expr))).average_time))
+	quote
+		val = $(esc(expr))
+		stats = Statistics(@benchmark for i=1:10
+			val = $(esc(expr))
+		end)
+		println(stats.average_time, ": ", stats.interval[1], " - ", stats.interval[2])
+		val
+	end
 end
 function test()
 	const a = Float64[1 1 1 1; 2 2 2 2; 3 3 3 3; 4 4 4 4]

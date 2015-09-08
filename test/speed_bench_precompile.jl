@@ -479,5 +479,15 @@ end
 
 end
 
-@time test()
-@time test()
+using SnoopCompile
+
+snoop_on()
+SnoopCompile.@snoop "/tmp/fsa_compiles.csv" begin
+   test()
+end
+snoop_off()
+
+data = SnoopCompile.read("/tmp/fsa_compiles.csv")
+pc, discards = SnoopCompile.parcel(data[end:-1:1,2])
+SnoopCompile.write(pc, "/tmp/precompile")
+
