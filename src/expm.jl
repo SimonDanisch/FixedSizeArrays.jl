@@ -58,26 +58,53 @@ function hessenberg3(A)
     @dblrotate3(A, c, s, 2, 3)
 end
 
+function reflector(x,y,z)
+ 
 
-function reflect3(x::AbstractVector, τ::Number, A) # apply reflector from left
+    x,y,z, ξ1/ν
+end
 
-            vA1 = τ'*(A[1, 1] +  x[2]'*A[2, 1] +  x[3]'*A[3, 1])
-            a11 = A[1, 1] - vA1
-            a21 = A[2, 1] - x[2]*vA1
-            a31 = A[3, 1] - x[3]*vA1
+
+function reflect3{T}(x1,x2,x3, τ::Number, A::Mat{3, 3, T}) # apply reflector from left
+
+            vA1 = τ'*(A[1, 1] +  x2'*A[2, 1] +  x3'*A[3, 1])
+            a11 = A[1,1] - vA1
+            a21 = A[2,1] - x2*vA1
+            a31 = A[3,1] - x3*vA1
             
-            vA2 = τ'*(A[1, 2] +  x[2]'*A[2, 2] +  x[3]'*A[3, 2])
+            vA2 = τ'*(A[1, 2] +  x2'*A[2, 2] +  x3'*A[3, 2])
             a12 = A[1,2] - vA2
-            a22 = A[2,2] - x[2]*vA2
-            a32 = A[3,2] - x[3]*vA2
+            a22 = A[2,2] - x2*vA2
+            a32 = A[3,2] - x3*vA2
             
-            vA3 = τ'*(A[1, 3] +  x[2]'*A[2, 3] +  x[3]'*A[3, 3])
+            vA3 = τ'*(A[1, 3] +  x2'*A[2, 3] +  x3'*A[3, 3])
             a13 = A[1,3] - vA3
-            a23 = A[2,3] - x[2]*vA3
-            a33 = A[3,3] - x[3]*vA3
-            Mat(((a11,a21,a31),(a12,a22,a32),(a13,a23,a33)))
+            a23 = A[2,3] - x2*vA3
+            a33 = A[3,3] - x3*vA3
+            Mat(((a11,a21,a31),(a12,a22,a32),(a13,a23,a33)))::Mat{3, 3, T}
 
 end
+
+function reflect3t{T}(x1,x2,x3, τ::Number, A::Mat{3, 3, T}) # apply reflector from left
+
+            vA1 = τ'*(A[1, 1] +  x2'*A[1, 2] +  x3'*A[1, 3])
+            a11 = A[1,1] - vA1
+            a21 = A[1,2] - x2*vA1
+            a31 = A[1,3] - x3*vA1
+            
+            vA2 = τ'*(A[2, 1] +  x2'*A[2, 2] +  x3'*A[2, 3])
+            a12 = A[2,1] - vA2
+            a22 = A[2,2] - x2*vA2
+            a32 = A[2,3] - x3*vA2
+            
+            vA3 = τ'*(A[3, 1] +  x2'*A[3, 2] +  x3'*A[3, 3])
+            a13 = A[3,1] - vA3
+            a23 = A[3,2] - x2*vA3
+            a33 = A[3,3] - x3*vA3
+            Mat(((a11,a12,a13),(a21,a22,a23),(a31,a32,a33)))::Mat{3, 3, T}
+
+end
+
 
 #francis QR algorithm with single or double shift
 
@@ -87,7 +114,7 @@ function francisdbl{T<:Real}(AA::Mat{3, 3, T})
     i = 0
     loc = 0 #location of zero
     la1::T = la2::T = la3::T = 0.
-    for i in 1:80
+    for i in 1:200
         if abs(A[3,2]) <= EPS * (abs(A[2,2])+abs(A[3,3]))
             la1 = A[3,3]
             loc = 1
@@ -124,14 +151,24 @@ function francisdbl{T<:Real}(AA::Mat{3, 3, T})
                 (A[3,3] + A[2,2])*A[1,1]  + A[3,3] * A[2,2] - A[2,3] * A[3,2] 
             y = A[2,1]*(A[1,1] - A[3,3])
             z = A[2,1]*A[3,2]
-            v = [x,y,z]
-            g = LinAlg.reflector!(v)
-           
-            A = reflect3(v, g, A)
-            A = reflect3(v, g, A')'
+            
+            ξ1 = x
+            normu = abs2(x) + abs2(y) + abs2(z)
+            if normu == zero(normu)
+               g = zero(ξ1/normu)
+            else
+                normu = sqrt(normu)
+                ν = copysign(normu, real(ξ1))
+                ξ1 += ν
+                x = -ν
+                y /= ξ1
+                z /= ξ1
+                g = ξ1/ν
+            end
+            A = reflect3(x,y,z, g, A)
+            A = reflect3t(x,y,z, g, A)
             A = hessenberg3(A)
         end
-   
     end
     
     # check convergence
@@ -235,6 +272,7 @@ end
 
 function expm{T<:Real}(AA::Mat{3, 3, T})
     t = sqrt(sum(AA.^2))
+
     A = AA/t #normalize
 
     x1, x2, x3, dis2, conv = francisdbl(A)
