@@ -545,7 +545,26 @@ context("Matrix Math") do
 			@fact isapprox(fmm, mm)  --> true
 		end
 	end
+	context("expm(Mat{3,3})") do
+	    for i in 1:30
+            m = 1. *rand(-8:8,3,3)/4
+            @fact norm(Matrix(expm(Mat(m))) -  expm(m)) <= 1E-9 --> true
+            m = m + m'
+            @fact norm(Matrix(expm(Mat(m))) -  expm(m)) <= 1E-9 --> true
+            m = 1. *rand(-1:1,3,3) # eigenvalues equal with high probability to reach all branches
+            @fact norm(Matrix(expm(Mat(m))) -  expm(m)) <= 1E-9 --> true
+            m = m + m'
+            @fact norm(Matrix(expm(Mat(m))) -  expm(m)) <= 1E-7 --> true 
+            
+            @fact norm(sort([FixedSizeArrays.eigvalssym(Mat(m))...]) - sort(eigvals(m))) <= 1E-9 --> true
+            
+        end
+    end
 end
+
+
+
+
 
 ac = rand(3)
 bc = rand(3)
