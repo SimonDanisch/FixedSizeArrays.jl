@@ -81,13 +81,13 @@ end
 
 #francis QR algorithm with single or double shift
 
-function francisdbl{T<:Real}(A::Mat{3, 3, T})
-    A = hessenberg3(A)
-    EPS = 300eps(T)
+function francisdbl{T<:Real}(AA::Mat{3, 3, T})
+    A = hessenberg3(AA)
+    EPS = eps(T)
     i = 0
     loc = 0 #location of zero
-    la1 = la2 = la3 = 0.
-    for i in 1:200
+    la1::T = la2::T = la3::T = 0.
+    for i in 1:80
         if abs(A[3,2]) <= EPS * (abs(A[2,2])+abs(A[3,3]))
             la1 = A[3,3]
             loc = 1
@@ -98,28 +98,27 @@ function francisdbl{T<:Real}(A::Mat{3, 3, T})
             break
         end
         l = 3
-        if 0 < abs2(A[l,l] - A[2,2]) + 4*A[l,2]*A[2,l]  # real ev in sub 2x2 matrix
+        # if real ev in sub 2x2 matrix do twice a raleigh shift
+        if 0 < abs2(A[l,l] - A[2,2]) + 4*A[l,2]*A[2,l]  
             mu = A[l,l]
-            A = A - mu*eye(typeof(A))
-            c, s, _ = LinAlg.givensAlgorithm(A[1,1],A[2,1])
+            A = A - mu*(eye(typeof(A))::Mat{3, 3, T})
+            c, s, _ = LinAlg.givensAlgorithm(A[1,1],A[2,1])::Tuple{T,T,T}
             A2 = @rotate3(A, c, s, 1, 2)
-            c2, s2, _ = LinAlg.givensAlgorithm(A2[2,2],A2[3,2])
+            c2, s2, _ = LinAlg.givensAlgorithm(A2[2,2],A2[3,2])::Tuple{T,T,T}
             A = @rotate3(A2, c2, s2, 2, 3)
     
             A2 = @rotate3t(A, c, s, 1, 2)
             A = @rotate3t(A2, c2, s2, 2, 3)
-            A = A + mu*eye(typeof(A))
-            mu = A[l,l]
-            A = A - mu*eye(typeof(A))
-            c, s, _ = LinAlg.givensAlgorithm(A[1,1],A[2,1])
+         
+            c, s, _ = LinAlg.givensAlgorithm(A[1,1],A[2,1])::Tuple{T,T,T}
             A2 = @rotate3(A, c, s, 1, 2)
-            c2, s2, _ = LinAlg.givensAlgorithm(A2[2,2],A2[3,2])
+            c2, s2, _ = LinAlg.givensAlgorithm(A2[2,2],A2[3,2])::Tuple{T,T,T}
             A = @rotate3(A2, c2, s2, 2, 3)
     
             A2 = @rotate3t(A, c, s, 1, 2)
             A = @rotate3t(A2, c2, s2, 2, 3)
-            A = A + mu*eye(typeof(A))
-        else
+            A = A + mu*(eye(typeof(A))::Mat{3, 3, T})
+        else #do an implicit francis double shift
      
             x = (A[1,1]*A[1,1] + A[1,2]*A[2,1] + A[3,1]*A[1,3]) -  A[1,2]*A[2,1] - 
                 (A[3,3] + A[2,2])*A[1,1]  + A[3,3] * A[2,2] - A[2,3] * A[3,2] 
@@ -134,30 +133,41 @@ function francisdbl{T<:Real}(A::Mat{3, 3, T})
         end
    
     end
+    
+    # check convergence
     if loc == 0
-        error("qr did not converge")
+        converged = false
+        loc = 1
+    else 
+        converged = true
     end
+    
+    # compute eigenvalues of 2x2 submatrix 
     spur = A[loc,loc] + A[2,2]
     det2 = A[loc,loc] * A[2,2] - A[2,loc] * A[loc,2]
     dis2 = abs2(A[loc,loc] - A[2,2]) + 4*A[loc,2]*A[2,loc]
 
-    if dis2 >= 0 # real, real, real
+    # return eigenvalues (if complex, return real and imaginary part as real numbers)
+    if dis2 >= 100EPS # real, real, real
         la2 = 0.5*(spur + copysign(sqrt(dis2), spur))
         if abs(la2) >  eps()
             la3 = det2/la2
         else
             la3 = 0.5*(spur - copysign(sqrt(dis2), spur))
         end
+    elseif dis2 >= -100EPS # treat as real
+        la3 = la2 = 0.5*spur 
+        dis2 = 0.
     else # real +  complex pair
         la2 = 0.5*spur #real part
         la3 = 0.5*sqrt(-dis2) #imaginary part
     end
-   
+    
     disc = dis2
-    det = det2 * la1
-
-    la1, la2, la3, disc
-   # A
+    
+    # return eigenvalus, discriminant of 2x2 matrix of end result and convergence status
+    la1, la2, la3, disc, converged
+   
 end
 
 
@@ -223,42 +233,47 @@ function eigvalssym{T<:Real}(A::Mat{3, 3, T})
 end
     
 
-function expm{T<:Real}(A::Mat{3, 3, T})
+function expm{T<:Real}(AA::Mat{3, 3, T})
+    t = sqrt(sum(AA.^2))
+    A = AA/t #normalize
 
-    x1, x2, x3, dis2 = francisdbl(A)
+    x1, x2, x3, dis2, conv = francisdbl(A)
+    if !conv # if convergence takes to long, call lapack
+       return Mat{3,3,T}(expm(convert(Matrix{T}, AA)))
+    end 
     dis = dis2 >= 0 ? 1 : -1
-    if dis < 0 && abs(x3) < eps()
+    if dis < 0 && abs2(x3) < eps(T)
         dis = 1
         x3 = x2
     end
  
     if dis >= 0
         if abs2(x1 - x2) < eps(T)
-            putzer3(one(T), A, x3, x1)
+            putzer3(t, A, x3, x1)
         elseif abs2(x2 - x3) < eps(T)
-            putzer3(one(T), A, x1, x2)
+            putzer3(t, A, x1, x2)
         elseif abs2(x1 - x3) < eps(T)
-            putzer3(one(T), A, x2, x1)            
+            putzer3(t, A, x2, x1)            
         else
-            putzer3(one(T), A, x1, x2, x3)
+            putzer3(t, A, x1, x2, x3)
         end
     else 
-        putzer3(one(T), A, x1, x2 + im*x3)
+        putzer3(t, A, x1, x2 + im*x3)
     end
 end    
 
 function putzer3{T}(t, A::Mat{3,3,T}, la1, la2) #la2 == la3, maybe la1 == la2 == la3
-        if abs(la1 - la2) < eps()  # la1 == la2 == la3
-	        r1 = exp(t* la1)
-		    r2 = t * exp(t* la1)
-		    r3 = 0.5 * t * t * exp(t * la1)
-  		    R = r2 - la2 * r3
+        if abs(la1 - la2) < 10eps(T)  # la1 == la2 == la3
+            r1 = exp(t* la1)
+            r2 = t * exp(t* la1)
+            r3 = 0.5 * t * t * exp(t * la1)
+            R = r2 - la2 * r3
 
         else
-	    	r1 = exp(t * la1)
-    	    r2 = (expm1(t * la1) - expm1(t * la2)) / (la1 - la2) # la1 != la2
-    	    r3 = (exp(t * la1) - exp(t * la2)*(1. + t*(la1-la2))) / abs2(la1-la2)
-   		    R = r2 - la2*r3
+            r1 = exp(t * la1)
+            r2 = (expm1(t * la1) - expm1(t * la2)) / (la1 - la2) # la1 != la2
+            r3 = (exp(t * la1) - exp(t * la2)*(1. + t*(la1-la2))) / abs2(la1-la2)
+            R = r2 - la2*r3
 
        	end
         r3 * A*A +  (R - la1*r3)*A +  (r1 - la1 * R)*eye(Mat{3, 3, Float64})
