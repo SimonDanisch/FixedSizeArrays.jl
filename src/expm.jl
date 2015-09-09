@@ -58,12 +58,6 @@ function hessenberg3(A)
     @dblrotate3(A, c, s, 2, 3)
 end
 
-function reflector(x,y,z)
- 
-
-    x,y,z, ξ1/ν
-end
-
 
 function reflect3{T}(x1,x2,x3, τ::Number, A::Mat{3, 3, T}) # apply reflector from left
 

@@ -546,7 +546,7 @@ context("Matrix Math") do
 		end
 	end
 	context("expm(Mat{3,3})") do
-	    for i in 1:10
+	    for i in 1:30
             m = 1. *rand(-8:8,3,3)/4
             @fact norm(Matrix(expm(Mat(m))) -  expm(m)) <= 1E-9 --> true
             m = m + m'
@@ -555,6 +555,9 @@ context("Matrix Math") do
             @fact norm(Matrix(expm(Mat(m))) -  expm(m)) <= 1E-9 --> true
             m = m + m'
             @fact norm(Matrix(expm(Mat(m))) -  expm(m)) <= 1E-7 --> true 
+            
+            @fact norm(sort([FixedSizeArrays.eigvalssym(Mat(m))...]) - sort(eigvals(m))) <= 1E-9 --> true
+            
         end
     end
 end
