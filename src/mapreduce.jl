@@ -65,11 +65,14 @@ end
     constructor_expr(FSA, inner)
 end
 
-@generated function similar{FSA <: FixedArray}(::Type{FSA}, ElType::DataType)
+@generated function similar{FSA <: FixedVector}(::Type{FSA}, ElType::DataType)
     :(Main.$(FSA.name.name){$(FSA.parameters[1]), ElType, $(FSA.parameters[3:end]...)})
 end
+@generated function similar{FSA <: FixedVectorNoTuple}(::Type{FSA}, ElType::DataType)
+    :(Main.$(FSA.name.name){ElType, $(FSA.parameters[3:end]...)})
+end
 
-@generated function map{FSA <: FixedVector}(F::DataType, arg1::FSA)
+@generated function map{FSA <: FixedArray}(F::DataType, arg1::FSA)
     eltype(FSA) == F && return :(arg1)
     inner = fill_tuples_expr((inds...) -> :( F(arg1[$(inds...)]) ), size(FSA))
     :( similar(FSA, F)($(inner)) )
@@ -84,6 +87,5 @@ end
 @generated function map{FSA <: FixedVectorNoTuple}(F::DataType, arg1::FSA)
     eltype(FSA) == F && return :(arg1)
     inner = ntuple(i-> :(F(arg1[$i])), length(FSA))
-    BN = basename(FSA)
-    :( $BN{F}($(inner...)) )
+    :( similar(FSA, F)($(inner...)) )
 end
