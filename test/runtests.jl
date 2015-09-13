@@ -556,7 +556,6 @@ context("Matrix Math") do
             @fact norm(Matrix(expm(Mat(m))) -  expm(m))/norm(expm(m)) <= 1E-9 --> true
             m = m + m'
             @fact norm(Matrix(expm(Mat(m))) -  expm(m))/norm(expm(m)) <= 1E-9 --> true 
-            @fact norm(sort([FixedSizeArrays.eigvalssym(Mat(m))...]) - sort(eigvals(m)))/norm(expm(m)) <= 1E-9 --> true # accuracy is low, so we don't use this in expm, but the result of qr algorithm
         end
     end
     context("expm(M::Mat{3,3, BigFloat})") do

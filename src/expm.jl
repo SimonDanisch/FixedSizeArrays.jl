@@ -222,30 +222,6 @@ function expm{T<:Real}(A::Mat{2, 2, T})
     )
 end
 
-# see https://en.wikipedia.org/w/index.php?title=Eigenvalue_algorithm&oldid=671391308#3.C3.973_matrices
-# the eigenvalues satisfy eig3 <= eig2 <= eig1
-
-function eigvalssym{T<:Real}(A::Mat{3, 3, T})
-    p1 = abs2(A[1,2]) + abs2(A[1,3]) + abs2(A[2,3])
-    if p1 == 0
-        return A[1,1],  A[2,2], A[3,3]
-    else
-        q = (A[1,1] + A[2,2] + A[3,3])/3
-        p2 = abs2(A[1,1] - q) + abs2(A[2,2] - q) + abs2(A[3,3] - q) + 2 * p1
-        p = sqrt(p2 / 6)
-        B = (1 / p) * (A - q * eye(Mat{3,3,T}))    
-        d = det(B)
-        r = d / 2
-        
-        phi = acos(clamp(r, -one(T), one(T))) / 3 # correcting rounding errors
-
-        eig1 = q + 2 * p * cos(phi)
-        eig3 = q + 2 * p * cos(phi + (2*pi/3))
-        eig2 = 3 * q - eig1 - eig3   
-    end
-   return eig1, eig2, eig3
-end
-    
 
 function expm{T<:Real}(AA::Mat{3, 3, T})
     t = sqrt(sum(AA.^2))
@@ -287,7 +263,6 @@ function putzer{T}(t, A::Mat{3,3,T}, x, y, d)
     la1 = (y+delta)
     la2 = (y-delta)
     la3 = x
-    h = y-x 
     r2 = real(dexp(t, la1, la2))
     r3 = real(ddexp(t, la1, la2, la3))
     R = r2 - la2*r3
