@@ -545,20 +545,22 @@ context("Matrix Math") do
 			@fact isapprox(fmm, mm)  --> true
 		end
 	end
-	context("expm(Mat{3,3})") do
+	context("expm(M::Mat{3,3,Float64})") do
+    	# in practice the precision is eps(), if m has not a triple eigenvalue 
 	    for i in 1:30
-            m = 1. *rand(-8:8,3,3)/4
-            @fact norm(Matrix(expm(Mat(m))) -  expm(m)) <= 1E-9 --> true
+            m = (rand(0:1,3,3).*randn(3,3) .+ rand(-3:3,3,3)) # some entries are natural numbers to have higher chance of multiple eigenvalues to trigger all branches
+            @fact norm(Matrix(expm(Mat(m))) -  expm(m))/norm(expm(m)) <= 1E-9 --> true 
+            m = m + m' # symmetric
+            @fact norm(Matrix(expm(Mat(m))) -  expm(m))/norm(expm(m)) <= 1E-9 --> true
+            m = 1. *rand(-1:1,3,3) # eigenvalues equal with high probability to test worse case
+            @fact norm(Matrix(expm(Mat(m))) -  expm(m))/norm(expm(m)) <= 1E-9 --> true
             m = m + m'
-            @fact norm(Matrix(expm(Mat(m))) -  expm(m)) <= 1E-9 --> true
-            m = 1. *rand(-1:1,3,3) # eigenvalues equal with high probability to reach all branches
-            @fact norm(Matrix(expm(Mat(m))) -  expm(m)) <= 1E-9 --> true
-            m = m + m'
-            @fact norm(Matrix(expm(Mat(m))) -  expm(m)) <= 1E-7 --> true 
-            
-            @fact norm(sort([FixedSizeArrays.eigvalssym(Mat(m))...]) - sort(eigvals(m))) <= 1E-9 --> true
-            
+            @fact norm(Matrix(expm(Mat(m))) -  expm(m))/norm(expm(m)) <= 1E-9 --> true 
+            @fact norm(sort([FixedSizeArrays.eigvalssym(Mat(m))...]) - sort(eigvals(m)))/norm(expm(m)) <= 1E-9 --> true # accuracy is low, so we don't use this in expm, but the result of qr algorithm
         end
+    end
+    context("expm(M::Mat{3,3, BigFloat})") do
+        @fact norm(Matrix(expm(Mat(big([0.0 0.0 1.0; -1.0 1.0 0.0; -1.0 0.0 2.0])))) - big([-0.0 0.0  1.0; -0.5  1.0  -0.5; -1.0  0.0  2.0])*e,1) <  10eps(big(1.)) --> true
     end
 end
 
