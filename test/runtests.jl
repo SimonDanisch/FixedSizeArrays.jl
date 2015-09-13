@@ -255,6 +255,12 @@ v1c = Vec(6.0+3.im,5.0-2im,4.0+0.im)
 v2c = v1 + v2*im
 v2c = Vec(1.0 + 6.0im, 2.0 + 5.0im, 3.0 + 4.0im)
 
+context("Complex Ops") do
+    context("dot product") do
+        @fact dot(v1c,v2c) --> dot([6.0+3.im,5.0-2im,4.0+0.im], [1.0,2.0,3.0] + [6.0,5.0,4.0]*im)
+    end
+end
+
 context("Indexing") do
 	context("FixedVector") do
         @fact setindex(v1, 88.9, 1) --> Vec(88.9,2.0,3.0)
@@ -380,11 +386,6 @@ context("Ops") do
 end
 
 
-context("Complex Ops") do
-	context("dot product") do
-		@fact dot(v1c,v2c) --> dot([6.0+3.im,5.0-2im,4.0+0.im], [1.0,2.0,3.0] + [6.0,5.0,4.0]*im)
-	end
-end
 
 
 
@@ -486,7 +487,6 @@ context("Matrix") do
     @fact typeof(vfs) --> Vec4d
     @fact typeof(mfs) --> Mat4d
 end
-
 context("Matrix Math") do
 	for i=1:4, j=1:4
 		v = rand(j)

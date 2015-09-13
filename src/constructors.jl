@@ -8,6 +8,8 @@ size_or{ND}(::Type{FixedArray{TypeVar(:T), ND,      Tuple{TypeVar(:N)}}}, OR) = 
 size_or{T}(::Type{FixedArray{T, TypeVar(:N),        Tuple{TypeVar(:N)}}}, OR) = OR
 size_or{T,ND}(::Type{FixedArray{T, ND,              Tuple{TypeVar(:N)}}}, OR) = OR
 
+
+
 size_or{FSA <: FixedArray}(::Type{FSA}, OR) = size_or(super(FSA), OR)
 
 eltype_or{T,ND,SZ}(::Type{FixedArray{T, ND, SZ}},                    OR) = T
@@ -21,7 +23,6 @@ eltype_or{SZ}(::Type{FixedArray{TypeVar(:T), TypeVar(:N), SZ}},             OR) 
 eltype_or{ND,SZ}(::Type{FixedArray{TypeVar(:T), ND, SZ}},                   OR) = OR
 
 eltype_or{FSA <: FixedArray}(::Type{FSA}, OR) = eltype_or(super(FSA), OR)
-
 
 _fill_tuples_expr(inner::Function, SZ::Tuple{Int}, inds...) =
     :(tuple($(ntuple(i->inner(i, inds...), SZ[1])...)))

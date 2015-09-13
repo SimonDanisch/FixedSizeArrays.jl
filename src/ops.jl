@@ -56,24 +56,33 @@ for op in binaryOps
     eval(quote
         $functor_expr
         @inline $op{T1 <: FixedArray, T2 <: FixedArray}(x::T1, y::T2) = $op(promote(x, y)...)
-        @inline $op{T <: FixedArray}(x::T,    y::T)      = map($functor_name(), x, y)
-        @inline $op{T <: FixedArray}(x::Number, y::T)    = map($functor_name(), x, y)
-        @inline $op{T <: FixedArray}(x::T,    y::Number) = map($functor_name(), x, y)
+        @inline $op{T1 <: FixedArray}(x::Number, y::T1) = eltype(y) == typeof(x) ? map($functor_name(), x, y) : $op(promote(x, y)...)
+        @inline $op{T1 <: FixedArray}(x::T1, y::Number) = eltype(x) == typeof(y) ? map($functor_name(), x, y) : $op(promote(x, y)...)
+
+        @inline $op{T <: FixedArray}(x::T,    y::T) = map($functor_name(), x, y)
     end)
 end
 
-function promote{T1 <: FixedArray, T2 <: FixedArray}(a::T1, b::T2)
+@inline function promote{T1 <: FixedArray, T2 <: FixedArray}(a::T1, b::T2)
     T = promote_type(eltype(T1), eltype(T2))
     map(T, a), map(T, b)
 end
-
-function ctranspose{R, C, T}(a::Mat{R, C, T})
-    Mat(ntuple(CRowFunctor(a), Val{R}))
+@inline function promote{T1 <: FixedArray}(a::T1, b::Number)
+    T = promote_type(eltype(T1), typeof(b))
+    map(T, a), T(b)
 end
+@inline function promote{T1 <: FixedArray}(a::Number, b::T1)
+    T = promote_type(typeof(a), eltype(T1))
+    T(a), map(T, b)
+end
+@inline ctranspose{R, C, T}(a::Mat{R, C, T}) = Mat(ntuple(CRowFunctor(a), Val{R}))
 
 @inline Base.hypot{T}(v::FixedVector{2,T}) = hypot(v[1],v[2])
 
-@inline dot{T <: FixedArray}(a::T, b::T) = sum(a.*b)
+immutable DotFunctor <: Func{2} end
+call(::DotFunctor, a, b) = a'*b
+@inline dot{T <: Union(FixedArray, Tuple)}(a::T, b::T) = sum(map(DotFunctor(), a, b))
+
 @inline dot{T}(a::NTuple{1,T}, b::NTuple{1,T}) = @inbounds return a[1]'*b[1]
 @inline dot{T}(a::NTuple{2,T}, b::NTuple{2,T}) = @inbounds return (a[1]'*b[1] + a[2]'*b[2])
 @inline dot{T}(a::NTuple{3,T}, b::NTuple{3,T}) = @inbounds return (a[1]'*b[1] + a[2]'*b[2] + a[3]'*b[3])

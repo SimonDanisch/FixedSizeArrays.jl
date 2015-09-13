@@ -34,8 +34,8 @@ eltype{T <: FixedArray,N,SZ}(A::FixedArray{T,N,SZ}) = T
 
 
 length{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})         = _length(SZ)
-length{T <: FixedArray}(A::Type{T})                 = length(super(T))
 length{T,N,SZ}(::FixedArray{T,N,SZ})                = _length(SZ)
+length{T <: FixedArray}(A::Type{T})                 = length(super(T))
 
 endof{T,N,SZ}(A::FixedArray{T,N,SZ})                = length(A)
 
@@ -49,8 +49,8 @@ size{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})           = _size(SZ)
 size{T <: FixedArray}(A::Type{T})                   = size(super(T))
 size{T <: FixedArray}(A::T)                         = size(T)
 
+size{T <: FixedArray}(A::Type{T}, d::Integer)       = size(T)[d]
 size{T <: FixedArray}(A::T, d::Integer)             = size(T, d)
-size{T <: FixedArray}(A::Type{T}, d::Integer)       = size(T)[d]::Int
 
 # Iterator
 start(A::FixedArray)                                = 1
