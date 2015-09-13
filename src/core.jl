@@ -19,33 +19,44 @@ function fixedsizearray_type{FSA <: FixedArray}(::Type{FSA})
     ff
 end
 
-eltype{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})         = T
-eltype{T <: FixedArray}(A::Type{T})                 = eltype(fixedsizearray_type(T))
-eltype{T <: FixedArray}(A::T)                       = eltype(T)
 
-length{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})         = prod(SZ.parameters)::Int
-length{T <: FixedArray}(A::Type{T})                 = length(fixedsizearray_type(T))
-length{C,T}(::FixedVector{C,T})                     = C
-length{R,C,T}(::FixedMatrix{R,C,T})                 = R*C
+_length{T <: Tuple}(::Type{T})						= *(T.parameters...)
+_length{N, N2}(::Type{Tuple{N, N2}})				= N*N2 
+_length{N}(::Type{Tuple{N}})						= N
+
+_size{T <: Tuple}(::Type{T})						= (T.parameters...)
+_size{N, N2}(::Type{Tuple{N, N2}})					= (N,N2) 
+_size{N}(::Type{Tuple{N}})							= (N,)
+
+eltype{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})         = T
+eltype{T <: FixedArray}(A::Type{T})                 = eltype(super(T))
+eltype{T <: FixedArray,N,SZ}(A::FixedArray{T,N,SZ}) = T
+
+
+length{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})         = _length(SZ)
+length{T,N,SZ}(::FixedArray{T,N,SZ})                = _length(SZ)
+length{T <: FixedArray}(A::Type{T})                 = length(super(T))
 
 endof{T,N,SZ}(A::FixedArray{T,N,SZ})                = length(A)
 
 
 ndims{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})          = N
-ndims{T <: FixedArray}(A::Type{T})                  = ndims(fixedsizearray_type(T))
+ndims{T <: FixedArray}(A::Type{T})                  = ndims(super(T))
 ndims{T <: FixedArray}(A::T)                        = ndims(T)
 
-size{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})           = (SZ.parameters...)::NTuple{N, Int}
-size{T <: FixedArray}(A::Type{T})                   = size(fixedsizearray_type(T))
+
+size{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})           = _size(SZ)
+size{T <: FixedArray}(A::Type{T})                   = size(super(T))
 size{T <: FixedArray}(A::T)                         = size(T)
 
+size{T <: FixedArray}(A::Type{T}, d::Integer)       = size(T)[d]
 size{T <: FixedArray}(A::T, d::Integer)             = size(T, d)
-size{T <: FixedArray}(A::Type{T}, d::Integer)       = size(T)[d]::Int
 
 # Iterator
 start(A::FixedArray)                                = 1
 next(A::FixedArray, state::Integer)                 = (A[state], state+1)
 done(A::FixedArray, state::Integer)                 = length(A) < state
+
 
 
 

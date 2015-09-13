@@ -1,13 +1,28 @@
-function size_or{FSA <: FixedArray}(::Type{FSA}, SZ)
-    fsa = fixedsizearray_type(FSA)
-    s  = tuple(fsa.parameters[3].parameters...)
-    any(sz -> isa(sz, TypeVar), s) ? SZ : s
-end
-function eltype_or{FSA <: FixedArray}(::Type{FSA}, ElType)
-    fsa = fixedsizearray_type(FSA)
-    s   = fsa.parameters[1]
-    isa(s, TypeVar) ? ElType : s
-end
+size_or{T,ND,SZ}(::Type{FixedArray{T, ND,               SZ}}, OR) = _size(SZ)
+size_or{ND,SZ}(::Type{FixedArray{TypeVar(:T), ND,       SZ}}, OR) = _size(SZ)
+size_or{T,SZ}(::Type{FixedArray{T, TypeVar(:N),         SZ}}, OR) = _size(SZ)
+size_or{SZ}(::Type{FixedArray{TypeVar(:T), TypeVar(:N), SZ}}, OR) = _size(SZ)
+
+size_or(::Type{FixedArray{TypeVar(:T), TypeVar(:N), Tuple{TypeVar(:N)}}}, OR) = OR
+size_or{ND}(::Type{FixedArray{TypeVar(:T), ND,      Tuple{TypeVar(:N)}}}, OR) = OR
+size_or{T}(::Type{FixedArray{T, TypeVar(:N),        Tuple{TypeVar(:N)}}}, OR) = OR
+size_or{T,ND}(::Type{FixedArray{T, ND,              Tuple{TypeVar(:N)}}}, OR) = OR
+
+
+
+size_or{FSA <: FixedArray}(::Type{FSA}, OR) = size_or(super(FSA), OR)
+
+eltype_or{T,ND,SZ}(::Type{FixedArray{T, ND, SZ}},                    OR) = T
+eltype_or{T,SZ}(::Type{FixedArray{T, TypeVar(:N), SZ}},              OR) = T
+eltype_or{T,ND}(::Type{FixedArray{T, ND, Tuple{TypeVar(:N)}}},       OR) = T
+eltype_or{T}(::Type{FixedArray{T, TypeVar(:N), Tuple{TypeVar(:N)}}}, OR) = T
+
+eltype_or(::Type{FixedArray{TypeVar(:T), TypeVar(:N), Tuple{TypeVar(:N)}}}, OR) = OR
+eltype_or{ND}(::Type{FixedArray{TypeVar(:T), ND, Tuple{TypeVar(:N)}}},      OR) = OR
+eltype_or{SZ}(::Type{FixedArray{TypeVar(:T), TypeVar(:N), SZ}},             OR) = OR
+eltype_or{ND,SZ}(::Type{FixedArray{TypeVar(:T), ND, SZ}},                   OR) = OR
+
+eltype_or{FSA <: FixedArray}(::Type{FSA}, OR) = eltype_or(super(FSA), OR)
 
 _fill_tuples_expr(inner::Function, SZ::Tuple{Int}, inds...) =
     :(tuple($(ntuple(i->inner(i, inds...), SZ[1])...)))
@@ -112,13 +127,13 @@ end
 
 
 
-zero{FSA <: FixedArray}(::Type{FSA}) = map(ConstFunctor(zero(eltype(FSA))), FSA)
-one{FSA <: FixedArray}(::Type{FSA})  = map(ConstFunctor(one(eltype(FSA))), FSA)
-eye{FSA <: FixedArray}(::Type{FSA})  = map(EyeFunc(size(FSA), eltype(FSA)), FSA)
-unit{FSA <: FixedVector}(::Type{FSA}, i::Integer) = map(UnitFunctor(i, eltype(FSA)), FSA)
+@inline zero{FSA <: FixedArray}(::Type{FSA}) = map(ConstFunctor(zero(eltype(FSA))), FSA)
+@inline one{FSA <: FixedArray}(::Type{FSA})  = map(ConstFunctor(one(eltype(FSA))), FSA)
+@inline eye{FSA <: FixedArray}(::Type{FSA})  = map(EyeFunc{eltype(FSA)}, FSA)
+@inline unit{FSA <: FixedVector}(::Type{FSA}, i::Integer) = map(UnitFunctor(i, eltype(FSA)), FSA)
 
-rand{FSA <: FixedArray}(x::Type{FSA}) = map(RandFunctor(eltype(FSA)), FSA)
-rand{FSA <: FixedArray}(x::Type{FSA}, range::Range) = (T = eltype(FSA) ; map(RandFunctor(T(first(range)):T(step(range)):T(last(range))), FSA)) # there's no easy way to convert eltypes of ranges (I think)
+@inline rand{FSA <: FixedArray}(x::Type{FSA}) = map(RandFunctor{eltype(FSA)}, FSA)
+@inline rand{FSA <: FixedArray}(x::Type{FSA}, range::Range) = (T = eltype(FSA) ; map(RandFunctor{T(first(range)):T(step(range)):T(last(range))}, FSA)) # there's no easy way to convert eltypes of ranges (I think)
 
 """
 Macro `fsa` helps to create fixed size arrays like Julia arrays.
