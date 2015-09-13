@@ -70,7 +70,7 @@ end
     :($name{$(FSA.parameters[1]), ElType, $(FSA.parameters[3:end]...)})
 end
 @generated function similar{FSA <: FixedVectorNoTuple}(::Type{FSA}, ElType::DataType)
-    name = parse("Main.", string(FSA.name))
+    name = parse(string("Main.", FSA.name))
     :($name{ElType, $(FSA.parameters[3:end]...)})
 end
 
