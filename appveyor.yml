@@ -18,7 +18,7 @@ install:
 build_script:
 # Need to convert from shallow to complete for Pkg.clone to work
 #  - git fetch --unshallow
-  - C:\projects\julia\bin\julia-debug -e "versioninfo(); Pkg.init(); Pkg.add(\"FixedSizeArrays\"); Pkg.checkout(\"FixedSizeArrays\");"
+  - C:\projects\julia\bin\julia-debug -e "versioninfo(); Pkg.init(); Pkg.clone(pwd(), \"FixedSizeArrays\")"
 
 test_script:
   - C:\projects\julia\bin\julia-debug -e "Pkg.test(\"FixedSizeArrays\")"
