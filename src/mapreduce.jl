@@ -66,10 +66,12 @@ end
 end
 
 @generated function similar{FSA <: FixedVector}(::Type{FSA}, ElType::DataType)
-    :(Main.$(FSA.name.name){$(FSA.parameters[1]), ElType, $(FSA.parameters[3:end]...)})
+    name = parse(string("Main.", FSA.name))
+    :($name{$(FSA.parameters[1]), ElType, $(FSA.parameters[3:end]...)})
 end
 @generated function similar{FSA <: FixedVectorNoTuple}(::Type{FSA}, ElType::DataType)
-    :(Main.$(FSA.name.name){ElType, $(FSA.parameters[3:end]...)})
+    name = parse("Main.", string(FSA.name))
+    :($name{ElType, $(FSA.parameters[3:end]...)})
 end
 
 @generated function map{FSA <: FixedArray}(F::DataType, arg1::FSA)
