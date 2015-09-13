@@ -19,13 +19,19 @@ function fixedsizearray_type{FSA <: FixedArray}(::Type{FSA})
     ff
 end
 
+
+_length{T <: Tuple}(::Type{T})						= *(T.parameters...)
+_length{N, N2}(::Type{Tuple{N, N2}})				= N*N2 
+_length{N}(::Type{Tuple{N}})						= N
+
+_size{T <: Tuple}(::Type{T})						= (T.parameters...)
+_size{N, N2}(::Type{Tuple{N, N2}})					= (N,N2) 
+_size{N}(::Type{Tuple{N}})							= (N,)
+
 eltype{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})         = T
 eltype{T <: FixedArray}(A::Type{T})                 = eltype(super(T))
 eltype{T <: FixedArray,N,SZ}(A::FixedArray{T,N,SZ}) = T
 
-_length{T <: Tuple}(::Type{T})						= *(SZ.parameters...)
-_length{N, N2}(::Type{Tuple{N, N2}})				= N*N2 
-_length{N}(::Type{Tuple{N}})						= N
 
 length{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})         = _length(SZ)
 length{T <: FixedArray}(A::Type{T})                 = length(super(T))
@@ -38,9 +44,6 @@ ndims{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})          = N
 ndims{T <: FixedArray}(A::Type{T})                  = ndims(super(T))
 ndims{T <: FixedArray}(A::T)                        = ndims(T)
 
-_size{T <: Tuple}(::Type{T})						= (SZ.parameters...)
-_size{N, N2}(::Type{Tuple{N, N2}})					= (N,N2) 
-_size{N}(::Type{Tuple{N}})							= (N,)
 
 size{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})           = _size(SZ)
 size{T <: FixedArray}(A::Type{T})                   = size(super(T))
