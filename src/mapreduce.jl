@@ -80,7 +80,7 @@ end
 
 map{R,C,T}(F::Type{T}, arg1::Mat{R,C,T}) = arg1
 @generated function map{R,C,T}(F::DataType, arg1::Mat{R,C,T})
-    inner = fill_tuples_expr((inds...) -> :( F(arg1[$(inds...)]) ), size(FSA))
+    inner = fill_tuples_expr((inds...) -> :( F(arg1[$(inds...)]) ), (R, C))
     :( Mat{R, C, F}($(inner)) )
 end
 
