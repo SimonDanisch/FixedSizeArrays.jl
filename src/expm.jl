@@ -176,28 +176,11 @@ function francisdbl{T<:Real}(AA::Mat{3, 3, T})
     # compute eigenvalues of 2x2 submatrix 
     spur = A[loc,loc] + A[2,2]
     det2 = A[loc,loc] * A[2,2] - A[2,loc] * A[loc,2]
-    dis2 = abs2(A[loc,loc] - A[2,2]) + 4*A[loc,2]*A[2,loc]
+    dis = abs2(A[loc,loc] - A[2,2]) + 4*A[loc,2]*A[2,loc]
 
-    # return eigenvalues (if complex, return real and imaginary part as real numbers)
-    if dis2 >= 100EPS # real, real, real
-        la2 = 0.5*(spur + copysign(sqrt(dis2), spur))
-        if abs(la2) >  eps()
-            la3 = det2/la2
-        else
-            la3 = 0.5*(spur - copysign(sqrt(dis2), spur))
-        end
-    elseif dis2 >= -100EPS # treat as real
-        la3 = la2 = 0.5*spur 
-        dis2 = 0.
-    else # real +  complex pair
-        la2 = 0.5*spur #real part
-        la3 = 0.5*sqrt(-dis2) #imaginary part
-    end
     
-    disc = dis2
-    
-    # return eigenvalus, discriminant of 2x2 matrix of end result and convergence status
-    la1, la2, la3, disc, converged
+    # return eigenvalue, discriminant of 2x2 matrix of end result and convergence status
+    la1, 0.5*spur, dis/4, converged
    
 end
 
@@ -269,67 +252,45 @@ function expm{T<:Real}(AA::Mat{3, 3, T})
 
     A = AA/t #normalize
 
-    x1, x2, x3, dis2, conv = francisdbl(A)
+    la1, x, dis, conv = francisdbl(A)
     if !conv # if convergence takes to long, call lapack
        return Mat{3,3,T}(expm(convert(Matrix{T}, AA)))
     end 
-    dis = dis2 >= 0 ? 1 : -1
-    if dis < 0 && abs2(x3) < eps(T)
-        dis = 1
-        x3 = x2
-    end
- 
-    if dis >= 0
-        if abs2(x1 - x2) < eps(T)
-            putzer3(t, A, x3, x1)
-        elseif abs2(x2 - x3) < eps(T)
-            putzer3(t, A, x1, x2)
-        elseif abs2(x1 - x3) < eps(T)
-            putzer3(t, A, x2, x1)            
-        else
-            putzer3(t, A, x1, x2, x3)
-        end
-    else 
-        putzer3(t, A, x1, x2 + im*x3)
-    end
+    putzer(t, A, la1, x, dis)
 end    
 
-function putzer3{T}(t, A::Mat{3,3,T}, la1, la2) #la2 == la3, maybe la1 == la2 == la3
-        if abs(la1 - la2) < 10eps(T)  # la1 == la2 == la3
-            r1 = exp(t* la1)
-            r2 = t * exp(t* la1)
-            r3 = 0.5 * t * t * exp(t * la1)
-            R = r2 - la2 * r3
-
-        else
-            r1 = exp(t * la1)
-            r2 = (expm1(t * la1) - expm1(t * la2)) / (la1 - la2) # la1 != la2
-            r3 = (exp(t * la1) - exp(t * la2)*(1. + t*(la1-la2))) / abs2(la1-la2)
-            R = r2 - la2*r3
-
-       	end
-        r3 * A*A +  (R - la1*r3)*A +  (r1 - la1 * R)*eye(Mat{3, 3, Float64})
-end
-function putzer3{T}(t, A::Mat{3,3,T}, la1, la2::Real, la3::Real) # three distinct real eigenvalues
-        r1 = exp(t * la1)
-        r2 = (expm1(t * la1) - expm1(t * la2))/ (la1 - la2) 
-        r3 = -((la2 - la3)*exp(t*la1) + (la3 - la1)*exp(t*la2) + (la1 - la2)*exp(t*la3)) / ((la1 - la2)*(la2 - la3)*(la3 - la1))
-        R = r2 - la2*r3
-
-        r3 * A*A +  (R - la1*r3)*A +  (r1 - la1 * R)*eye(Mat{3,3,T})
-        
-end
-function putzer3{T}(t, A::Mat{3,3,T}, la1, la2::Complex) # one real and a complex conjugate pair of eigenvalues, all different
-        la3 = la2'
-        r1 = exp(t * la1)
-        r2 = (expm1(t * la1) - expm1(t * la2)) / (la1 - la2) # possibly complex
-        r3 = real(-((la2 - la3)*exp(la1*t) + (la3 - la1)*exp(t*la2) + (la1 - la2)*exp(t*la3)) / ((la1 - la2)*(la2 - la3)*(la3 - la1))) # r3 is real, see short comm. by r.r. huilgol
-        R = real(r2 - la2*r3) # also real
-     
-        r3 * A*A +  (R - la1*r3)*A +  (r1 - la1 * R)*eye(Mat{3,3,T})
-   
+function dexp(t, x, y) 
+    if abs2(x-y) > eps()
+        2exp(t*(x+y)/2)*sinh(t*(x-y)/2)/((x-y))
+    else
+        exp(t*(x+y)/2)*(t+(t^3*(x-y)^2)/24)
+    end
 end
 
+function ddexp(t, x, y, z) 
+    d, i = findmax([abs2(y-x), abs2(z-y),abs2(z-x)])
+    if d < eps()
+        exp(t*(x+y+z)/3)*t^2/2
+    elseif i == 1
+        (dexp(t, y, z) - dexp(t, x,z))/(y-x)
+    elseif i==2
+        (dexp(t, z, x) - dexp(t, y,x))/(z-y)
+    elseif i==3
+        (dexp(t, z, y) - dexp(t, x,y))/(z-x)
+    end
+end
 
-
+function putzer{T}(t, A::Mat{3,3,T}, x, y, d)
+    deltaabs = sqrt(abs(d))   
+    delta = sqrt(complex(d))
+    r1 = real(exp(t * (y+delta)))
+    la1 = (y+delta)
+    la2 = (y-delta)
+    la3 = x
+    h = y-x 
+    r2 = real(dexp(t, la1, la2))
+    r3 = real(ddexp(t, la1, la2, la3))
+    R = r2 - la2*r3
+    r3 * A*A +  real(R - la1*r3)*A +  real(r1 - la1 * R)*eye(Mat{3,3,T})
+end   
 
