@@ -29,7 +29,7 @@ _size{N, N2}(::Type{Tuple{N, N2}})					= (N,N2)
 _size{N}(::Type{Tuple{N}})							= (N,)
 
 eltype{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})         = T
-eltype{T <: FixedArray}(A::Type{T})                 = eltype(super(T))
+eltype{T <: FixedArray}(A::Type{T})                 = eltype_or(T, Any)
 eltype{T <: FixedArray,N,SZ}(A::FixedArray{T,N,SZ}) = T
 
 
@@ -46,7 +46,7 @@ ndims{T <: FixedArray}(A::T)                        = ndims(T)
 
 
 size{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})           = _size(SZ)
-size{T <: FixedArray}(A::Type{T})                   = size(super(T))
+size{T <: FixedArray}(A::Type{T})                   = size_or(T, ())
 size{T <: FixedArray}(A::T)                         = size(T)
 
 size{T <: FixedArray}(A::Type{T}, d::Integer)       = size(T)[d]

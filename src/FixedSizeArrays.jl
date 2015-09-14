@@ -13,8 +13,7 @@ include("constructors.jl")
 immutable Mat{Row, Column, T} <: FixedMatrix{Row, Column, T}
     _::NTuple{Column, NTuple{Row, T}}
 end
-size_or{R, C, T}(::Type{Mat{R, C, T}}, OR) = (R, C)
-size_or{T <: Mat}(::Type{T}, OR) = OR
+
 # most common FSA types
 immutable Vec{N, T} <: FixedVector{N, T}
     _::NTuple{N, T}
@@ -54,5 +53,5 @@ export row
 export column
 export MatMulFunctor
 export setindex
-
+export eltype_or, size_or
 end
