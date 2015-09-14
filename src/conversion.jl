@@ -15,3 +15,6 @@ convert{T <: Tuple, FSA <: FixedArray}(::Type{T}, x::FSA) = map(eltype(T), x.(1)
 convert{T <: FixedArray}(t::Type{T}, f::T)                = f
 convert{FSA1 <: FixedArray}(t::Type{FSA1}, f::FixedArray) =
     map(ConversionIndexFunctor(f, eltype_or(FSA1, eltype(typeof(f)))), FSA1)
+
+convert{T <: FixedArray}(::Type{T}, x) = T(x)
+convert{T <: FixedArray}(::Type{T}, x...) = T(x)
