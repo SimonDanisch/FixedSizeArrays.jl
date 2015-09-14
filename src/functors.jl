@@ -21,12 +21,6 @@ immutable ConversionIndexFunctor{T, T2} <: Func{1}
 end
 call(f::ConversionIndexFunctor, i...) = f.target(f.args1[i...])
 
-immutable IndexFunctorTuple{T, T2} <: Func{1}
-    indexes::T
-    target::T2
-end
-call(f::IndexFunctorTuple, i) = f.target[f.indexes[i]]
-
 immutable IndexFunctor{T} <: Func{1}
     args1::T
 end
@@ -38,11 +32,6 @@ immutable IndexFunc{T} <: Base.Func{1}
 end
 Base.call{T}(a::IndexFunc{T}, j) = a.arg[a.i,j]
 
-
-immutable RowFunctor{M}
-    mat::M
-end
-call(r::RowFunctor, i::Int) = row(r.mat, i)
 
 immutable CRowFunctor{M}
     mat::M

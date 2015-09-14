@@ -5,6 +5,9 @@ using FactCheck
 immutable Normal{N, T} <: FixedVector{N, T}
     _::NTuple{N, T}
 end
+immutable D3{N1, N2, N3, T} <: FixedArray{T, 3, Tuple{N1, N2, N3}}
+    _::NTuple{N1, NTuple{N2, NTuple{N3, T}}}
+end
 immutable RGB{T} <: FixedVectorNoTuple{3, T}
     r::T
     g::T
@@ -118,6 +121,7 @@ context("Constructor FixedVectorNoTuple") do
             @fact typeof(RGB{T}(1f0, 2, 3.0))   --> RGB{T}
             @fact typeof(RGB(1f0, 2, 3.0))      --> RGB{Float64}
             @fact typeof(RGB{Int}(1f0, 2, 3.0)) --> RGB{Int}
+            @fact_throws DimensionMismatch RGB((1,2,3), (2,3,4))
         end
     end
 end
@@ -134,6 +138,11 @@ context("Constructor ") do
         @fact typeof(rand(Vec{7, Int}, 1:7)) --> Vec{7, Int}
         @fact typeof(rand(Mat4d, -20f0:0.192f0:230f0)) --> Mat4d
         @fact typeof(rand(Mat{4,21,Float32}, -20f0:0.192f0:230f0)) --> Mat{4,21,Float32}
+
+        x = rand(D3{4,4,4, Float32})
+        @fact typeof(x) --> D3{4,4,4, Float32}
+        @fact eltype(x) --> Float32
+        @fact size(x) --> (4,4,4)
 
     end
     context("Zero") do
@@ -241,7 +250,8 @@ context("Constructors") do
 	context("FixedVector: unary, from FixedVector") do
 		@fact typeof(Vec3f(1,1,1))     --> Vec{3, Float32}
 		@fact typeof(Vec3f(1,1f0,1))   --> Vec{3, Float32}
-		@fact typeof(Vec3f(1f0,1,1.0)) --> Vec{3, Float32}
+        @fact typeof(Vec3f(1f0,1,1.0)) --> Vec{3, Float32}
+		@fact eltype(Vec3f(1f0,1,1.0)) --> Float32
 
 		@fact typeof(Vec3f(1))  	--> Vec{3, Float32}
 		@fact typeof(Vec3f(0))  	--> Vec{3, Float32}
@@ -306,6 +316,7 @@ context("Indexing") do
 		@fact_throws BoundsError v1[-1]
 		@fact_throws BoundsError v1[0]
 		@fact_throws BoundsError v1[4]
+        @fact row(v1, 1) --> (1.0,)
 	end
     m = Mat{4,4,Int}(
         (1,2,3,4),
@@ -315,11 +326,11 @@ context("Indexing") do
     )
     context("FixedMatrix") do
         @fact setindex(m, 42.0, 2,2) --> Mat{4,4,Int}(
-        (1,2,3,4),
-        (5,42.0,7,8),
-        (9,10,11,12),
-        (13,14,15,16)
-    )
+            (1,2,3,4),
+            (5,42.0,7,8),
+            (9,10,11,12),
+            (13,14,15,16)
+        )
         @fact m[1] --> 1
         @fact m[2] --> 2
         @fact m[10] --> 10
@@ -333,9 +344,13 @@ context("Indexing") do
         @fact_throws BoundsError m[5,1]
         @fact_throws BoundsError m[-1,1]
         @fact_throws BoundsError m[0,0]
+
+        @fact row(m, 1) --> (1,5,9,13)
+
     end
 
 end
+
 
 
 context("Ops") do
@@ -413,7 +428,30 @@ context("Ops") do
         @fact hypot(b) --> 2.23606797749979
         @fact hypot(a) == hypot(b) --> true
     end
+    context("normalize") do
+        a = Vec(3,4)
+        b = Vec(3.,4.)
+        @fact normalize(a) --> Vec(0.6,0.8)
+        @fact normalize(b) --> Vec(0.6,0.8)
+    end
 
+    context("reduce") do
+        a = rand(Vec{7, Float32})
+        x = reduce(Base.AddFun(), a)
+        y = 0f0
+        for elem in a
+            y += elem
+        end
+        @fact y --> x
+
+        a = rand(Mat{7, 9, Cuint})
+        x2 = reduce(Base.AddFun(), a)
+        y2 = Cuint(0)
+        for elem in a
+            y2 += elem
+        end
+        @fact y2 --> x2
+    end
 end
 
 
@@ -439,6 +477,7 @@ zeromat = Mat2d((0.0,0.0),(0.0,0.0))
 
 
 context("Matrix") do
+    @fact map(Float64, zeromat) --> zeromat
     @fact length(Mat2d) --> 4
     @fact length(zeromat) --> 4
 
@@ -631,6 +670,11 @@ jfs = dot(afs, gfs)
 kfs = abs(ffs)
 lfs = abs(-ffs)
 
+context("Meta") do 
+    sym, expr = FixedSizeArrays.gen_functor(:+, 2)
+    @fact typeof(sym) --> Symbol
+    @fact typeof(expr) --> Expr
+end
 
 context("Vector Math") do
     context("all") do
@@ -660,6 +704,7 @@ context("Equality") do
     @fact Vec(1,2,3) --> not(Vec(1.0,4.0,3.0))
     @fact Vec(1,2,3) --> [1,2,3]
     @fact Mat((1,2),(3,4)) --> Mat((1,2),(3,4))
+    @fact one(Mat{4,1, Float32}) --> one(Vec{4, Float32})
 end
 #=
 #don't have this yet
@@ -723,8 +768,6 @@ context("mapping operators") do
                             end
 
                         end
-                    catch e
-                        println(e)
                     end
                 end
             end
@@ -742,8 +785,6 @@ context("mapping operators") do
                                 @fact v[i] --> op(t[i])
                             end
                         end
-                    catch e
-                        println(e)
                     end
                 end
             end
