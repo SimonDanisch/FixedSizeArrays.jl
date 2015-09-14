@@ -79,7 +79,7 @@ call(pf::ParseFunctor{Nothing}, i::Int) = parse(pf.a[i])
     end
 end
 
-call{FSA <: FixedVectorNoTuple}(::Type{FSA}, a::Tuple, b::Tuple...) = error("$FSA can't be constructed from $a")
+call{FSA <: FixedVectorNoTuple}(::Type{FSA}, a::Tuple, b::Tuple...) = throw(DimensionMismatch("$FSA can't be constructed from $a"))
 call{FSA <: FixedVectorNoTuple}(::Type{FSA}, a::Tuple) = FSA(a...)
 call{FSA <: FixedArray, T}(::Type{FSA}, a::T...) = FSA(a)
 
@@ -90,14 +90,6 @@ call{FSA <: FixedArray, T}(::Type{FSA}, a::T...) = FSA(a)
     ElType  = eltype_or(FSA, a)
     Len     = prod(SZ)
     T_N     = FSA
-    if a <: Tuple # a::Tuple is ambigous to default constructor, so need to do it here
-        tuple_expr = any(x-> x!=ElType, a.parameters) ? :( map($ElType, a) ) : :(a)
-        if FSA <: FixedVectorNoTuple
-            return :( $T_N($tuple_expr...) )
-        else
-            return :($T_N($tuple_expr))
-        end
-    end
     if FSA <: FixedVectorNoTuple
         return :($T_N($(ntuple(i-> :($ElType(a)), Len)...)))
     else

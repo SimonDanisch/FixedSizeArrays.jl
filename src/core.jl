@@ -10,15 +10,6 @@ typealias FixedMatrix{Row, Column, T}        FixedArray{T, 2, Tuple{Row, Column}
 abstract FixedVectorNoTuple{CARDINALITY, T} <: FixedVector{CARDINALITY, T}
 export FixedVectorNoTuple
 
-# Get the abstract FixedSizeArray type, even for complex type hirarchies
-function fixedsizearray_type{FSA <: FixedArray}(::Type{FSA})
-    ff = FSA
-    while ff.name.name != :FixedArray
-        ff = super(ff)
-    end
-    ff
-end
-
 
 _length{T <: Tuple}(::Type{T})						= *(T.parameters...)
 _length{N, N2}(::Type{Tuple{N, N2}})				= N*N2 
@@ -28,7 +19,6 @@ _size{T <: Tuple}(::Type{T})						= (T.parameters...)
 _size{N, N2}(::Type{Tuple{N, N2}})					= (N,N2) 
 _size{N}(::Type{Tuple{N}})							= (N,)
 
-eltype{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})         = T
 eltype{T <: FixedArray}(A::Type{T})                 = eltype_or(T, Any)
 eltype{T <: FixedArray,N,SZ}(A::FixedArray{T,N,SZ}) = T
 
