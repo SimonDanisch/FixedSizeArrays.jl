@@ -100,6 +100,7 @@ context("Constructor FixedVectorNoTuple") do
             r = rand(T)
             x = RGB{Int}[RGB(1) for i=1:10]
             @fact RGB{Float32}(["0.222", "9.8822", "29.999"]) --> RGB{Float32}(0.222, 9.8822, 29.999)
+            @fact RGB(["0.222", "9.8822", "29.999"]) --> RGB{Float64}(0.222, 9.8822, 29.999)
             @fact typeof(map(RGB{Float32}, x))  --> Vector{RGB{Float32}}
             @fact RGB{T}(r)                     --> RGB(r,r,r)
             @fact RGB{T}([r,r,r])               --> RGB(r,r,r)
@@ -147,6 +148,12 @@ context("Constructor ") do
         @fact typeof(eye(Mat4d)) --> Mat4d
         @fact typeof(eye(Mat{4,2, Int})) --> Mat{4,2, Int}
     end
+    context("one") do
+        x = one(Mat{4,2, Int})
+        @fact typeof(one(Mat4d)) --> Mat4d
+        @fact typeof(x) --> Mat{4,2, Int}
+        @fact all(x-> x==1, x) --> true
+    end
 
     context("unit") do
         u4 = unit(Vec4d, 1)
@@ -159,9 +166,9 @@ context("Constructor ") do
         @fact u7[end] --> 1
         @fact u7[1:end-1] --> (0,0,0,0,0,0)
     end
-    for N=1:3:10
+    for N=(1,10)
         context("construction, conversion, $N") do
-            for VT=[Point, Vec, Normal], VT2=[Normal, Vec, Point], ET=[Float32, Int, Uint, Float64], ET2=[Float64, Uint, Int, Float32]
+            for VT=[Point, Vec], VT2=[Normal, Vec], ET=[Float32, Int, Uint], ET2=[Float64, Uint, Float32]
                 rand_range  = ET(1):ET(10)
                 rand_range2 = ET2(1):ET2(10)
                 rn = rand(rand_range, N)
@@ -248,6 +255,30 @@ context("Constructors") do
 		@fact Vec3d(Vec3f(1.0)) 	--> Vec3d(1.0)
 	end
 end
+
+
+context("size_or") do 
+    @fact size_or(Mat, nothing) --> nothing
+    @fact size_or(Mat{4}, nothing) --> nothing
+    @fact size_or(Mat{4,4}, nothing) --> (4,4)
+    @fact size_or(Mat{4,4, Float32}, nothing) --> (4,4)
+
+    @fact size_or(Vec, nothing) --> nothing
+    @fact size_or(Vec{4}, nothing) --> (4,)
+    @fact size_or(Vec{4,Float32}, nothing) --> (4,)
+end
+context("eltype_or") do 
+    @fact eltype_or(Mat, nothing) --> nothing
+    @fact eltype_or(Mat{4}, nothing) --> nothing
+    @fact eltype_or(Mat{4,4}, nothing) --> nothing
+    @fact eltype_or(Mat{4,4, Float32}, nothing) --> Float32
+
+    @fact eltype_or(Vec, nothing) --> nothing
+    @fact eltype_or(Vec{4}, nothing) --> nothing
+    @fact eltype_or(Vec{4,Float32}, nothing) --> Float32
+end
+
+
 v2 = Vec(6.0,5.0,4.0)
 v1 = Vec(1.0,2.0,3.0)
 v2 = Vec(6.0,5.0,4.0)
@@ -408,7 +439,6 @@ zeromat = Mat2d((0.0,0.0),(0.0,0.0))
 
 
 context("Matrix") do
-
     @fact length(Mat2d) --> 4
     @fact length(zeromat) --> 4
 
