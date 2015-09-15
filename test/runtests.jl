@@ -466,6 +466,52 @@ context("Conversion 2") do
     @fact convert(Vector{Float64}, v1) --> [1.0,2.0,3.0]
 end
 
+for T in [UInt, Int, Float32, Float64]
+    context("Conversion to Vec{N,$T}") do
+        X = map(T, (1,2,3,4,5))
+
+        context("single value conversion") do
+            x = X[1]
+            for N in 1:4
+                @fact convert(Vec{N,T}, x) --> Vec{N,T}(repeated(x,N)...)
+            end
+        end
+
+        context("conversion from vararg, tuple & array") do
+            for N in 1:4
+                tup = X[1:N]
+                arr = [tup...]
+                @fact convert(Vec{N,T}, tup...) --> Vec{N,T}(tup...) "Vec{$N,$T} from vararg"
+                @fact convert(Vec{N,T}, tup)    --> Vec{N,T}(tup...) "Vec{$N,$T} from tuple"
+                @fact convert(Vec{N,T}, arr)    --> Vec{N,T}(tup...) "Vec{$N,$T} from array"
+                @fact convert(Vec, tup...) --> Vec{N,T}(tup...) "Vec from vararg"
+                @fact convert(Vec, tup)    --> Vec{N,T}(tup...) "Vec from tuple"
+                @fact convert(Vec, arr)    --> Vec{N,T}(tup...) "Vec from array"
+            end
+        end
+
+        context("conversion from too many args should fail") do
+            for N in 1:4
+                tup = X[1:N+1]
+                arr = [tup...]
+                @fact_throws convert(Vec{N,T}, tup...)
+                @fact_throws convert(Vec{N,T}, tup)
+                @fact_throws convert(Vec{N,T}, arr)
+            end
+        end
+
+        context("conversion from too few args should fail") do
+            for N in 3:5
+                tup = X[1:N-1]
+                arr = [tup...]
+                @fact_throws convert(Vec{N,T}, tup...)
+                @fact_throws convert(Vec{N,T}, tup)
+                @fact_throws convert(Vec{N,T}, arr)
+            end
+        end
+    end
+end
+
 # matrix operations
 
 #typealias Mat1d Matrix1x1{Float64}
