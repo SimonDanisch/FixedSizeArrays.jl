@@ -179,16 +179,20 @@ end
 # Matrix
 (*){T, M, N, O, K}(a::FixedMatrix{M, N, T}, b::FixedMatrix{O, K, T}) = throw(DimensionMismatch("$N != $O in $(typeof(a)) and $(typeof(b))"))
 
-@generated function (*){T, M, N, K}(a::Mat{M, N, T}, b::Mat{N, K, T})
-    expr = [
-        :(tuple(
-            $([:( dot(row(a, $k), column(b, $m)) ) for k=1:K]...)
-        ))
-    for m=1:M]
-    quote 
-        $(Expr(:boundscheck, false))
-        Mat(tuple($(expr...)))
-    end
+
+@generated function *{T, M, N}(a::Mat{M, N, T}, b::Vec{N,T})
+   expr = [:(dot(row(a, $i), b.(1))) for i=1:M]
+   return quote 
+       $(Expr(:boundscheck, false))
+       Vec($(expr...))
+   end
+end
+@generated function *{T, M, N, R}(a::Mat{M, N, T}, b::Mat{N, R, T})
+   expr = Expr(:tuple, [Expr(:tuple, [:(dot(row(a, $i), column(b,$j))) for i in 1:M]...) for j in 1:R]...)
+   return quote 
+       $(Expr(:boundscheck, false))
+       Mat($(expr))
+   end
 end
 
 @generated function (*){T, FSV <: FixedVector, R, C}(a::Mat{R, C, T}, b::FSV)
