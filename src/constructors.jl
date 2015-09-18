@@ -60,11 +60,11 @@ immutable ParseFunctor{T, S <: AbstractString} <: Func{1}
     a::Vector{S}
 end
 call{T}(pf::ParseFunctor{T}, i::Int) = parse(T, pf.a[i])
-call(pf::ParseFunctor{Nothing}, i::Int) = parse(pf.a[i])
+call(pf::ParseFunctor{Void}, i::Int) = parse(pf.a[i])
 
 @generated function call{FSA <: FixedArray, T <: Array}(::Type{FSA}, a::T)
     if eltype(a) <: AbstractString
-        ElType = eltype_or(FSA, Nothing)
+        ElType = eltype_or(FSA, Void)
         return :(map(ParseFunctor($ElType, a), FSA)) # can't be defined in another method as it leads to lots of ambigouity with the default constructor
     end
     SZ     = size_or(FSA, :(size(a)))

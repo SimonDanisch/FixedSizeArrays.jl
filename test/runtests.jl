@@ -98,7 +98,7 @@ end
 
 
 context("Constructor FixedVectorNoTuple") do
-    for T=[Float32, Float64, Int, Uint, Uint32, Uint8]
+    for T=[Float32, Float64, Int, UInt, UInt32, UInt8]
         context("$T") do
             r = rand(T)
             x = RGB{Int}[RGB(1) for i=1:10]
@@ -177,7 +177,7 @@ context("Constructor ") do
     end
     for N=(1,10)
         context("construction, conversion, $N") do
-            for VT=[Point, Vec], VT2=[Normal, Vec], ET=[Float32, Int, Uint], ET2=[Float64, Uint, Float32]
+            for VT=[Point, Vec], VT2=[Normal, Vec], ET=[Float32, Int, UInt], ET2=[Float64, UInt, Float32]
                 rand_range  = ET(1):ET(10)
                 rand_range2 = ET2(1):ET2(10)
                 rn = rand(rand_range, N)
