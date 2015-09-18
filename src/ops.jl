@@ -96,13 +96,8 @@ end
 
 immutable DotFunctor <: Func{2} end
 call(::DotFunctor, a, b) = a'*b
-@inline dot{T <: Union(FixedArray, Tuple)}(a::T, b::T) = sum(map(DotFunctor(), a, b))
-
-@inline dot{T}(a::NTuple{1,T}, b::NTuple{1,T}) = @inbounds return a[1]'*b[1]
-@inline dot{T}(a::NTuple{2,T}, b::NTuple{2,T}) = @inbounds return (a[1]'*b[1] + a[2]'*b[2])
-@inline dot{T}(a::NTuple{3,T}, b::NTuple{3,T}) = @inbounds return (a[1]'*b[1] + a[2]'*b[2] + a[3]'*b[3])
-@inline dot{T}(a::NTuple{4,T}, b::NTuple{4,T}) = @inbounds return (a[1]'*b[1] + a[2]'*b[2] + a[3]'*b[3]+a[4]'*b[4])
-
+@inline dot{T <:  FixedArray}(a::T, b::T) = sum(map(DotFunctor(), a, b))
+ 
 immutable BilinearDotFunctor <: Func{2} end
 call(::BilinearDotFunctor, a, b) = a*b
 @inline bilindot{T <: Union(FixedArray, Tuple)}(a::T, b::T) = sum(map(DotFunctor(), a, b))
