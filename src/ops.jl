@@ -75,7 +75,15 @@ end
     T = promote_type(typeof(a), eltype(T1))
     T(a), map(T, b)
 end
+
 @inline ctranspose{R, C, T}(a::Mat{R, C, T}) = Mat(ntuple(CRowFunctor(a), Val{R}))
+@generated function ctranspose{N,T}(b::Vec{N,T})
+    expr = [:(b._[$i],) for i=1:N]
+    return quote 
+        $(Expr(:boundscheck, false))
+        Mat{1,N,T}($(expr...))
+    end
+end
 
 @inline Base.hypot{T}(v::FixedVector{2,T}) = hypot(v[1],v[2])
 
@@ -178,7 +186,8 @@ end
 
 # Matrix
 (*){T, M, N, O, K}(a::FixedMatrix{M, N, T}, b::FixedMatrix{O, K, T}) = throw(DimensionMismatch("$N != $O in $(typeof(a)) and $(typeof(b))"))
-
+(*){T, M, N, O}(a::FixedMatrix{M, N, T}, b::FixedVector{O, T}) = throw(DimensionMismatch("$N != $O in $(typeof(a)) and $(typeof(b))"))
+(*){T, M, N, O}(b::FixedVector{O, T}, a::FixedMatrix{M, N, T}) = throw(DimensionMismatch("Vector * Matrix not defined, try Vector' * Matrix"))
 
 @generated function *{T, M, N}(a::Mat{M, N, T}, b::Vec{N,T})
    expr = [:(dot(row(a, $i), b.(1))) for i=1:M]
@@ -195,30 +204,6 @@ end
    end
 end
 
-@generated function (*){T, FSV <: FixedVector, R, C}(a::Mat{R, C, T}, b::FSV)
-    N = length(b)
-    N != C && throw(DimensionMismatch("$N != $C for $a, $b"))
-    expr = [:(dot(row(a, $i), b.(1))) for i=1:R]
-    if N == R # TODO, remove this and just always return FSV. Currently this would mean something like symbol(FSV.name.name), as FSV == FSV{N, F}
-        return quote 
-            $(Expr(:boundscheck, false))
-            FSV(tuple($(expr...)))
-        end
-    else
-        return quote 
-            $(Expr(:boundscheck, false)) 
-            Mat(tuple(tuple($(expr...))))
-        end
-    end
-end
-@generated function (*){T, FSV <: FixedVector, C}(a::FSV, b::Mat{1, C, T})
-    N = length(a)
-    N != C && throw(DimensionMismatch("DimensionMissmatch: $N != $R for $(typeof(a)), $(typeof(b))"))
-    expr = [:(tuple($([:(a[$i]*b[$j]) for j=1:C]...))) for i=1:C]
-    :($(Expr(:boundscheck, false)); Mat(tuple($(expr...))))
-end
-
-(*){FSV <: FixedVector}(a::FSV, b::FSV) = Mat{1, 1, eltype(FSV)}(dot(a,b))
 
 function (==)(a::FixedVectorNoTuple, b::FixedVectorNoTuple)
     s_a = size(a)
