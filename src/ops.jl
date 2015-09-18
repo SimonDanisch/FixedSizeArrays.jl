@@ -195,22 +195,6 @@ end
    end
 end
 
-@generated function (*){T, FSV <: FixedVector, R, C}(a::Mat{R, C, T}, b::FSV)
-    N = length(b)
-    N != C && throw(DimensionMismatch("$N != $C for $a, $b"))
-    expr = [:(dot(row(a, $i), b.(1))) for i=1:R]
-    if N == R # TODO, remove this and just always return FSV. Currently this would mean something like symbol(FSV.name.name), as FSV == FSV{N, F}
-        return quote 
-            $(Expr(:boundscheck, false))
-            FSV(tuple($(expr...)))
-        end
-    else
-        return quote 
-            $(Expr(:boundscheck, false)) 
-            Mat(tuple(tuple($(expr...))))
-        end
-    end
-end
 @generated function (*){T, FSV <: FixedVector, C}(a::FSV, b::Mat{1, C, T})
     N = length(a)
     N != C && throw(DimensionMismatch("DimensionMissmatch: $N != $R for $(typeof(a)), $(typeof(b))"))
