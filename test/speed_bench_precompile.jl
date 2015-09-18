@@ -64,7 +64,7 @@ for elem in bf
 end
 
 
-for T=[Float32, Float64, Int, Uint, Uint32, Uint8]
+for T=[Float32, Float64, Int, UInt, UInt32, UInt8]
     r = rand(T)
     x = RGB{Int}[RGB(1) for i=1:10]
     RGB{Float32}(["0.222", "9.8822", "29.999"]) == RGB{Float32}(0.222, 9.8822, 29.999)
