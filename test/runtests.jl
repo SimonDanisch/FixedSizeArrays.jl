@@ -299,6 +299,8 @@ v2c = Vec(1.0 + 6.0im, 2.0 + 5.0im, 3.0 + 4.0im)
 context("Complex Ops") do
     context("dot product") do
         @fact dot(v1c,v2c) --> dot([6.0+3.im,5.0-2im,4.0+0.im], [1.0,2.0,3.0] + [6.0,5.0,4.0]*im)
+        @fact Vector(transpose(v1c)*v2c) --> [6.0+3.im 5.0-2im 4.0+0.im]*([1.0,2.0,3.0] + [6.0,5.0,4.0]*im)
+        @fact Matrix(v2c*transpose(v1c)) --> ([1.0,2.0,3.0] + [6.0,5.0,4.0]*im)*[6.0+3.im 5.0-2im 4.0+0.im]
     end
 end
 

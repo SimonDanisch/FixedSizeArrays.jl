@@ -75,18 +75,38 @@ end
     T = promote_type(typeof(a), eltype(T1))
     T(a), map(T, b)
 end
-@inline ctranspose{R, C, T}(a::Mat{R, C, T}) = Mat(ntuple(CRowFunctor(a), Val{R}))
 
+@inline ctranspose{R, C, T}(a::Mat{R, C, T}) = Mat(ntuple(CRowFunctor(a), Val{R}))
+@generated function ctranspose{N,T}(b::Vec{N,T})
+    expr = [:(b._[$i]',) for i=1:N]
+    return quote 
+        $(Expr(:boundscheck, false))
+        Mat{1,N,T}($(expr...))
+    end
+end
+@inline transpose{R, C, T}(a::Mat{R, C, T}) = Mat(ntuple(RowFunctor(a), Val{R}))
+@generated function transpose{N,T}(b::Vec{N,T})
+    expr = [:(transpose(b._[$i]),) for i=1:N]
+    return quote 
+        $(Expr(:boundscheck, false))
+        Mat{1,N,T}($(expr...))
+    end
+end
 @inline Base.hypot{T}(v::FixedVector{2,T}) = hypot(v[1],v[2])
 
 immutable DotFunctor <: Func{2} end
 call(::DotFunctor, a, b) = a'*b
-@inline dot{T <: Union(FixedArray, Tuple)}(a::T, b::T) = sum(map(DotFunctor(), a, b))
+@inline dot{T <:  FixedArray}(a::T, b::T) = sum(map(DotFunctor(), a, b))
+ 
+immutable BilinearDotFunctor <: Func{2} end
+call(::BilinearDotFunctor, a, b) = a*b
+@inline bilindot{T <: Union(FixedArray, Tuple)}(a::T, b::T) = sum(map(DotFunctor(), a, b))
 
-@inline dot{T}(a::NTuple{1,T}, b::NTuple{1,T}) = @inbounds return a[1]'*b[1]
-@inline dot{T}(a::NTuple{2,T}, b::NTuple{2,T}) = @inbounds return (a[1]'*b[1] + a[2]'*b[2])
-@inline dot{T}(a::NTuple{3,T}, b::NTuple{3,T}) = @inbounds return (a[1]'*b[1] + a[2]'*b[2] + a[3]'*b[3])
-@inline dot{T}(a::NTuple{4,T}, b::NTuple{4,T}) = @inbounds return (a[1]'*b[1] + a[2]'*b[2] + a[3]'*b[3]+a[4]'*b[4])
+@inline bilindot{T}(a::NTuple{1,T}, b::NTuple{1,T}) = @inbounds return a[1]*b[1]
+@inline bilindot{T}(a::NTuple{2,T}, b::NTuple{2,T}) = @inbounds return (a[1]*b[1] + a[2]*b[2])
+@inline bilindot{T}(a::NTuple{3,T}, b::NTuple{3,T}) = @inbounds return (a[1]*b[1] + a[2]*b[2] + a[3]*b[3])
+@inline bilindot{T}(a::NTuple{4,T}, b::NTuple{4,T}) = @inbounds return (a[1]*b[1] + a[2]*b[2] + a[3]*b[3]+a[4]*b[4])
+
 
 #cross{T}(a::FixedVector{2, T}, b::FixedVector{2, T}) = a[1]*b[2]-a[2]*b[1] # not really used!?
 @inline cross{T<:Real}(a::FixedVector{3, T}, b::FixedVector{3, T}) = @inbounds return typeof(a)(
@@ -178,47 +198,31 @@ end
 
 # Matrix
 (*){T, M, N, O, K}(a::FixedMatrix{M, N, T}, b::FixedMatrix{O, K, T}) = throw(DimensionMismatch("$N != $O in $(typeof(a)) and $(typeof(b))"))
+(*){T, M, N, O}(a::FixedMatrix{M, N, T}, b::FixedVector{O, T}) = throw(DimensionMismatch("$N != $O in $(typeof(a)) and $(typeof(b))"))
 
-
-@generated function *{T, M, N}(a::Mat{M, N, T}, b::Vec{N,T})
-   expr = [:(dot(row(a, $i), b.(1))) for i=1:M]
-   return quote 
-       $(Expr(:boundscheck, false))
-       Vec($(expr...))
-   end
-end
-@generated function *{T, M, N, R}(a::Mat{M, N, T}, b::Mat{N, R, T})
-   expr = Expr(:tuple, [Expr(:tuple, [:(dot(row(a, $i), column(b,$j))) for i in 1:M]...) for j in 1:R]...)
+@generated function *{T, N}(a::FixedVector{N, T}, b::FixedMatrix{1, N, T})
+   expr = Expr(:tuple, [Expr(:tuple, [:(a[$i] * b[$j]) for i in 1:N]...) for j in 1:N]...)
    return quote 
        $(Expr(:boundscheck, false))
        Mat($(expr))
    end
 end
 
-@generated function (*){T, FSV <: FixedVector, R, C}(a::Mat{R, C, T}, b::FSV)
-    N = length(b)
-    N != C && throw(DimensionMismatch("$N != $C for $a, $b"))
-    expr = [:(dot(row(a, $i), b.(1))) for i=1:R]
-    if N == R # TODO, remove this and just always return FSV. Currently this would mean something like symbol(FSV.name.name), as FSV == FSV{N, F}
-        return quote 
-            $(Expr(:boundscheck, false))
-            FSV(tuple($(expr...)))
-        end
-    else
-        return quote 
-            $(Expr(:boundscheck, false)) 
-            Mat(tuple(tuple($(expr...))))
-        end
-    end
+@generated function *{T, M, N}(a::Mat{M, N, T}, b::Vec{N,T})
+   expr = [:(bilindot(row(a, $i), b.(1))) for i=1:M]
+   return quote 
+       $(Expr(:boundscheck, false))
+       Vec($(expr...))
+   end
 end
-@generated function (*){T, FSV <: FixedVector, C}(a::FSV, b::Mat{1, C, T})
-    N = length(a)
-    N != C && throw(DimensionMismatch("DimensionMissmatch: $N != $R for $(typeof(a)), $(typeof(b))"))
-    expr = [:(tuple($([:(a[$i]*b[$j]) for j=1:C]...))) for i=1:C]
-    :($(Expr(:boundscheck, false)); Mat(tuple($(expr...))))
+@generated function *{T, M, N, R}(a::Mat{M, N, T}, b::Mat{N, R, T})
+   expr = Expr(:tuple, [Expr(:tuple, [:(bilindot(row(a, $i), column(b,$j))) for i in 1:M]...) for j in 1:R]...)
+   return quote 
+       $(Expr(:boundscheck, false))
+       Mat($(expr))
+   end
 end
 
-(*){FSV <: FixedVector}(a::FSV, b::FSV) = Mat{1, 1, eltype(FSV)}(dot(a,b))
 
 function (==)(a::FixedVectorNoTuple, b::FixedVectorNoTuple)
     s_a = size(a)
