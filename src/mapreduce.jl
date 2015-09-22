@@ -1,4 +1,4 @@
-@inline function reduce{FSA <: Union(FixedArray, Tuple)}(f, a::FSA)
+@inline function reduce{FSA <: Union{FixedArray, Tuple}}(f, a::FSA)
     length(a) == 1 && return a[1]
     @inbounds begin
         red = f(a[1], a[2])
