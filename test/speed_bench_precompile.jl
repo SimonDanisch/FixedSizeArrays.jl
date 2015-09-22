@@ -89,7 +89,7 @@ end
 
 # A little brutal, but hey.... Better redudantant tests, than not enough tests
 for N=1:3:10
-    for VT=[Point, Vec, Normal], VT2=[Normal, Vec, Point], ET=[Float32, Int, Uint, Float64], ET2=[Float64, Uint, Int, Float32]
+    for VT=[Point, Vec, Normal], VT2=[Normal, Vec, Point], ET=[Float32, Int, UInt64, Float64], ET2=[Float64, UInt64, Int, Float32]
         rand_range  = ET(1):ET(10)
         rand_range2 = ET2(1):ET2(10)
         rn = rand(rand_range, N)

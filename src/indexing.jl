@@ -1,14 +1,14 @@
-@inline getindex{T <: FixedVector}(x::T, i::Union(Range, Integer)) = x.(1)[i]
+@inline getindex{T <: FixedVector}(x::T, i::Union{Range, Integer}) = x.(1)[i]
 @inline getindex{T <: FixedVectorNoTuple}(x::T, i::Integer) = x.(i)
 @inline getindex{N, M, T}(a::Mat{N, M, T}, i::Range, j::Int) = ntuple(IndexFunc(a, j), Val{length(i)})::NTuple{length(i), T}
-@inline getindex{N, M, T}(a::Mat{N, M, T}, i::Int, j::Union(Range, Int)) = a.(1)[j][i]
+@inline getindex{N, M, T}(a::Mat{N, M, T}, i::Int, j::Union{Range, Int}) = a.(1)[j][i]
 @inline getindex{N, M, T}(a::Mat{N, M, T}, i::Int) = a[ind2sub((N,M), i)...]
 @inline getindex(A::FixedArray, I::Tuple) = map(IndexFunctor(A), I)
 
 @inline setindex(a::FixedArray, value, index::Int...) = map(SetindexFunctor(a, value, index), typeof(a))
 
 @inline column{N, T}(v::FixedVector{N, T}) = v
-@inline column{R, C, T}(a::Mat{R, C, T}, i::Union(Range, Int)) = a.(1)[i]
+@inline column{R, C, T}(a::Mat{R, C, T}, i::Union{Range, Int}) = a.(1)[i]
 
 @inline row{N, T}(v::FixedVector{N, T}) = Mat{1, N, T}(v...)
 @inline row{N, T}(v::FixedVector{N, T}, i::Int) = (v[i],)
