@@ -330,7 +330,7 @@ lowl = Mat(jm)
 jm2 = convert(Array{Float64,2}, lowl)
 
 #Single valued constructor
-Mat4d(0.0) 
+Mat4d(0.0)
 a = Vec4d(0)
 b = Vec4d(0,0,0,0)
 

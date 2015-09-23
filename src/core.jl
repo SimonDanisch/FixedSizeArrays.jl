@@ -12,11 +12,11 @@ export FixedVectorNoTuple
 
 
 _length{T <: Tuple}(::Type{T})						= *(T.parameters...)
-_length{N, N2}(::Type{Tuple{N, N2}})				= N*N2 
+_length{N, N2}(::Type{Tuple{N, N2}})				= N*N2
 _length{N}(::Type{Tuple{N}})						= N
 
 _size{T <: Tuple}(::Type{T})						= (T.parameters...)
-_size{N, N2}(::Type{Tuple{N, N2}})					= (N,N2) 
+_size{N, N2}(::Type{Tuple{N, N2}})					= (N,N2)
 _size{N}(::Type{Tuple{N}})							= (N,)
 
 eltype{T <: FixedArray}(A::Type{T})                 = eltype_or(T, Any)

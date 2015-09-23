@@ -50,7 +50,7 @@ function test()
 	@mybench for i=1:100 dot(b,b) end
 	@mybench for i=1:100 dot(b2,b2) end
 	@mybench for i=1:100 dot(b3,b3) end
-	
+
 	println("column:")
 	@mybench for i=1:1000 column(a2,1) end
 	@mybench for i=1:1000 ImmutableArrays.column(a3,1) end

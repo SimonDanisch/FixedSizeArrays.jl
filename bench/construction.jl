@@ -22,26 +22,26 @@ macro timing(expr)
 	tms 	= gensym()
 	bts 	= gensym()
 	gctms 	= gensym()
-	gcps 	= gensym() 
-	gcswps 	= gensym() 
+	gcps 	= gensym()
+	gcswps 	= gensym()
 
 	tms1 	= gensym()
 	gcswps1 = gensym()
 	gcps1 	= gensym()
 	gctms1 	= gensym()
-	bts1 	= gensym() 
+	bts1 	= gensym()
 	esc(quote
-		$bts 	 = Base.gc_bytes() 
+		$bts 	 = Base.gc_bytes()
 		$gctms 	 = Base.gc_time_ns()
-		$gcps 	 = Base.gc_num_pause() 
+		$gcps 	 = Base.gc_num_pause()
 		$gcswps  = Base.gc_num_full_sweep()
-		$tms 	 = Base.time_ns() 
+		$tms 	 = Base.time_ns()
 
 		$expr
 
 		$tms1 	 = Base.time_ns()
-		$gcswps1 = Base.gc_num_full_sweep() 
-		$gcps1 	 = Base.gc_num_pause() 
+		$gcswps1 = Base.gc_num_full_sweep()
+		$gcps1 	 = Base.gc_num_pause()
 		$gctms1  = Base.gc_time_ns()
 		$bts1 	 = Base.gc_bytes()
 
@@ -81,7 +81,7 @@ function test(N)
 
 		push!(bench[(:fsa, :vector_creation)], (@timing vecrand = nvec(1,2,3,4)))
 		push!(bench[(:fsa, :matrix_creation)], (@timing matrand = nvec((4,4), 1,2,3,4, 1,2,3,4, 1,2,3,4, 1,2,3,4)))
-		
+
 		push!(bench[(:fsa, :vector_creation_fromj)], (@timing vecrand = nvec(vecrand)))
 		push!(bench[(:fsa, :matrix_creation_fromj)], (@timing matrand = nvec(matrand)))
 
@@ -109,7 +109,7 @@ function test2(N)
 		b = toq()
 		bench += b
 	end
-		
+
 	result,bench
 end
 
