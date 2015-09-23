@@ -457,7 +457,9 @@ context("Ops") do
 end
 
 
-
+context("Promotion") do
+    @fact promote_type(Vec{2,Float64}, Int) --> Vec{2,Float64}
+end
 
 
 # type conversion
