@@ -841,5 +841,9 @@ context("mapping operators") do
 end
 end
 
+context("Base.Test") do
+    a = rand(2)
+    @fact Base.Test.@test_approx_eq(a, Vec(a)) --> nothing
+end
 
 FactCheck.exitstatus()

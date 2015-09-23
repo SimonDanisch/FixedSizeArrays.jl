@@ -249,4 +249,5 @@ end
 
 (==)(a::AbstractArray, b::FixedArray) = b == a
 
-
+# To support @test_approx_eq
+Base.Test.approx_full(a::FixedArray) = a
