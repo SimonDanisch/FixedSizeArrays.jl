@@ -130,7 +130,7 @@ end
 context("Constructor ") do
     context("Rand") do
         #Win32 seems to fail for rand(Vec4d)
-        @fact typeof(rand(Vec4d)) --> Vec4d 
+        @fact typeof(rand(Vec4d)) --> Vec4d
         @fact typeof(rand(Mat4d)) --> Mat4d
 
         @fact typeof(rand(Mat{4,2, Int})) --> Mat{4,2, Int}
@@ -146,7 +146,7 @@ context("Constructor ") do
 
     end
     context("Zero") do
-        @fact typeof(zero(Vec4d)) --> Vec4d 
+        @fact typeof(zero(Vec4d)) --> Vec4d
         @fact typeof(zero(Mat4d)) --> Mat4d
 
         @fact typeof(zero(Mat{4,2, Int})) --> Mat{4,2, Int}
@@ -267,7 +267,7 @@ context("Constructors") do
 end
 
 
-context("size_or") do 
+context("size_or") do
     @fact size_or(Mat, nothing) --> nothing
     @fact size_or(Mat{4}, nothing) --> nothing
     @fact size_or(Mat{4,4}, nothing) --> (4,4)
@@ -277,7 +277,7 @@ context("size_or") do
     @fact size_or(Vec{4}, nothing) --> (4,)
     @fact size_or(Vec{4,Float32}, nothing) --> (4,)
 end
-context("eltype_or") do 
+context("eltype_or") do
     @fact eltype_or(Mat, nothing) --> nothing
     @fact eltype_or(Mat{4}, nothing) --> nothing
     @fact eltype_or(Mat{4,4}, nothing) --> nothing
@@ -457,7 +457,9 @@ context("Ops") do
 end
 
 
-
+context("Promotion") do
+    @fact promote_type(Vec{2,Float64}, Int) --> Vec{2,Float64}
+end
 
 
 # type conversion
@@ -655,7 +657,7 @@ context("Matrix Math") do
 			fmm = mfs'
 			@fact isapprox(fmm, mm)  --> true
 		end
-		
+
 		context("ctranspose M") do
 			mm = mc'
 			fmm = mfsc'
@@ -663,16 +665,16 @@ context("Matrix Math") do
 		end
 	end
 	context("expm(M::Mat{3,3,Float64})") do
-    	# in practice the precision is eps(), if m has not a triple eigenvalue 
+    	# in practice the precision is eps(), if m has not a triple eigenvalue
 	    for i in 1:30
             m = (rand(0:1,3,3).*randn(3,3) .+ rand(-3:3,3,3)) # some entries are natural numbers to have higher chance of multiple eigenvalues to trigger all branches
-            @fact norm(Matrix(expm(Mat(m))) -  expm(m))/norm(expm(m)) <= 1E-9 --> true 
+            @fact norm(Matrix(expm(Mat(m))) -  expm(m))/norm(expm(m)) <= 1E-9 --> true
             m = m + m' # symmetric
             @fact norm(Matrix(expm(Mat(m))) -  expm(m))/norm(expm(m)) <= 1E-9 --> true
             m = 1. *rand(-1:1,3,3) # eigenvalues equal with high probability to test worse case
             @fact norm(Matrix(expm(Mat(m))) -  expm(m))/norm(expm(m)) <= 1E-9 --> true
             m = m + m'
-            @fact norm(Matrix(expm(Mat(m))) -  expm(m))/norm(expm(m)) <= 1E-9 --> true 
+            @fact norm(Matrix(expm(Mat(m))) -  expm(m))/norm(expm(m)) <= 1E-9 --> true
         end
     end
     context("expm(M::Mat{3,3, BigFloat})") do
@@ -718,7 +720,7 @@ jfs = dot(afs, gfs)
 kfs = abs(ffs)
 lfs = abs(-ffs)
 
-context("Meta") do 
+context("Meta") do
     sym, expr = FixedSizeArrays.gen_functor(:+, 2)
     @fact typeof(sym) --> Symbol
     @fact typeof(expr) --> Expr
@@ -841,5 +843,9 @@ context("mapping operators") do
 end
 end
 
+context("Base.Test") do
+    a = rand(2)
+    @fact Base.Test.@test_approx_eq(a, Vec(a)) --> nothing
+end
 
 FactCheck.exitstatus()

@@ -27,7 +27,7 @@ function test()
 
 
     e = simplemap(+, a, b)
-    
+
     println("simplemap:")
     @time simplemap(+, a, b)
     f = simplemap(Base.AddFun(), a, b)

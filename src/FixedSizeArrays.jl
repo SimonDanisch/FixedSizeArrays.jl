@@ -38,6 +38,15 @@ function show{R,C,T}(io::IO, m::Mat{R,C,T})
 	println(io, ")")
 end
 
+showcompact(io::IO, v::FixedVector{0}) = print(io, "Vec()")
+function showcompact{N}(io::IO, v::FixedVector{N})
+    print(io, "Vec(", v[1])
+    for i = 2:N
+        print(io, ",", v[i])
+    end
+    print(io, ")")
+end
+
 export FixedArray
 export FixedVector
 export FixedMatrix

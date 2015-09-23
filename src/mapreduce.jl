@@ -33,7 +33,7 @@ function constructor_expr{T <: FixedVector}(::Type{T}, tuple_expr::Expr)
         FSA($(tuple_expr))
     end
 end
-constructor_expr{T <: Mat}(::Type{T}, tuple_expr::Expr) = quote 
+constructor_expr{T <: Mat}(::Type{T}, tuple_expr::Expr) = quote
     $(Expr(:boundscheck, false))
     $(Expr(:meta, :inline))
     Mat($(tuple_expr))

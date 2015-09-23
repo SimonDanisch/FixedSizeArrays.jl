@@ -76,10 +76,14 @@ end
     T(a), map(T, b)
 end
 
+function promote_rule{N, T, X<:Number}(::Type{Vec{N,T}}, ::Type{X})
+    Vec{N, promote_type(T, X)}
+end
+
 @inline ctranspose{R, C, T}(a::Mat{R, C, T}) = Mat(ntuple(CRowFunctor(a), Val{R}))
 @generated function ctranspose{N,T}(b::Vec{N,T})
     expr = [:(b._[$i]',) for i=1:N]
-    return quote 
+    return quote
         $(Expr(:boundscheck, false))
         Mat{1,N,T}($(expr...))
     end
@@ -87,7 +91,7 @@ end
 @inline transpose{R, C, T}(a::Mat{R, C, T}) = Mat(ntuple(RowFunctor(a), Val{R}))
 @generated function transpose{N,T}(b::Vec{N,T})
     expr = [:(transpose(b._[$i]),) for i=1:N]
-    return quote 
+    return quote
         $(Expr(:boundscheck, false))
         Mat{1,N,T}($(expr...))
     end
@@ -97,7 +101,7 @@ end
 immutable DotFunctor <: Func{2} end
 call(::DotFunctor, a, b) = a'*b
 @inline dot{T <:  FixedArray}(a::T, b::T) = sum(map(DotFunctor(), a, b))
- 
+
 immutable BilinearDotFunctor <: Func{2} end
 call(::BilinearDotFunctor, a, b) = a*b
 @inline bilindot{T <: Union{FixedArray, Tuple}}(a::T, b::T) = sum(map(DotFunctor(), a, b))
@@ -122,8 +126,8 @@ call(::BilinearDotFunctor, a, b) = a*b
 @inline det{T}(A::FixedMatrix{1, 1, T}) = @inbounds return ( A[1] )
 @inline det{T}(A::FixedMatrix{2, 2, T}) = @inbounds return ( A[1,1]*A[2,2] - A[1,2]*A[2,1])
 @inline det{T}(A::FixedMatrix{3, 3, T}) = @inbounds return (
-    A[1,1]*(A[2,2]*A[3,3]-A[2,3]*A[3,2]) - 
-    A[1,2]*(A[2,1]*A[3,3]-A[2,3]*A[3,1]) + 
+    A[1,1]*(A[2,2]*A[3,3]-A[2,3]*A[3,2]) -
+    A[1,2]*(A[2,1]*A[3,3]-A[2,3]*A[3,1]) +
     A[1,3]*(A[2,1]*A[3,2]-A[2,2]*A[3,1])
 )
 @inline det{T}(A::FixedMatrix{4, 4, T}) = @inbounds return (
@@ -202,7 +206,7 @@ end
 
 @generated function *{T, N}(a::FixedVector{N, T}, b::FixedMatrix{1, N, T})
    expr = Expr(:tuple, [Expr(:tuple, [:(a[$i] * b[$j]) for i in 1:N]...) for j in 1:N]...)
-   return quote 
+   return quote
        $(Expr(:boundscheck, false))
        Mat($(expr))
    end
@@ -210,14 +214,14 @@ end
 
 @generated function *{T, M, N}(a::Mat{M, N, T}, b::Vec{N,T})
    expr = [:(bilindot(row(a, $i), b.(1))) for i=1:M]
-   return quote 
+   return quote
        $(Expr(:boundscheck, false))
        Vec($(expr...))
    end
 end
 @generated function *{T, M, N, R}(a::Mat{M, N, T}, b::Mat{N, R, T})
    expr = Expr(:tuple, [Expr(:tuple, [:(bilindot(row(a, $i), column(b,$j))) for i in 1:M]...) for j in 1:R]...)
-   return quote 
+   return quote
        $(Expr(:boundscheck, false))
        Mat($(expr))
    end
@@ -249,4 +253,5 @@ end
 
 (==)(a::AbstractArray, b::FixedArray) = b == a
 
-
+# To support @test_approx_eq
+Base.Test.approx_full(a::FixedArray) = a
