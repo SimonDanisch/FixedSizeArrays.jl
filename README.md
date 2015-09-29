@@ -15,7 +15,7 @@
 FixedSizeArrays is giving any composite type array like behavior by inheriting from FixedSizeArrays.
 So you can do something like this:
 ```Julia
-immutable RGB{T} <: FixedVectorNoTuple{T, 3}
+immutable RGB{T} <: FixedVectorNoTuple{3, T}
 r::T
 g::T
 b::T
