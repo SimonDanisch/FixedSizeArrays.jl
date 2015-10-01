@@ -30,18 +30,23 @@ function constructor_expr{T <: FixedVector}(::Type{T}, tuple_expr::Expr)
     quote
         $(Expr(:boundscheck, false))
         $(Expr(:meta, :inline))
-        FSA($(tuple_expr))
+        rvalue = FSA($(tuple_expr))
+        $(Expr(:boundscheck,:pop))
+        rvalue
     end
 end
 constructor_expr{T <: Mat}(::Type{T}, tuple_expr::Expr) = quote
     $(Expr(:boundscheck, false))
     $(Expr(:meta, :inline))
-    Mat($(tuple_expr))
+    rvalue = Mat($(tuple_expr))
+    $(Expr(:boundscheck,:pop))
 end
 constructor_expr{T <: FixedVectorNoTuple}(::Type{T}, tuple_expr::Expr) = quote
     $(Expr(:boundscheck, false))
     $(Expr(:meta, :inline))
-    FSA($(tuple_expr)...)
+    rvalue = FSA($(tuple_expr)...)
+    $(Expr(:boundscheck,:pop))
+    rvalue
 end
 @generated function map{FSA <: FixedArray}(F, arg1::FSA, arg2::FSA)
     inner = fill_tuples_expr((inds...) -> inner_expr((arg1, arg2), inds...), size(FSA))
@@ -80,7 +85,7 @@ end
     :( similar(FSA, F)($(inner)) )
 end
 
-map{R,C,T}(F::Type{T}, arg1::Mat{R,C,T}) = arg1
+@inline map{R,C,T}(F::Type{T}, arg1::Mat{R,C,T}) = arg1
 @generated function map{R,C,T}(F::DataType, arg1::Mat{R,C,T})
     inner = fill_tuples_expr((inds...) -> :( F(arg1[$(inds...)]) ), (R, C))
     :( Mat{R, C, F}($(inner)) )

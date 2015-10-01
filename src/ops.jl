@@ -84,7 +84,6 @@ end
 @generated function ctranspose{N,T}(b::Vec{N,T})
     expr = [:(b._[$i]',) for i=1:N]
     return quote
-        $(Expr(:boundscheck, false))
         Mat{1,N,T}($(expr...))
     end
 end
@@ -92,7 +91,6 @@ end
 @generated function transpose{N,T}(b::Vec{N,T})
     expr = [:(transpose(b._[$i]),) for i=1:N]
     return quote
-        $(Expr(:boundscheck, false))
         Mat{1,N,T}($(expr...))
     end
 end
@@ -205,26 +203,17 @@ end
 (*){T, M, N, O}(a::FixedMatrix{M, N, T}, b::FixedVector{O, T}) = throw(DimensionMismatch("$N != $O in $(typeof(a)) and $(typeof(b))"))
 
 @generated function *{T, N}(a::FixedVector{N, T}, b::FixedMatrix{1, N, T})
-   expr = Expr(:tuple, [Expr(:tuple, [:(a[$i] * b[$j]) for i in 1:N]...) for j in 1:N]...)
-   return quote
-       $(Expr(:boundscheck, false))
-       Mat($(expr))
-   end
+    expr = Expr(:tuple, [Expr(:tuple, [:(a[$i] * b[$j]) for i in 1:N]...) for j in 1:N]...)
+    :( Mat($(expr)) )
 end
 
 @generated function *{T, M, N}(a::Mat{M, N, T}, b::Vec{N,T})
-   expr = [:(bilindot(row(a, $i), b.(1))) for i=1:M]
-   return quote
-       $(Expr(:boundscheck, false))
-       Vec($(expr...))
-   end
+    expr = [:(bilindot(row(a, $i), b.(1))) for i=1:M]
+    :( Vec($(expr...)) )
 end
 @generated function *{T, M, N, R}(a::Mat{M, N, T}, b::Mat{N, R, T})
-   expr = Expr(:tuple, [Expr(:tuple, [:(bilindot(row(a, $i), column(b,$j))) for i in 1:M]...) for j in 1:R]...)
-   return quote
-       $(Expr(:boundscheck, false))
-       Mat($(expr))
-   end
+    expr = Expr(:tuple, [Expr(:tuple, [:(bilindot(row(a, $i), column(b,$j))) for i in 1:M]...) for j in 1:R]...)
+    :( Mat($(expr)) )
 end
 
 
