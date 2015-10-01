@@ -40,6 +40,7 @@ constructor_expr{T <: Mat}(::Type{T}, tuple_expr::Expr) = quote
     $(Expr(:meta, :inline))
     rvalue = Mat($(tuple_expr))
     $(Expr(:boundscheck,:pop))
+    rvalue
 end
 constructor_expr{T <: FixedVectorNoTuple}(::Type{T}, tuple_expr::Expr) = quote
     $(Expr(:boundscheck, false))
