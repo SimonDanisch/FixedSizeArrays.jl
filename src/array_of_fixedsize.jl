@@ -1,11 +1,10 @@
 function show{FSA <: FixedVector}(io::IO, a::Vector{FSA})
-	print(io, "Vector with: ", length(a), "x", FSA, "[")
+	println(io, length(a), "-element", typeof(a), ":")
 	for elem in a
-		print(io, "[")
-		print(io, join(elem, ", "))
-		print(io, "]")
+		print(io, " ")
+		showcompact(io, elem)
+		println(io)
 	end
-	println(io, "]")
 end
 immutable MaxFun <: Func{2} end
 immutable MinFun <: Func{2} end

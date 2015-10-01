@@ -93,6 +93,7 @@ context("Array of FixedArrays") do
         println(a)
         println(b)
         println(m)
+        showcompact(Point(1,2,3))
     end
 end
 
@@ -841,11 +842,14 @@ context("mapping operators") do
         end
     end
 end
-end
 
 context("Base.Test") do
     a = rand(2)
     @fact Base.Test.@test_approx_eq(a, Vec(a)) --> nothing
 end
+
+end
+
+
 
 FactCheck.exitstatus()
