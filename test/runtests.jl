@@ -1,6 +1,7 @@
-using FixedSizeArrays
-using FactCheck
+module FSAtesting
 
+using FixedSizeArrays
+using FactCheck, Base.Test
 
 immutable Normal{N, T} <: FixedVector{N, T}
     _::NTuple{N, T}
@@ -358,63 +359,73 @@ end
 
 context("Ops") do
 	context("Negation") do
-		@fact -v1 --> Vec(-1.0,-2.0,-3.0)
+		@fact @inferred(-v1) --> Vec(-1.0,-2.0,-3.0)
 		@fact isa(-v1, Vec3d) --> true
 	end
 
 	context("Negation") do
-		@fact v1+v2 --> Vec3d(7.0,7.0,7.0)
+		@fact @inferred(v1+v2) --> Vec3d(7.0,7.0,7.0)
 	end
 	context("Negation") do
-		@fact v2-v1 --> Vec3d(5.0,3.0,1.0)
+		@fact @inferred(v2-v1) --> Vec3d(5.0,3.0,1.0)
 	end
 	context("Multiplication") do
-		@fact v1.*v2 --> Vec3d(6.0,10.0,12.0)
+		@fact @inferred(v1.*v2) --> Vec3d(6.0,10.0,12.0)
 	end
 	context("Division") do
-		@fact v1 ./ v1 --> Vec3d(1.0,1.0,1.0)
+		@fact @inferred(v1 ./ v1) --> Vec3d(1.0,1.0,1.0)
 	end
 
 	context("Scalar") do
-		@fact 1.0 + v1 --> Vec3d(2.0,3.0,4.0)
-		@fact 1.0 .+ v1 --> Vec3d(2.0,3.0,4.0)
-		@fact v1 + 1.0 --> Vec3d(2.0,3.0,4.0)
-		@fact v1 .+ 1.0 --> Vec3d(2.0,3.0,4.0)
-		@fact 1 + v1 --> Vec3d(2.0,3.0,4.0)
-		@fact 1 .+ v1 --> Vec3d(2.0,3.0,4.0)
-		@fact v1 + 1 --> Vec3d(2.0,3.0,4.0)
-		@fact v1 .+ 1 --> Vec3d(2.0,3.0,4.0)
+		@fact @inferred(1.0 + v1) --> Vec3d(2.0,3.0,4.0)
+		@fact @inferred(1.0 .+ v1) --> Vec3d(2.0,3.0,4.0)
+		@fact @inferred(v1 + 1.0) --> Vec3d(2.0,3.0,4.0)
+		@fact @inferred(v1 .+ 1.0) --> Vec3d(2.0,3.0,4.0)
+		@fact @inferred(1 + v1) --> Vec3d(2.0,3.0,4.0)
+		@fact @inferred(1 .+ v1) --> Vec3d(2.0,3.0,4.0)
+		@fact @inferred(v1 + 1) --> Vec3d(2.0,3.0,4.0)
+		@fact @inferred(v1 .+ 1) --> Vec3d(2.0,3.0,4.0)
 
-		@fact v1 - 1.0 --> Vec3d(0.0,1.0,2.0)
-		@fact v1 .- 1.0 --> Vec3d(0.0,1.0,2.0)
-		@fact 1.0 - v1 --> Vec3d(0.0,-1.0,-2.0)
-		@fact 1.0 .- v1 --> Vec3d(0.0,-1.0,-2.0)
-		@fact v1 - 1 --> Vec3d(0.0,1.0,2.0)
-		@fact v1 .- 1 --> Vec3d(0.0,1.0,2.0)
-		@fact 1 - v1 --> Vec3d(0.0,-1.0,-2.0)
-		@fact 1 .- v1 --> Vec3d(0.0,-1.0,-2.0)
+		@fact @inferred(v1 - 1.0) --> Vec3d(0.0,1.0,2.0)
+		@fact @inferred(v1 .- 1.0) --> Vec3d(0.0,1.0,2.0)
+		@fact @inferred(1.0 - v1) --> Vec3d(0.0,-1.0,-2.0)
+		@fact @inferred(1.0 .- v1) --> Vec3d(0.0,-1.0,-2.0)
+		@fact @inferred(v1 - 1) --> Vec3d(0.0,1.0,2.0)
+		@fact @inferred(v1 .- 1) --> Vec3d(0.0,1.0,2.0)
+		@fact @inferred(1 - v1) --> Vec3d(0.0,-1.0,-2.0)
+		@fact @inferred(1 .- v1) --> Vec3d(0.0,-1.0,-2.0)
 
-		@fact 2.0 * v1 --> Vec3d(2.0,4.0,6.0)
-		@fact 2.0 .* v1 --> Vec3d(2.0,4.0,6.0)
-		@fact v1 * 2.0 --> Vec3d(2.0,4.0,6.0)
-		@fact v1 .* 2.0 --> Vec3d(2.0,4.0,6.0)
-		@fact 2 * v1 --> Vec3d(2.0,4.0,6.0)
-		@fact 2 .* v1 --> Vec3d(2.0,4.0,6.0)
-		@fact v1 * 2 --> Vec3d(2.0,4.0,6.0)
-		@fact v1 .* 2 --> Vec3d(2.0,4.0,6.0)
+		@fact @inferred(2.0 * v1) --> Vec3d(2.0,4.0,6.0)
+		@fact @inferred(2.0 .* v1) --> Vec3d(2.0,4.0,6.0)
+		@fact @inferred(v1 * 2.0) --> Vec3d(2.0,4.0,6.0)
+		@fact @inferred(v1 .* 2.0) --> Vec3d(2.0,4.0,6.0)
+		@fact @inferred(2 * v1) --> Vec3d(2.0,4.0,6.0)
+		@fact @inferred(2 .* v1) --> Vec3d(2.0,4.0,6.0)
+		@fact @inferred(v1 * 2) --> Vec3d(2.0,4.0,6.0)
+		@fact @inferred(v1 .* 2) --> Vec3d(2.0,4.0,6.0)
 
-		@fact v1 / 2.0 --> Vec3d(0.5,1.0,1.5)
-		@fact v1 ./ 2.0 --> Vec3d(0.5,1.0,1.5)
-		@fact v1 / 2 --> Vec3d(0.5,1.0,1.5)
-		@fact v1 ./ 2 --> Vec3d(0.5,1.0,1.5)
+		@fact @inferred(v1 / 2.0) --> Vec3d(0.5,1.0,1.5)
+		@fact @inferred(v1 ./ 2.0) --> Vec3d(0.5,1.0,1.5)
+		@fact @inferred(v1 / 2) --> Vec3d(0.5,1.0,1.5)
+		@fact @inferred(v1 ./ 2) --> Vec3d(0.5,1.0,1.5)
 
-		@fact 12.0 ./ v1 --> Vec3d(12.0,6.0,4.0)
-		@fact 12 ./ v1 --> Vec3d(12.0,6.0,4.0)
+		@fact @inferred(12.0 ./ v1) --> Vec3d(12.0,6.0,4.0)
+		@fact @inferred(12 ./ v1) --> Vec3d(12.0,6.0,4.0)
 
-		@fact (v1 .^ 2) --> Vec3d(1.0,4.0,9.0)
-		@fact (v1 .^ 2.0) --> Vec3d(1.0,4.0,9.0)
-		@fact (2.0 .^ v1) --> Vec3d(2.0,4.0,8.0)
-		@fact (2 .^ v1) --> Vec3d(2.0,4.0,8.0)
+		@fact @inferred((v1 .^ 2)) --> Vec3d(1.0,4.0,9.0)
+		@fact @inferred((v1 .^ 2.0)) --> Vec3d(1.0,4.0,9.0)
+		@fact @inferred((2.0 .^ v1)) --> Vec3d(2.0,4.0,8.0)
+		@fact @inferred((2 .^ v1)) --> Vec3d(2.0,4.0,8.0)
+
+                a = Vec(3.2f0)
+                @fact @inferred(a+0.2) --> Vec1d(3.2f0+0.2)
+                @fact @inferred(0.2+a) --> Vec1d(3.2f0+0.2)
+                @fact @inferred(a*0.2) --> Vec1d(3.2f0*0.2)
+                @fact @inferred(0.2*a) --> Vec1d(3.2f0*0.2)
+                @fact @inferred(a+0.2f0) --> Vec{1,Float32}(3.4f0)
+                @fact @inferred(0.2f0+a) --> Vec{1,Float32}(3.4f0)
+                @fact @inferred(a*0.2f0) --> Vec{1,Float32}(3.2f0*0.2f0)
+                @fact @inferred(0.2f0*a) --> Vec{1,Float32}(3.2f0*0.2f0)
 	end
     context("vector norm+cross product") do
         @fact norm(Vec3d(1.0,2.0,2.0)) --> 3.0
@@ -539,7 +550,7 @@ context("Matrix") do
 
     for i=1:4, j=1:4
         x1 = rand(i,j)
-        @fact Mat(x1') --> Mat(x1)'
+        @fact @inferred(ctranspose(Mat(x1))) --> Mat(x1')
     end
 
 
@@ -614,18 +625,16 @@ context("Matrix Math") do
 		mc = rand(i,j) + im*rand(i,j)
 		vfs = Vec(v)
 		mfs = Mat(m)
-        mfsc = Mat(mc)
+                mfsc = Mat(mc)
 
 		context("Matrix{$i, $j} * Vector{$j}") do
 			vm = m * v
-			fsvm = mfs * vfs
-			@fact isapprox(fsvm, vm)  --> true
+			@fact isapprox(@inferred(mfs * vfs), vm)  --> true
 		end
 		if i == j
 			context("Matrix{$i, $j} * Matrix{$i, $j}") do
 				mm = m * m
-				fmm = mfs * mfs
-				@fact isapprox(fmm, mm)  --> true
+				@fact isapprox(@inferred(mfs * mfs), mm)  --> true
 			end
 			context("det(M)") do
 				mm = det(m)
@@ -850,6 +859,6 @@ end
 
 end
 
-
+end
 
 FactCheck.exitstatus()

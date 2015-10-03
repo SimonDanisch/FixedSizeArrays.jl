@@ -80,10 +80,11 @@ end
     :($name{ElType, $(FSA.parameters[3:end]...)})
 end
 
-@generated function map{FSA <: FixedArray}(F::DataType, arg1::FSA)
-    eltype(FSA) == F && return :(arg1)
-    inner = fill_tuples_expr((inds...) -> :( F(arg1[$(inds...)]) ), size(FSA))
-    :( similar(FSA, F)($(inner)) )
+@generated function map{T}(::Type{T}, arg1::FixedArray)
+    eltype(arg1) == T && return :(arg1)
+    FSA = similar(arg1, T)
+    inner = fill_tuples_expr((inds...) -> :( T(arg1[$(inds...)]) ), size(FSA))
+    :( $FSA($(inner)) )
 end
 
 @inline map{R,C,T}(F::Type{T}, arg1::Mat{R,C,T}) = arg1

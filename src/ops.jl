@@ -55,11 +55,12 @@ for op in binaryOps
     functor_name, functor_expr = gen_functor(op, 2)
     eval(quote
         $functor_expr
+        @inline $op{T <: FixedArray}(x::T, y::T) = map($functor_name(), x, y)
         @inline $op{T1 <: FixedArray, T2 <: FixedArray}(x::T1, y::T2) = $op(promote(x, y)...)
-        @inline $op{T1 <: FixedArray}(x::Number, y::T1) = eltype(y) == typeof(x) ? map($functor_name(), x, y) : $op(promote(x, y)...)
-        @inline $op{T1 <: FixedArray}(x::T1, y::Number) = eltype(x) == typeof(y) ? map($functor_name(), x, y) : $op(promote(x, y)...)
-
-        @inline $op{T <: FixedArray}(x::T,    y::T) = map($functor_name(), x, y)
+        @inline $op{T <: Number}(x::T, y::FixedArray{T}) = map($functor_name(), x, y)
+        @inline $op{T1 <: Number, T2}(x::T1, y::FixedArray{T2}) = $op(promote(x, y)...)
+        @inline $op{T <: Number}(x::FixedArray{T}, y::T) = map($functor_name(), x, y)
+        @inline $op{T1, T2 <: Number}(x::FixedArray{T1}, y::T2) = $op(promote(x, y)...)
     end)
 end
 
@@ -67,12 +68,12 @@ end
     T = promote_type(eltype(T1), eltype(T2))
     map(T, a), map(T, b)
 end
-@inline function promote{T1 <: FixedArray}(a::T1, b::Number)
-    T = promote_type(eltype(T1), typeof(b))
+function promote{T1, T2 <: Number}(a::FixedArray{T1}, b::T2)
+    T = promote_type(T1, T2)
     map(T, a), T(b)
 end
-@inline function promote{T1 <: FixedArray}(a::Number, b::T1)
-    T = promote_type(typeof(a), eltype(T1))
+function promote{T1 <: Number, T2}(a::T1, b::FixedArray{T2})
+    T = promote_type(T1, T2)
     T(a), map(T, b)
 end
 
