@@ -145,6 +145,12 @@ call(::BilinearDotFunctor, a, b) = a*b
 )
 
 
+trace(A::FixedMatrix{1,1}) = A[1,1]
+trace(A::FixedMatrix{2,2}) = A[1,1] + A[2,2]
+trace(A::FixedMatrix{3,3}) = A[1,1] + A[2,2] + A[3,3]
+trace(A::FixedMatrix{4,4}) = A[1,1] + A[2,2] + A[3,3] + A[4,4]
+
+
 @inline inv{T}(A::Mat{1, 1, T}) = @inbounds return Mat{1, 1, T}(inv(A[1]))
 @inline function inv{T}(A::Mat{2, 2, T})
     determinant = det(A)

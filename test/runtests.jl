@@ -643,6 +643,11 @@ context("Matrix Math") do
 				fmm = det(mfs)
 				@fact isapprox(fmm, mm)  --> true
 			end
+                        context("trace(M)") do
+                                mm = trace(m)
+                                fmm = trace(mfs)
+                                @fact isapprox(fmm, mm)  --> true
+                        end
 			context("inv(M)") do
 				mm = inv(m)
 				fmm = inv(mfs)
