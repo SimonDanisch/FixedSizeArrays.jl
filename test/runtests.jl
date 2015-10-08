@@ -153,6 +153,8 @@ context("Constructor ") do
 
         @fact typeof(zero(Mat{4,2, Int})) --> Mat{4,2, Int}
         @fact typeof(zero(Vec{7, Int})) --> Vec{7, Int}
+        @fact zero(Vec((1,2))) --> Vec((0,0))
+        @fact zero(Vec((1.0,2.0))) --> Vec((0.0,0.0))
     end
 
     context("eye") do
@@ -641,6 +643,11 @@ context("Matrix Math") do
 				fmm = det(mfs)
 				@fact isapprox(fmm, mm)  --> true
 			end
+                        context("trace(M)") do
+                                mm = trace(m)
+                                fmm = trace(mfs)
+                                @fact isapprox(fmm, mm)  --> true
+                        end
 			context("inv(M)") do
 				mm = inv(m)
 				fmm = inv(mfs)

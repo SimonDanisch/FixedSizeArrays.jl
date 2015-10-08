@@ -114,6 +114,7 @@ end
 
 
 @inline zero{FSA <: FixedArray}(::Type{FSA}) = map(ConstFunctor(zero(eltype(FSA))), FSA)
+zero(fsa::FixedArray) = zero(typeof(fsa))
 @inline one{FSA <: FixedArray}(::Type{FSA})  = map(ConstFunctor(one(eltype(FSA))), FSA)
 @inline eye{FSA <: FixedArray}(::Type{FSA})  = map(EyeFunc{eltype(FSA)}, FSA)
 @inline unit{FSA <: FixedVector}(::Type{FSA}, i::Integer) = map(UnitFunctor(i, eltype(FSA)), FSA)
