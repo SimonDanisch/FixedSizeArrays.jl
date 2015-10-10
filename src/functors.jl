@@ -48,3 +48,8 @@ function call(sf::SetindexFunctor, i::Int...)
     sf.index == i && return eltype(sf.target)(sf.value)
     sf.target[i...]
 end
+
+immutable RowFunctor{M}
+    mat::M
+end
+call(r::RowFunctor, i::Int) = row(r.mat, i)

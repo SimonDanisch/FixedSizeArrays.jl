@@ -572,6 +572,18 @@ context("Matrix") do
     	(4.0,8.0,12.0,16.0)
     )
 
+    x = Mat(
+        (1,1,1,),
+        (2,2,2,),
+        (3,3,3,),
+    )
+    @fact transpose(x) --> Mat(
+        (1,2,3),
+        (1,2,3),
+        (1,2,3),
+    )
+    @fact transpose(b) --> b
+
     @fact length(b) --> 16
 
     @fact a-->b
