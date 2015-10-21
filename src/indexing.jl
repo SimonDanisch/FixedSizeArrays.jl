@@ -10,7 +10,7 @@
 @inline column{N, T}(v::FixedVector{N, T}) = v
 @inline column{R, C, T}(a::Mat{R, C, T}, i::Union{Range, Int}) = a.(1)[i]
 
-@inline row{N, T}(v::FixedVector{N, T}) = Mat{1, N, T}(v...)
+@inline row{N, T}(v::FixedVector{N, T}) = Mat{1, N, T}(v.(1))
 @inline row{N, T}(v::FixedVector{N, T}, i::Int) = (v[i],)
 @inline row{R, C, T}(a::Mat{R, C, T}, j::Int) = ntuple(IndexFunc(a, j), Val{C})::NTuple{C, T}
 @inline row{R, T}(a::Mat{R, 1, T}, j::Int) = (a.(1)[1][j],)
