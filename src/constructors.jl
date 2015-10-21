@@ -69,7 +69,12 @@ call(pf::ParseFunctor{Void}, i::Int) = parse(pf.a[i])
     end
     SZ     = size_or(FSA, :(size(a)))
     ElType = eltype_or(FSA, eltype(a))
-    expr = :($FSA(fill_tuples((sz, i...)->$ElType(a[i...]), $SZ)))
+    if isa(SZ, Expr)
+        expr = :($FSA(fill_tuples((sz, i...)->$ElType(a[i...]), $SZ)))
+    else
+        tupexpr = fill_tuples_expr((i,inds...) -> :($ElType(a[$i, $(inds...)])), SZ)
+        expr = :($FSA($tupexpr))
+    end
     if FSA <: FixedVectorNoTuple
         expr = :($FSA(a...))
     end
