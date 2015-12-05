@@ -44,7 +44,10 @@ size{T <: FixedArray}(A::T, d::Integer)             = size(T, d)
 
 # Iterator
 start(A::FixedArray)                                = 1
-next(A::FixedArray, state::Integer)                 = (A[state], state+1)
+function next(A::FixedArray, state::Integer)
+    @inbounds x = A[state]
+    (x, state+1)
+end
 done(A::FixedArray, state::Integer)                 = length(A) < state
 
 
