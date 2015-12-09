@@ -90,10 +90,12 @@ context("Array of FixedArrays") do
         end
     end
     context("Show") do
-        m = [rand(Mat4d) for i=1:2]
+        a = [rand(Vec4d) for i=1:2]
+        b = [rand(RGB{Float32}) for i=1:2]
+        c = [rand(Mat4d) for i=1:2]
         println(a)
         println(b)
-        println(m)
+        println(c)
         showcompact(Point(1,2,3))
     end
 end
@@ -445,10 +447,15 @@ context("Ops") do
         @fact hypot(a) == hypot(b) --> true
     end
     context("normalize") do
-        a = Vec(3,4)
         b = Vec(3.,4.)
-        @fact normalize(a) --> Vec(0.6,0.8)
         @fact normalize(b) --> Vec(0.6,0.8)
+
+        v = Vec(3.0, 4.0)
+        @test norm(v) === 5.0
+        w = normalize(v)
+        @fact w --> Vec(0.6, 0.8)
+        @fact norm(w) === 1.0 --> true
+
     end
 
     context("reduce") do
@@ -573,14 +580,14 @@ context("Matrix") do
     )
 
     x = Mat(
-        (1,1,1,),
-        (2,2,2,),
-        (3,3,3,),
+        (1,1,1),
+        (2,2,2),
+        (3,3,3)
     )
     @fact transpose(x) --> Mat(
         (1,2,3),
         (1,2,3),
-        (1,2,3),
+        (1,2,3)
     )
     @fact transpose(b) --> b
 

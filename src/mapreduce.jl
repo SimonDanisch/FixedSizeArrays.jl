@@ -71,12 +71,18 @@ end
     constructor_expr(FSA, inner)
 end
 
-@generated function similar{FSA <: FixedVector}(::Type{FSA}, ElType::DataType)
-    name = parse(string("Main.", FSA.name))
-    :($name{$(FSA.parameters[1]), ElType, $(FSA.parameters[3:end]...)})
+qualified_name{T}(::Type{T}) = parse(string("Main.", T.name))# is this actually a good idea?
+
+@generated function similar{FSA <: FixedVector}(::Type{FSA}, ElType::DataType, s=size(FSA))
+    name = qualified_name(FSA)
+    :($name{s[1], ElType, $(FSA.parameters[3:end]...)})
 end
+similar{FSA <: Mat}(::Type{FSA}, ElType::DataType, s=Tuple{Int, Int}) = Mat{s..., ElType}
+similar{FSA <: Mat}(::Type{FSA}, ElType::DataType, s=Tuple{Int}) = Mat{s[1],s[1], ElType}
+similar{FSA <: Mat}(::Type{FSA}, ElType::DataType) = similar(FSA, ELType, size(FSA))
+
 @generated function similar{FSA <: FixedVectorNoTuple}(::Type{FSA}, ElType::DataType)
-    name = parse(string("Main.", FSA.name))
+    name = qualified_name(FSA)
     :($name{ElType, $(FSA.parameters[3:end]...)})
 end
 

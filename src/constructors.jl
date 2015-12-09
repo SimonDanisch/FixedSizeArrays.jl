@@ -86,20 +86,18 @@ end
 
 call{FSA <: FixedVectorNoTuple}(::Type{FSA}, a::Tuple, b::Tuple...) = throw(DimensionMismatch("$FSA can't be constructed from $a"))
 call{FSA <: FixedVectorNoTuple}(::Type{FSA}, a::Tuple) = FSA(a...)
-call{FSA <: FixedArray, T}(::Type{FSA}, a::T...) = FSA(a)
-
-
+#call{FSA <: FixedArray, T}(::Type{FSA}, a::T...) = FSA(a) # all a's have the same type, so we can just use that tuple
 
 @generated function call{FSA <: FixedArray, X}(::Type{FSA}, a::X)
     SZ      = size_or(FSA, (1,))
     ElType  = eltype_or(FSA, a)
     Len     = prod(SZ)
-    T_N     = FSA
     if FSA <: FixedVectorNoTuple
-        return :($T_N($(ntuple(i-> :($ElType(a)), Len)...)))
+        return :($FSA($(ntuple(i-> :($ElType(a)), Len)...)))
     else
+        name = similar(FSA, ElType, SZ)
         expr = fill_tuples_expr((inds...)->:($ElType(a[1])), SZ)
-        return :($T_N($expr))
+        return :($name($expr))
     end
 end
 
@@ -110,9 +108,10 @@ end
         length(a) != prod(SZ) && throw(DimensionMismatch("can't construct $FSA with $(length(a)) arguments. Args: $a"))
         return :($FSA(map($ElType, a)...))
     else
-        all(x-> x <: Tuple, a) && return :( $FSA(a) ) # TODO be smarter about this
-        any(x-> x != ElType, a) && return :($FSA(map($ElType, a)))
-        return :($FSA(a))
+        FSA <: Mat && return :($FSA(a))
+        inner = any(x-> x != ElType, a) ? :(map($ElType, a)) : :(a)
+        name = similar(FSA, ElType, SZ)
+        return :($name($inner))
     end
 end
 

@@ -3,16 +3,20 @@ import ImmutableArrays
 using Benchmarks
 
 macro mybench(expr)
+	funsym = gensym()
 	quote
-		val = $(esc(expr))
-		stats = Statistics(@benchmark for i=1:10
+		function $funsym()
 			val = $(esc(expr))
-		end)
-		println(stats.average_time, ": ", stats.interval[1], " - ", stats.interval[2])
-		val
+			for i=1:10000
+				val += $(esc(expr))
+			end
+			val
+		end
+		res = @benchmark $funsym()
+		stats = Benchmarks.SummaryStatistics(res).elapsed_time_center
+		println(stats)
 	end
 end
-function test()
 	const a = Float64[1 1 1 1; 2 2 2 2; 3 3 3 3; 4 4 4 4]
 	const b = Float64[1,2,3,4]
 	const a2 = Mat{4,4,Float64}((
@@ -47,16 +51,14 @@ function test()
 	@mybench sum(a3)
 
 	println("dot:")
-	@mybench for i=1:100 dot(b,b) end
-	@mybench for i=1:100 dot(b2,b2) end
-	@mybench for i=1:100 dot(b3,b3) end
+	@mybench dot(b,b)
+	@mybench dot(b2,b2)
+	@mybench dot(b3,b3)
 
 	println("column:")
-	@mybench for i=1:1000 column(a2,1) end
-	@mybench for i=1:1000 ImmutableArrays.column(a3,1) end
+	@mybench column(a2,1)
+	@mybench ImmutableArrays.column(a3,1)
 
 	println("row:")
-	@mybench for i=1:1000 row(a2,1) end
-	@mybench for i=1:1000 ImmutableArrays.row(a3,1) end
-end
-test()
+	@mybench row(a2,1)
+	@mybench ImmutableArrays.row(a3,1)
