@@ -1,3 +1,5 @@
+Base.promote_array_type{FSA <: FixedArray, T}(F, ::Type{T}, ::Type{FSA}) = FSA
+
 # operations
 const unaryOps = (:-, :~, :conj, :abs,
                   :sin, :cos, :tan, :sinh, :cosh, :tanh,
