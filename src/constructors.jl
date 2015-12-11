@@ -124,9 +124,11 @@ zero(fsa::FixedArray) = zero(typeof(fsa))
 @inline eye{FSA <: FixedArray}(::Type{FSA})  = map(EyeFunc{eltype(FSA)}, FSA)
 @inline unit{FSA <: FixedVector}(::Type{FSA}, i::Integer) = map(UnitFunctor(i, eltype(FSA)), FSA)
 
-@inline rand{FSA <: FixedArray}(x::Type{FSA}) = map(RandFunctor{eltype(FSA)}, FSA)
-@inline rand{FSA <: FixedArray}(x::Type{FSA}, range::Range) = (T = eltype(FSA) ; map(RandFunctor{T(first(range)):T(step(range)):T(last(range))}, FSA)) # there's no easy way to convert eltypes of ranges (I think)
-
+@inline rand{FSA <: FixedArray}(m::MersenneTwister, x::Type{FSA}) = map(RandFunctor{eltype(FSA)}(m), FSA)
+@inline function rand{FSA <: FixedArray}(x::Type{FSA}, range::Range)
+    T = eltype(FSA)
+    map(RandFunctor{T(first(range)):T(step(range)):T(last(range))}(MersenneTwister()), FSA) # there's no easy way to convert eltypes of ranges (I think)
+end
 """
 Macro `fsa` helps to create fixed size arrays like Julia arrays.
 E.g.
