@@ -1,5 +1,7 @@
-immutable RandFunctor{T} <: Func{1} end
-@inline call{T}(rf::Type{RandFunctor{T}}, i...) = rand(T)
+immutable RandFunctor{T} <: Func{1}
+    mt::MersenneTwister
+end
+@inline call{T}(rf::RandFunctor{T}, i...) = rand(rf.mt, T)
 
 immutable ConstFunctor{T} <: Base.Func{1}
     args::T

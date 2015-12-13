@@ -79,7 +79,7 @@ context("Array of FixedArrays") do
         bff = b + RGB{Float32}(1)
         afd = a .+ 1f0
         bfd = b .+ 1f0
-
+        @inferred(b .* 1f0)
         for i=1:N
             @fact a[1] + 1f0 --> af[i]
             @fact b[1] + 1f0 --> bf[i]
@@ -90,7 +90,7 @@ context("Array of FixedArrays") do
         end
     end
     context("Show") do
-        m = [rand(Mat4d) for i=1:2]
+        m = rand(Mat4d, 2)
         println(a)
         println(b)
         println(m)
@@ -145,7 +145,7 @@ context("Constructor ") do
         @fact typeof(x) --> D3{4,4,4, Float32}
         @fact eltype(x) --> Float32
         @fact size(x) --> (4,4,4)
-
+        @fact typeof(rand(Vec4d, 5,5)) --> Matrix{Vec4d} 
     end
     context("Zero") do
         @fact typeof(zero(Vec4d)) --> Vec4d
