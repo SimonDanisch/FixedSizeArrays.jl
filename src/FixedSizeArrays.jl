@@ -63,4 +63,6 @@ export column
 export MatMulFunctor
 export setindex
 export eltype_or, size_or
+export FSlice
+export destructure
 end
