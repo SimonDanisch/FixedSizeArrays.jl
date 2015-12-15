@@ -33,7 +33,7 @@ immutable FSlice; end
 
 """
 Remove the fixed dimensional structure from an
-`Array{F<:FixedArray{T,M,SIZE},N}`, reinterpreting it as an `Array{T,M+N}`, in
+`Array{F<:FixedArray{T,M,SIZE},N}`, reinterpreting it as an `Array{T,M+N}` in
 natural memory ordering (ie, fixed dimensions first).
 """
 function destructure{F<:FixedArray}(a::Array{F})
@@ -58,3 +58,35 @@ function getindex{F<:FixedVectorNoTuple}(a::Array{F}, fieldname::Symbol, inds...
     destructure(a)[fieldindex, inds...]
 end
 
+
+# Turn A[1,2,...] into A[FSlice, 1,2,3,4]
+function fixed_slice_expr(expr)
+    if expr.head == :(=)
+        return Expr(expr.head, fixed_slice_expr(expr.args[1]), expr.args[2:end]...)
+    end
+    expr.head == :ref || error("Array reference not found in expression $expr")
+    name = expr.args[1]
+    inds = expr.args[2:end]
+    Expr(:ref, expr.args[1], FSlice, expr.args[2:end]...)
+end
+
+"""
+Slice across both fixed and variable size dimensions of
+`Array{F<:FixedArray,M}`.  Before slicing, the array is reshaped to the natural
+memory ordering as in `destructure()`: the `N=ndims(F)` fixed dimensions come
+first, followed by the `M` dimensions of variable length.
+
+Examples:
+
+    # Array of fixed size vectors
+    a = [Vec(i,j) for i=1:5, j=1:5]
+    @fslice a[2,:,:] = 10
+    xcomps = @fslice a[1,:,:]
+
+    # Vector of fixed size matrices
+    m = [@fsa([i 0; 0 i^2]) for i=1:4]
+    @fslice m[1,1,:]
+"""
+macro fslice(expr)
+    esc(fixed_slice_expr(expr))
+end
