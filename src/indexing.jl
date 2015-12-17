@@ -50,7 +50,7 @@ function setindex!{F<:FixedArray}(a::Array{F}, val, ::Type{FSlice}, inds...)
     destructure(a)[inds...] = val
 end
 
-function getindex{F<:FixedVectorNoTuple}(a::Array{F}, fieldname::Symbol, inds...)
+function getindex{F<:FixedVectorNoTuple}(a::Array{F}, ::Type{FSlice}, fieldname::Symbol, inds...)
     # Not terribly efficient; can we somehow force the field index to be
     # resolved at compile time?
     fieldindex = findfirst(fieldnames(F), fieldname)
@@ -58,7 +58,7 @@ function getindex{F<:FixedVectorNoTuple}(a::Array{F}, fieldname::Symbol, inds...
     destructure(a)[fieldindex, inds...]
 end
 
-function setindex!{F<:FixedVectorNoTuple}(a::Array{F}, val, fieldname::Symbol, inds...)
+function setindex!{F<:FixedVectorNoTuple}(a::Array{F}, val, ::Type{FSlice}, fieldname::Symbol, inds...)
     fieldindex = findfirst(fieldnames(F), fieldname)
     fieldindex > 0 || error("No field named $fieldname in $(typeof(a))")
     destructure(a)[fieldindex, inds...] = val
@@ -91,6 +91,14 @@ Examples:
     # Vector of fixed size matrices
     m = [@fsa([i 0; 0 i^2]) for i=1:4]
     @fslice m[1,1,:]
+
+    # Slice immutables by field name
+    immutable MyVec <: FixedVectorNoTuple{2,Float64}
+        x::Float64
+        y::Float64
+    end
+    v = MyVec[MyVec(i,-i) for i=1:5]
+    @fslice v[:x, :]
 """
 macro fslice(expr)
     esc(fixed_slice_expr(expr))
