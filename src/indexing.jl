@@ -58,6 +58,11 @@ function getindex{F<:FixedVectorNoTuple}(a::Array{F}, fieldname::Symbol, inds...
     destructure(a)[fieldindex, inds...]
 end
 
+function setindex!{F<:FixedVectorNoTuple}(a::Array{F}, val, fieldname::Symbol, inds...)
+    fieldindex = findfirst(fieldnames(F), fieldname)
+    fieldindex > 0 || error("No field named $fieldname in $(typeof(a))")
+    destructure(a)[fieldindex, inds...] = val
+end
 
 # Turn A[1,2,...] into A[FSlice, 1,2,3,4]
 function fixed_slice_expr(expr)
