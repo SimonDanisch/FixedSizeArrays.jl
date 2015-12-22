@@ -29,14 +29,18 @@
 
 # Unified slicing along combinations of fixed and variable dimensions
 
-"Get index of a field with `name` in type `T`.  Should this be in base?"
-function fieldindex{T}(::Type{T}, name::Symbol)
-    i = findfirst(fieldnames(T), name)
-    if i == 0
+"Get index of a field with `name` in type `T`.  Should this be in Base?"
+@generated function fieldindex{T}(::Type{T}, name::Symbol)
+    # Expand all field names inline to allow this to become a constant
+    # expression.  Simple alternative is `findfirst(fieldnames(T), name)`
+    exprs = [:($(Expr(:quote, n)) == name && return $i) for (i,n) in enumerate(fieldnames(T))]
+    quote
+        $(Expr(:meta, :inline))
+        $(exprs...)
         error("No field \"$name\" in type $T")
     end
-    i
 end
+
 
 # Turn `A[1,2,...]` into `destructure(A)[1,2,3,4]`
 #
