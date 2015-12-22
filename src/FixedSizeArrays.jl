@@ -23,6 +23,7 @@ immutable Point{N, T} <: FixedVector{N, T}
 end
 
 include("mapreduce.jl")
+include("destructure.jl")
 include("indexing.jl")
 include("ops.jl")
 include("expm.jl")
