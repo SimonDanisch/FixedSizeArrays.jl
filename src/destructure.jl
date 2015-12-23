@@ -1,12 +1,21 @@
+import Base.linearindexing
+import Base.similar
+
 "Destructuring view around an arbitrary abstract array.  See destructure()"
 immutable DestructuredArray{T,N,ArrayT} <: AbstractArray{T,N}
     base::ArrayT
 end
 
-import Base.linearindexing
+function DestructuredArray{ArrayT<:AbstractArray}(a::ArrayT)
+    DestructuredArray{eltype(eltype(a)), ndims(a)+ndims(eltype(a)), ArrayT}(a)
+end
 
 linearindexing(::Type{DestructuredArray}) = Base.LinearSlow()
 size{T,N,ArrayT}(a::DestructuredArray{T,N,ArrayT}) = (size(eltype(ArrayT))..., size(a.base)...)
+
+# TODO: Should define similar() but it doesn't work for sparse matrices in 0.4
+# since they don't support more than two dimensions.
+# similar{S,D}(a::DestructuredArray, ::Type{S}, dims::NTuple{D,Int}) = similar(a.base, S, dims...)
 
 @generated function getindex{T,N,ArrayT}(a::DestructuredArray{T,N,ArrayT}, inds::Int...)
     eldims = ndims(eltype(ArrayT))
@@ -33,18 +42,16 @@ end
 
 
 """
-Destructure the elements of an array `a` to create `M=ndims(eltype(a))`
-additional dimensions prefixing the dimensions of `a`.  The returned array is a
-view onto the original elements, with fixed dimensions first according to the
-natural memory ordering.
+Destructure the elements of an array `A` to create `M=ndims(eltype(A))`
+additional dimensions prepended to the dimensions of `A`.  The returned array
+is a view onto the original elements; additional dimensions occur first
+for consistency with the natural memory ordering.
 
-For example, `AbstractArray{F<:FixedArray{T,M,SIZE},N}` appears as as an
-`AbstractArray{T,M+N}`.
+For example, `AbstractArray{F<:FixedArray{T,M,SIZE},N}` appears as an
+`AbstractArray{T,M+N}` after destructuring.
 """
-function destructure{ArrayT<:AbstractArray}(a::ArrayT)
-    DestructuredArray{eltype(eltype(a)), ndims(a)+ndims(eltype(a)), ArrayT}(a)
-end
+destructure(A::AbstractArray) = DestructuredArray(A)
 
-# Faster (as of 2015-12) reinterpret-based version for plain Array
-destructure{T,N}(a::Array{T,N}) = reinterpret(eltype(T), a, (size(T)..., size(a)...))
+# Faster reinterpret-based version (as of 2015-12) for plain Array
+destructure{T,N}(A::Array{T,N}) = reinterpret(eltype(T), A, (size(T)..., size(a)...))
 
