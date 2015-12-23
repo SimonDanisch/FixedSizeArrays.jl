@@ -308,6 +308,18 @@ context("Complex Ops") do
     end
 end
 
+context("Destructure") do
+    rgb = [RGB(i,2*i,3*i) for i=1:4]
+    rgb_ref = [1 2 3 4;
+               2 4 6 8;
+               3 6 9 12]
+    @fact destructure(rgb) --> rgb_ref
+    @fact FixedSizeArrays.DestructuredArray(rgb) --> rgb_ref
+
+    A = [@fsa([i 2*i; 3*i 4*i]) for i=1:2]
+    @fact destructure(A) --> cat(3, [1 2; 3 4], [2 4; 6 8])
+end
+
 context("Indexing") do
 	context("FixedVector") do
         @fact setindex(v1, 88.9, 1) --> Vec(88.9,2.0,3.0)
@@ -355,6 +367,39 @@ context("Indexing") do
 
     end
 
+    context("fslice") do
+        rgb = [RGB(i,2*i,3*i) for i=1:10]
+
+        # Plain indexing
+        @fact @fslice(rgb[1,2]) --> rgb[2].r
+        @fact @fslice(rgb[2,5]) --> rgb[5].g
+        @fact @fslice(rgb[3,8]) --> rgb[8].b
+
+        # Slicing along fixed dims
+        @fact @fslice(rgb[:,1]) --> rgb[1]
+        @fact @fslice(rgb[:,end]) --> rgb[end]
+
+        # Slicing across fixed dims
+        @fact @fslice(rgb[1,:])  --> [c.r for c in rgb]
+        @fact @fslice(rgb[2,:])  --> [c.g for c in rgb]
+        @fact @fslice(rgb[3,:])  --> [c.b for c in rgb]
+        # Slicing across fixed dims with field names
+        @fact @fslice(rgb[:r,:]) --> [c.r for c in rgb]
+        @fact @fslice(rgb[:g,:]) --> [c.g for c in rgb]
+        @fact @fslice(rgb[:b,:]) --> [c.b for c in rgb]
+
+        # Slicing FSAs with two fixed dimensions
+        N = 3
+        A = [@fsa([i 2*i; 3*j 4*j]) for i=1:N, j=1:N]
+        for i=1:N,j=1:N
+            @fact @fslice(A[:,:,i,j]) --> A[i,j]
+        end
+        @fact @fslice(A[1,1,:,1]) --> [A[i,1][1,1] for i=1:N]
+        @fact @fslice(A[end,end,end,:]) --> [A[end,j][end,end] for j=1:N]
+        @fact @fslice(A[1,[1,end],1,1]) --> [A[1,1][1,1], A[1,1][1,end]]
+
+        # TODO: test setindex
+    end
 end
 
 
