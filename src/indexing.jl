@@ -41,7 +41,6 @@
     end
 end
 
-
 # Turn `A[1,2,...]` into `destructure(A)[1,2,3,4]`
 #
 # Turn `A[:x,:y,1,2,...]` into
