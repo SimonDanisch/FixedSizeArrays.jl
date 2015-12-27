@@ -24,6 +24,14 @@ typealias Mat2d Mat{2,2, Float64}
 typealias Mat3d Mat{3,3, Float64}
 typealias Mat4d Mat{4,4, Float64}
 
+# Compatibility hacks for 0.5 APL-style array slicing
+if VERSION < v"0.5.0-dev+1195"
+    # Remove all dimensions of size 1
+    compatsqueeze(A) = squeeze(A,(find(collect(size(A)).==1)...))
+else
+    compatsqueeze(A) = A
+end
+
 facts("FixedSizeArrays") do
 
 context("fsa macro") do
@@ -380,23 +388,23 @@ context("Indexing") do
         @fact @fslice(rgb[:,end]) --> rgb[end]
 
         # Slicing across fixed dims
-        @fact @fslice(rgb[1,:])  --> [c.r for c in rgb]
-        @fact @fslice(rgb[2,:])  --> [c.g for c in rgb]
-        @fact @fslice(rgb[3,:])  --> [c.b for c in rgb]
+        @fact compatsqueeze(@fslice(rgb[1,:]))  --> [c.r for c in rgb]
+        @fact compatsqueeze(@fslice(rgb[2,:]))  --> [c.g for c in rgb]
+        @fact compatsqueeze(@fslice(rgb[3,:]))  --> [c.b for c in rgb]
         # Slicing across fixed dims with field names
-        @fact @fslice(rgb[:r,:]) --> [c.r for c in rgb]
-        @fact @fslice(rgb[:g,:]) --> [c.g for c in rgb]
-        @fact @fslice(rgb[:b,:]) --> [c.b for c in rgb]
+        @fact compatsqueeze(@fslice(rgb[:r,:])) --> [c.r for c in rgb]
+        @fact compatsqueeze(@fslice(rgb[:g,:])) --> [c.g for c in rgb]
+        @fact compatsqueeze(@fslice(rgb[:b,:])) --> [c.b for c in rgb]
 
         # Slicing FSAs with two fixed dimensions
         N = 3
-        A = [@fsa([i 2*i; 3*j 4*j]) for i=1:N, j=1:N]
+        A = Mat{2,2,Int}[@fsa([i 2*i; 3*j 4*j]) for i=1:N, j=1:N]
         for i=1:N,j=1:N
-            @fact @fslice(A[:,:,i,j]) --> A[i,j]
+            @fact compatsqueeze(@fslice(A[:,:,i,j])) --> A[i,j]
         end
-        @fact @fslice(A[1,1,:,1]) --> [A[i,1][1,1] for i=1:N]
-        @fact @fslice(A[end,end,end,:]) --> [A[end,j][end,end] for j=1:N]
-        @fact @fslice(A[1,[1,end],1,1]) --> [A[1,1][1,1], A[1,1][1,end]]
+        @fact compatsqueeze(@fslice(A[1,1,:,1])) --> [A[i,1][1,1] for i=1:N]
+        @fact compatsqueeze(@fslice(A[end,end,end,:])) --> [A[end,j][end,end] for j=1:N]
+        @fact compatsqueeze(@fslice(A[1,[1,end],1,1])) --> [A[1,1][1,1], A[1,1][1,end]]
 
         # TODO: test setindex
     end
