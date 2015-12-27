@@ -23,6 +23,7 @@ immutable Point{N, T} <: FixedVector{N, T}
 end
 
 include("mapreduce.jl")
+include("destructure.jl")
 include("indexing.jl")
 include("ops.jl")
 include("expm.jl")
@@ -63,4 +64,6 @@ export column
 export MatMulFunctor
 export setindex
 export eltype_or, size_or
+export @fslice
+export destructure
 end
