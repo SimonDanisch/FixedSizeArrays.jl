@@ -317,13 +317,26 @@ context("Complex Ops") do
 end
 
 context("Destructure") do
-    rgb = [RGB(i,2*i,3*i) for i=1:4]
     rgb_ref = [1 2 3 4;
                2 4 6 8;
                3 6 9 12]
+    rgb_ref_set = [1 10 10 4;
+                   2 10 10 8;
+                   3 10 10 12]
+    # Test destructure
+    rgb = [RGB(i,2*i,3*i) for i=1:4]
     @fact destructure(rgb) --> rgb_ref
-    @fact FixedSizeArrays.DestructuredArray(rgb) --> rgb_ref
+    destructure(rgb)[:,2:end-1] = 10
+    @fact destructure(rgb) --> rgb_ref_set
 
+    # Explicitly test DestructuredArray.  This wrapper type isn't used by
+    # destructure() for plain old dense arrays, since a reinterpret is faster.
+    rgb = [RGB(i,2*i,3*i) for i=1:4]
+    @fact FixedSizeArrays.DestructuredArray(rgb) --> rgb_ref
+    destructure(rgb)[:,2:end-1] = 10
+    @fact FixedSizeArrays.DestructuredArray(rgb) --> rgb_ref_set
+
+    # destructure() with 2D FSA
     A = [@fsa([i 2*i; 3*i 4*i]) for i=1:2]
     @fact destructure(A) --> cat(3, [1 2; 3 4], [2 4; 6 8])
 end
@@ -376,37 +389,45 @@ context("Indexing") do
     end
 
     context("fslice") do
-        rgb = [RGB(i,2*i,3*i) for i=1:10]
+        context("getindex") do
+            rgb = [RGB(i,2*i,3*i) for i=1:10]
 
-        # Plain indexing
-        @fact @fslice(rgb[1,2]) --> rgb[2].r
-        @fact @fslice(rgb[2,5]) --> rgb[5].g
-        @fact @fslice(rgb[3,8]) --> rgb[8].b
+            # Plain indexing
+            @fact @fslice(rgb[1,2]) --> rgb[2].r
+            @fact @fslice(rgb[2,5]) --> rgb[5].g
+            @fact @fslice(rgb[3,8]) --> rgb[8].b
 
-        # Slicing along fixed dims
-        @fact @fslice(rgb[:,1]) --> rgb[1]
-        @fact @fslice(rgb[:,end]) --> rgb[end]
+            # Slicing along fixed dims
+            @fact @fslice(rgb[:,1]) --> rgb[1]
+            @fact @fslice(rgb[:,end]) --> rgb[end]
 
-        # Slicing across fixed dims
-        @fact compatsqueeze(@fslice(rgb[1,:]))  --> [c.r for c in rgb]
-        @fact compatsqueeze(@fslice(rgb[2,:]))  --> [c.g for c in rgb]
-        @fact compatsqueeze(@fslice(rgb[3,:]))  --> [c.b for c in rgb]
-        # Slicing across fixed dims with field names
-        @fact compatsqueeze(@fslice(rgb[:r,:])) --> [c.r for c in rgb]
-        @fact compatsqueeze(@fslice(rgb[:g,:])) --> [c.g for c in rgb]
-        @fact compatsqueeze(@fslice(rgb[:b,:])) --> [c.b for c in rgb]
+            # Slicing across fixed dims
+            @fact compatsqueeze(@fslice(rgb[1,:]))  --> [c.r for c in rgb]
+            @fact compatsqueeze(@fslice(rgb[2,:]))  --> [c.g for c in rgb]
+            @fact compatsqueeze(@fslice(rgb[3,:]))  --> [c.b for c in rgb]
+            # Slicing across fixed dims with field names
+            @fact compatsqueeze(@fslice(rgb[:r,:])) --> [c.r for c in rgb]
+            @fact compatsqueeze(@fslice(rgb[:g,:])) --> [c.g for c in rgb]
+            @fact compatsqueeze(@fslice(rgb[:b,:])) --> [c.b for c in rgb]
 
-        # Slicing FSAs with two fixed dimensions
-        N = 3
-        A = Mat{2,2,Int}[@fsa([i 2*i; 3*j 4*j]) for i=1:N, j=1:N]
-        for i=1:N,j=1:N
-            @fact compatsqueeze(@fslice(A[:,:,i,j])) --> A[i,j]
+            # Slicing FSAs with two fixed dimensions
+            N = 3
+            A = Mat{2,2,Int}[@fsa([i 2*i; 3*j 4*j]) for i=1:N, j=1:N]
+            for i=1:N,j=1:N
+                @fact compatsqueeze(@fslice(A[:,:,i,j])) --> A[i,j]
+            end
+            @fact compatsqueeze(@fslice(A[1,1,:,1])) --> [A[i,1][1,1] for i=1:N]
+            @fact compatsqueeze(@fslice(A[end,end,end,:])) --> [A[end,j][end,end] for j=1:N]
+            @fact compatsqueeze(@fslice(A[1,[1,end],1,1])) --> [A[1,1][1,1], A[1,1][1,end]]
         end
-        @fact compatsqueeze(@fslice(A[1,1,:,1])) --> [A[i,1][1,1] for i=1:N]
-        @fact compatsqueeze(@fslice(A[end,end,end,:])) --> [A[end,j][end,end] for j=1:N]
-        @fact compatsqueeze(@fslice(A[1,[1,end],1,1])) --> [A[1,1][1,1], A[1,1][1,end]]
 
-        # TODO: test setindex
+        context("setindex") do
+            rgb = [RGB(i,2*i,3*i) for i=1:10]
+
+            @fslice rgb[:r,:] = -1
+            @fslice rgb[3,:] = -3
+            @fact rgb --> [RGB(-1,2*i,-3) for i=1:10]
+        end
     end
 end
 
