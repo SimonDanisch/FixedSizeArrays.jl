@@ -71,14 +71,6 @@ end
     constructor_expr(FSA, inner)
 end
 
-@generated function similar{FSA <: FixedVector}(::Type{FSA}, ElType::DataType)
-    name = parse(string("Main.", FSA.name))
-    :($name{$(FSA.parameters[1]), ElType, $(FSA.parameters[3:end]...)})
-end
-@generated function similar{FSA <: FixedVectorNoTuple}(::Type{FSA}, ElType::DataType)
-    name = parse(string("Main.", FSA.name))
-    :($name{ElType, $(FSA.parameters[3:end]...)})
-end
 
 @generated function map{T}(::Type{T}, arg1::FixedArray)
     eltype(arg1) == T && return :(arg1)

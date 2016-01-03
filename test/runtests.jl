@@ -153,7 +153,7 @@ context("Constructor ") do
         @fact typeof(x) --> D3{4,4,4, Float32}
         @fact eltype(x) --> Float32
         @fact size(x) --> (4,4,4)
-        @fact typeof(rand(Vec4d, 5,5)) --> Matrix{Vec4d} 
+        @fact typeof(rand(Vec4d, 5,5)) --> Matrix{Vec4d}
     end
     context("Zero") do
         @fact typeof(zero(Vec4d)) --> Vec4d
@@ -298,6 +298,11 @@ context("eltype_or") do
     @fact eltype_or(Vec, nothing) --> nothing
     @fact eltype_or(Vec{4}, nothing) --> nothing
     @fact eltype_or(Vec{4,Float32}, nothing) --> Float32
+end
+
+context("similar") do
+    @fact similar(Vec{3}, Float32) --> Vec{3, Float32}
+    @fact similar(Vec, Float32, 3) --> Vec{3, Float32}
 end
 
 

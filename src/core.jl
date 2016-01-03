@@ -42,6 +42,32 @@ size{T <: FixedArray}(A::T)                         = size(T)
 size{T <: FixedArray}(A::Type{T}, d::Integer)       = size(T)[d]
 size{T <: FixedArray}(A::T, d::Integer)             = size(T, d)
 
+@generated function fsa_abstract{FSA <: FixedArray}(::Type{FSA})
+    ff = FSA
+    while ff.name.name != :FixedArray
+       ff = super(ff)
+    end
+    :($ff)
+end
+@generated function size_or{FSA <: FixedArray}(::Type{FSA}, OR)
+    fsatype = fsa_abstract(FSA)
+    sz = fsatype.parameters[3]
+    any(x->isa(x, TypeVar), sz.parameters) && return :(OR)
+    :($(_size(sz)))
+end
+@generated function eltype_or{FSA <: FixedArray}(::Type{FSA}, OR)
+    fsatype = fsa_abstract(FSA)
+    T = fsatype.parameters[1]
+    isa(T, TypeVar) && return :(OR)
+    :($T)
+end
+@generated function ndims_or{FSA <: FixedArray}(::Type{FSA}, OR)
+    fsatype = fsa_abstract(FSA)
+    N = fsatype.parameters[2]
+    isa(N, TypeVar) && return :(OR)
+    :($N)
+end
+
 # Iterator
 start(A::FixedArray)                                = 1
 function next(A::FixedArray, state::Integer)
@@ -51,5 +77,15 @@ end
 done(A::FixedArray, state::Integer)                 = length(A) < state
 
 
-
-
+@generated function similar{FSA <: FixedVector}(::Type{FSA}, typ::DataType, n::Int)
+    name = parse(string("Main.", FSA.name))
+    :($name{n, typ, $(FSA.parameters[3:end]...)})
+end
+@generated function similar{FSA <: FixedVector}(::Type{FSA}, typ::DataType)
+    name = parse(string("Main.", FSA.name))
+    :($name{$(FSA.parameters[1]), typ, $(FSA.parameters[3:end]...)})
+end
+@generated function similar{FSA <: FixedVectorNoTuple}(::Type{FSA}, typ::DataType)
+    name = parse(string("Main.", FSA.name))
+    :($name{typ, $(FSA.parameters[3:end]...)})
+end
