@@ -1,22 +1,3 @@
-@generated function fsa_abstract{FSA <: FixedArray}(::Type{FSA})
-    ff = FSA
-    while ff.name.name != :FixedArray
-       ff = super(ff)
-    end
-    :($ff)
-end
-@generated function size_or{FSA <: FixedArray}(::Type{FSA}, OR)
-    fsatype = fsa_abstract(FSA)
-    sz = fsatype.parameters[3]
-    any(x->isa(x, TypeVar), sz.parameters) && return :(OR)
-    :($(_size(sz)))
-end
-@generated function eltype_or{FSA <: FixedArray}(::Type{FSA}, OR)
-    fsatype = fsa_abstract(FSA)
-    T = fsatype.parameters[1]
-    isa(T, TypeVar) && return :(OR)
-    :($T)
-end
 
 _fill_tuples_expr(inner::Function, SZ::Tuple{Int}, inds...) =
     :(tuple($(ntuple(i->inner(i, inds...), SZ[1])...)))

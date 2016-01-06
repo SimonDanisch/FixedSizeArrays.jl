@@ -63,7 +63,8 @@ export row
 export column
 export MatMulFunctor
 export setindex
-export eltype_or, size_or
+export eltype_or, size_or, ndims_or
 export @fslice
 export destructure
+
 end
