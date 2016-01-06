@@ -52,6 +52,7 @@ end
 @generated function size_or{FSA <: FixedArray}(::Type{FSA}, OR)
     fsatype = fsa_abstract(FSA)
     sz = fsatype.parameters[3]
+    isa(sz, TypeVar) && return :(OR)
     any(x->isa(x, TypeVar), sz.parameters) && return :(OR)
     :($(_size(sz)))
 end

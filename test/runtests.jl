@@ -288,6 +288,8 @@ context("size_or") do
     @fact size_or(Vec, nothing) --> nothing
     @fact size_or(Vec{4}, nothing) --> (4,)
     @fact size_or(Vec{4,Float32}, nothing) --> (4,)
+    @fact size_or(FixedArray, nothing) --> nothing
+
 end
 context("eltype_or") do
     @fact eltype_or(Mat, nothing) --> nothing
@@ -298,8 +300,22 @@ context("eltype_or") do
     @fact eltype_or(Vec, nothing) --> nothing
     @fact eltype_or(Vec{4}, nothing) --> nothing
     @fact eltype_or(Vec{4,Float32}, nothing) --> Float32
-end
 
+    @fact eltype_or(FixedArray, nothing) --> nothing
+
+end
+context("ndims_or") do
+    @fact ndims_or(Mat, nothing) --> 2
+    @fact ndims_or(Mat{4}, nothing) --> 2
+    @fact ndims_or(Mat{4,4}, nothing) --> 2
+    @fact ndims_or(Mat{4,4, Float32}, nothing) --> 2
+
+    @fact ndims_or(Vec, nothing) --> 1
+    @fact ndims_or(Vec{4}, nothing) --> 1
+    @fact ndims_or(Vec{4, Float64}, nothing) --> 1
+
+    @fact ndims_or(FixedArray, nothing) --> nothing
+end
 context("similar") do
     @fact similar(Vec{3}, Float32) --> Vec{3, Float32}
     @fact similar(Vec, Float32, 3) --> Vec{3, Float32}
