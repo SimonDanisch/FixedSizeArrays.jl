@@ -8,6 +8,10 @@ include("core.jl")
 include("functors.jl")
 include("constructors.jl")
 
+if VERSION <= v"0.5.0"
+    supertype(x) = super(x)
+end
+
 # put them here due to #JuliaLang/julia#12814
 # needs to be befor indexing and ops, but after constructors
 immutable Mat{Row, Column, T} <: FixedMatrix{Row, Column, T}
