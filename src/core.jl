@@ -25,13 +25,13 @@ eltype{T <: FixedArray,N,SZ}(A::FixedArray{T,N,SZ}) = T
 
 length{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})         = _length(SZ)
 length{T,N,SZ}(::FixedArray{T,N,SZ})                = _length(SZ)
-length{T <: FixedArray}(A::Type{T})                 = length(super(T))
+length{T <: FixedArray}(A::Type{T})                 = length(supertype(T))
 
 endof{T,N,SZ}(A::FixedArray{T,N,SZ})                = length(A)
 
 
 ndims{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})          = N
-ndims{T <: FixedArray}(A::Type{T})                  = ndims(super(T))
+ndims{T <: FixedArray}(A::Type{T})                  = ndims(supertype(T))
 ndims{T <: FixedArray}(A::T)                        = ndims(T)
 
 
@@ -45,7 +45,7 @@ size{T <: FixedArray}(A::T, d::Integer)             = size(T, d)
 @generated function fsa_abstract{FSA <: FixedArray}(::Type{FSA})
     ff = FSA
     while ff.name.name != :FixedArray
-       ff = super(ff)
+       ff = supertype(ff)
     end
     :($ff)
 end
