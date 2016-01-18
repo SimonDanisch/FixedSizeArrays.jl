@@ -1,8 +1,11 @@
-immutable RandFunctor{T} <: Func{1}
+immutable MersenneFunctor{T} <: Func{1}
     mt::MersenneTwister
 end
-@inline call{T}(rf::RandFunctor{T}, i...) = rand(rf.mt, T)
-
+@inline call{T}(rf::MersenneFunctor{T}, i...) = rand(rf.mt, T)
+immutable RandFunctor{T} <: Func{1}
+    valuerange::T
+end
+@inline call(rf::RandFunctor, i...) = rand(rf.valuerange)
 immutable ConstFunctor{T} <: Base.Func{1}
     args::T
 end
