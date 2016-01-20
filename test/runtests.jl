@@ -13,6 +13,9 @@ immutable RGB{T} <: FixedVectorNoTuple{3, T}
     r::T
     g::T
     b::T
+    function RGB(a::NTuple{3, T})
+        new{T}(a[1], a[2], a[3])
+    end
 end
 
 typealias Vec1d Vec{1, Float64}
@@ -50,6 +53,66 @@ context("fsa macro") do
     @fact a5 --> Mat(((a,4),(2,5),(3,6)))
     @fact a6 --> Mat(((a,3,5),(2,4,6)))
 end
+
+context("core") do
+    context("ndims") do
+        @fact ndims(D3) --> 3
+        @fact ndims(Mat) --> 2
+        @fact ndims(Vec) --> 1
+        @fact ndims(Vec(1,2,3)) --> 1
+
+        @fact ndims(D3{3,3,3}) --> 3
+        @fact ndims(Mat{3,3}) --> 2
+        @fact ndims(Vec{3}) --> 1
+
+        @fact ndims(D3{3,3,3,Int}) --> 3
+        @fact ndims(Mat{3,3,Int}) --> 2
+        @fact ndims(Vec{3,Int}) --> 1
+    end
+    context("size_or") do
+        @fact size_or(Mat, nothing) --> nothing
+        @fact size_or(Mat{4}, nothing) --> nothing
+        @fact size_or(Mat{4,4}, nothing) --> (4,4)
+        @fact size_or(Mat{4,4, Float32}, nothing) --> (4,4)
+
+        @fact size_or(Vec, nothing) --> nothing
+        @fact size_or(Vec{4}, nothing) --> (4,)
+        @fact size_or(Vec{4,Float32}, nothing) --> (4,)
+        @fact size_or(FixedArray, nothing) --> nothing
+
+    end
+    context("eltype_or") do
+        @fact eltype_or(Mat, nothing) --> nothing
+        @fact eltype_or(Mat{4}, nothing) --> nothing
+        @fact eltype_or(Mat{4,4}, nothing) --> nothing
+        @fact eltype_or(Mat{4,4, Float32}, nothing) --> Float32
+
+        @fact eltype_or(Vec, nothing) --> nothing
+        @fact eltype_or(Vec{4}, nothing) --> nothing
+        @fact eltype_or(Vec{4,Float32}, nothing) --> Float32
+
+        @fact eltype_or(FixedArray, nothing) --> nothing
+
+    end
+    context("ndims_or") do
+        @fact ndims_or(Mat, nothing) --> 2
+        @fact ndims_or(Mat{4}, nothing) --> 2
+        @fact ndims_or(Mat{4,4}, nothing) --> 2
+        @fact ndims_or(Mat{4,4, Float32}, nothing) --> 2
+
+        @fact ndims_or(Vec, nothing) --> 1
+        @fact ndims_or(Vec{4}, nothing) --> 1
+        @fact ndims_or(Vec{4, Float64}, nothing) --> 1
+
+        @fact ndims_or(FixedArray, nothing) --> nothing
+    end
+    context("similar") do
+        @fact similar(Vec{3}, Float32) --> Vec{3, Float32}
+        @fact similar(Vec, Float32, 3) --> Vec{3, Float32}
+    end
+
+end
+
 
 context("Array of FixedArrays") do
 
@@ -98,10 +161,12 @@ context("Array of FixedArrays") do
         end
     end
     context("Show") do
-        m = rand(Mat4d, 2)
-        println(a)
-        println(b)
-        println(m)
+        m1 = rand(Mat4d, 2)
+        m2 = rand(RGB{Float32}, 2)
+        m3 = rand(Vec3f, 2)
+        println(m1)
+        println(m2)
+        println(m3)
         showcompact(Point(1,2,3))
     end
 end
@@ -252,6 +317,10 @@ context("Constructor ") do
                 @fact typeof(x2) --> Vector{VT2{N, ET}}
                 @fact typeof(x3) --> Vector{VT{N, ET}}
                 @fact x3         --> x
+
+                # Construction with only N, issue #56
+                @fact VT{N}(ET(1)) --> Vec{N, ET}(1)
+                @fact VT{N}(ntuple(x->ET(1), N)...) --> Vec{N, ET}(1)
             end
         end
     end
@@ -279,47 +348,6 @@ context("Constructors") do
 end
 
 
-context("size_or") do
-    @fact size_or(Mat, nothing) --> nothing
-    @fact size_or(Mat{4}, nothing) --> nothing
-    @fact size_or(Mat{4,4}, nothing) --> (4,4)
-    @fact size_or(Mat{4,4, Float32}, nothing) --> (4,4)
-
-    @fact size_or(Vec, nothing) --> nothing
-    @fact size_or(Vec{4}, nothing) --> (4,)
-    @fact size_or(Vec{4,Float32}, nothing) --> (4,)
-    @fact size_or(FixedArray, nothing) --> nothing
-
-end
-context("eltype_or") do
-    @fact eltype_or(Mat, nothing) --> nothing
-    @fact eltype_or(Mat{4}, nothing) --> nothing
-    @fact eltype_or(Mat{4,4}, nothing) --> nothing
-    @fact eltype_or(Mat{4,4, Float32}, nothing) --> Float32
-
-    @fact eltype_or(Vec, nothing) --> nothing
-    @fact eltype_or(Vec{4}, nothing) --> nothing
-    @fact eltype_or(Vec{4,Float32}, nothing) --> Float32
-
-    @fact eltype_or(FixedArray, nothing) --> nothing
-
-end
-context("ndims_or") do
-    @fact ndims_or(Mat, nothing) --> 2
-    @fact ndims_or(Mat{4}, nothing) --> 2
-    @fact ndims_or(Mat{4,4}, nothing) --> 2
-    @fact ndims_or(Mat{4,4, Float32}, nothing) --> 2
-
-    @fact ndims_or(Vec, nothing) --> 1
-    @fact ndims_or(Vec{4}, nothing) --> 1
-    @fact ndims_or(Vec{4, Float64}, nothing) --> 1
-
-    @fact ndims_or(FixedArray, nothing) --> nothing
-end
-context("similar") do
-    @fact similar(Vec{3}, Float32) --> Vec{3, Float32}
-    @fact similar(Vec, Float32, 3) --> Vec{3, Float32}
-end
 
 
 v2 = Vec(6.0,5.0,4.0)
@@ -406,6 +434,8 @@ context("Indexing") do
         @fact_throws BoundsError m[0,0]
 
         @fact row(m, 1) --> (1,5,9,13)
+
+
 
     end
 
@@ -726,6 +756,13 @@ context("Matrix") do
     mfs = Mat(m)
     @fact typeof(vfs) --> Vec4d
     @fact typeof(mfs) --> Mat4d
+
+    # issue #65, wrong
+    a = Mat((1,2), (3,4))
+    @fact Mat(a) --> a
+    b = Mat([1,2,3,4])
+    @fact b --> Mat((1,2,3,4))
+    @fact b --> Mat([1,2,3,4]'')
 end
 context("Matrix Math") do
 	for i=1:4, j=1:4
