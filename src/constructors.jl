@@ -12,29 +12,16 @@ _fill_tuples{N}(inner, originalSZ, SZ::NTuple{N, Int}, inds::Int...) =
     ntuple(i->_fill_tuples(inner, originalSZ, SZ[1:end-1], i, inds...), Val{SZ[end]})
 fill_tuples{N}(inner, SZ::NTuple{N, Int}) = _fill_tuples(inner, SZ, SZ)
 
-@generated function call{FSA <: FixedArray, T1 <: FixedArray}(::Type{FSA}, a::T1, b...)
-    SZ      = size_or(FSA, nothing)
-    ElType  = eltype_or(FSA, eltype(T1))
-    a_expr  = :( a )
-    if SZ != nothing
-        if (prod(SZ) > (length(T1) + length(b)))
-            throw(DimensionMismatch("$FSA is too small, can not be constructed from array $a and $b arguments"))
-        elseif prod(SZ) < length(T1) && isempty(b) #shrinking constructor, e.g. Vec3(Vec4(...))
-            a_expr = :( a[1:$(prod(SZ))] )
-        end
-    end
-    if isempty(b)
-        if ElType != eltype(T1) && FSA <: T1
-            return :( map($ElType, $a_expr) )
-        elseif ElType == eltype(T1) && !(FSA <: T1)
-            return :( $FSA($a_expr...) )
-        else
-            return :( $FSA($a_expr...) )
-        end
-    else
-        return :( $FSA(a..., b...) )
-    end
-end
+
+#=
+Constructors for homogenous non tuple arguments
+Is unrolled for the first 4, since a::T... leads to slow performance
+=#
+call{FSA <: FixedArray, T}(::Type{FSA}, a::T) = FSA(NTuple{1,T}((a,)))
+call{FSA <: FixedArray, T}(::Type{FSA}, a::T, b::T) = FSA(NTuple{2,T}((a,b)))
+call{FSA <: FixedArray, T}(::Type{FSA}, a::T, b::T, c::T) = FSA(NTuple{3,T}((a,b,c)))
+call{FSA <: FixedArray, T}(::Type{FSA}, a::T, b::T, c::T, d::T) = FSA(NTuple{4,T}((a,b,c,d)))
+call{FSA <: FixedArray, T}(::Type{FSA}, a::T...) = FSA(a)
 
 immutable ParseFunctor{T, S <: AbstractString} <: Func{1}
     t::Type{T}
@@ -43,6 +30,10 @@ end
 call{T}(pf::ParseFunctor{T}, i::Int) = parse(T, pf.a[i])
 call(pf::ParseFunctor{Void}, i::Int) = parse(pf.a[i])
 
+
+"""
+Constructs a fixedsize array from a Base.Array
+"""
 @generated function call{FSA <: FixedArray, T <: Array}(::Type{FSA}, a::T)
     if eltype(a) <: AbstractString
         ElType = eltype_or(FSA, Void)
@@ -56,48 +47,91 @@ call(pf::ParseFunctor{Void}, i::Int) = parse(pf.a[i])
         tupexpr = fill_tuples_expr((i,inds...) -> :($ElType(a[$i, $(inds...)])), SZ)
         expr = :($FSA($tupexpr))
     end
-    if FSA <: FixedVectorNoTuple
-        expr = :($FSA(a...))
-    end
     quote
         $SZ != size(a) && throw(DimensionMismatch("size of $FSA is not fitting array $(typeof(a)), with size: $(size(a))"))
         $expr
     end
 end
 
-call{FSA <: FixedVectorNoTuple}(::Type{FSA}, a::Tuple, b::Tuple...) = throw(DimensionMismatch("$FSA can't be constructed from $a"))
-call{FSA <: FixedVectorNoTuple}(::Type{FSA}, a::Tuple) = FSA(a...)
-call{FSA <: FixedArray, T}(::Type{FSA}, a::T...) = FSA(a)
 
-
-
+"""
+Constructor for singular arguments.
+Can be a tuple, is not declared as that, because it will generate ambigouities
+and overwrites the default constructor.
+"""
 @generated function call{FSA <: FixedArray, X}(::Type{FSA}, a::X)
-    SZ      = size_or(FSA, (1,))
-    ElType  = eltype_or(FSA, a)
-    Len     = prod(SZ)
-    T_N     = FSA
-    if FSA <: FixedVectorNoTuple
-        return :($T_N($(ntuple(i-> :($ElType(a)), Len)...)))
+    ND = ndims(FSA)
+    if X <: Tuple
+        types_svec = a.parameters
+        if all(x-> x <: Tuple, types_svec) && ND == 1
+            return :(throw(
+                DimensionMismatch("tried to construct $FSA from $a. I can't allow that!")
+            ))
+        end
+        orlen = length(types_svec)
+        ortyp = promote_type(types_svec...)
     else
-        expr = fill_tuples_expr((inds...)->:($ElType(a[1])), SZ)
-        return :($T_N($expr))
+        orlen = 1
+        ortyp = a
     end
+    SZ      = size_or(FSA, (orlen, ntuple(x->1, ND-1)...))
+    T       = eltype_or(FSA, ortyp)
+    FSAT    = similar(FSA, T, SZ)
+    if X <: Tuple
+        expr = fill_tuples_expr((inds...)->:($T(a[$(inds[1])])), SZ)
+    else
+        expr = fill_tuples_expr((inds...)->:($T(a)), SZ)
+    end
+    return :($FSAT($expr))
 end
-
+"""
+Constructors for heterogenous multiple arguments.
+E.g. 1, 2f0, 4.0
+"""
 @generated function call{FSA <: FixedArray}(::Type{FSA}, a...)
     SZ     = size_or(FSA, (length(a),))
     ElType = eltype_or(FSA, promote_type(a...))
-    if FSA <: FixedVectorNoTuple
-        length(a) != prod(SZ) && throw(DimensionMismatch("can't construct $FSA with $(length(a)) arguments. Args: $a"))
-        return :($FSA(map($ElType, a)...))
-    else
-        all(x-> x <: Tuple, a) && return :( $FSA(a) ) # TODO be smarter about this
-        any(x-> x != ElType, a) && return :($FSA(map($ElType, a)))
-        return :($FSA(a))
-    end
+    all(x-> x <: Tuple, a) && return :( $FSA(a) ) # TODO be smarter about this
+    any(x-> x != ElType, a) && return :($FSA(map($ElType, a)))
+    return :($FSA(a))
 end
 
-
+"""
+Construction from other FixedSizeArrays + X arguments
+E.g. Vec4f0(Vec3f0(1), 0)
+"""
+@generated function call{FSA <: FixedArray, T1 <: FixedArray}(::Type{FSA}, a::T1, b...)
+    if isempty(b) # this is the conversion constructor for 2 FSA's
+        #easiest way is to just construct from the tuple
+        expr = :(FSA(get_tuple(a)))
+        if size_or(FSA, nothing) == nothing # no concrete size
+            return expr
+        else #has a size
+            len1 = size(FSA, 1)
+            len2 = size(T1, 1)
+            if len1 < len2 # we need to shrink
+                return :(FSA(get_tuple(a)[1:$len1]))
+            elseif len1==len2
+                return expr
+            else
+                return :(throw(DimensionMismatch(
+                    "tried to create $FSA from $T1. The latter has too many elements"
+                )))
+            end
+        end
+    end
+    SZ      = size_or(FSA, nothing)
+    ElType  = eltype_or(FSA, eltype(T1))
+    a_expr  = :( a )
+    if SZ != nothing
+        if (prod(SZ) > (length(T1) + length(b)))
+            throw(DimensionMismatch("$FSA is too small, can not be constructed from array $a and $b arguments"))
+        elseif prod(SZ) < length(T1) && isempty(b) #shrinking constructor, e.g. Vec3(Vec4(...))
+            a_expr = :( a[1:$(prod(SZ))] )
+        end
+    end
+    return :( $FSA(a..., b...) )
+end
 
 @inline zero{FSA <: FixedArray}(::Type{FSA}) = map(ConstFunctor(zero(eltype(FSA))), FSA)
 zero(fsa::FixedArray) = zero(typeof(fsa))
