@@ -11,10 +11,6 @@ abstract FixedVectorNoTuple{CARDINALITY, T} <: FixedVector{CARDINALITY, T}
 export FixedVectorNoTuple
 
 
-_length{T <: Tuple}(::Type{T})						= *(T.parameters...)
-_length{N, N2}(::Type{Tuple{N, N2}})				= N*N2
-_length{N}(::Type{Tuple{N}})						= N
-
 _size{T <: Tuple}(::Type{T})						= (T.parameters...)
 _size{N, N2}(::Type{Tuple{N, N2}})					= (N,N2)
 _size{N}(::Type{Tuple{N}})							= (N,)
@@ -23,16 +19,19 @@ eltype{T <: FixedArray}(A::Type{T})                 = eltype_or(T, Any)
 eltype{T <: FixedArray,N,SZ}(A::FixedArray{T,N,SZ}) = T
 
 
-length{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})         = _length(SZ)
-length{T,N,SZ}(::FixedArray{T,N,SZ})                = _length(SZ)
-length{T <: FixedArray}(A::Type{T})                 = length(supertype(T))
+function length{T <: FixedArray}(A::Type{T})
+    prod(size(T))
+end
+length{T <: FixedArray}(A::T) = length(T)
 
-endof{T,N,SZ}(A::FixedArray{T,N,SZ})                = length(A)
+endof{T <: FixedArray}(A::Type{T}) = length(T)
+endof{T <: FixedArray}(A::T) = endof(T)
 
 
-ndims{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})          = N
-ndims{T <: FixedArray}(A::Type{T})                  = ndims(supertype(T))
-ndims{T <: FixedArray}(A::T)                        = ndims(T)
+@generated function ndims{T <: FixedArray}(A::Type{T})
+    :($(fsa_abstract(T).parameters[2]))
+end
+ndims{T <: FixedArray}(A::T) = ndims(T)
 
 
 size{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})           = _size(SZ)
@@ -70,23 +69,35 @@ end
 end
 
 # Iterator
-start(A::FixedArray)                                = 1
+start(A::FixedArray) = 1
 function next(A::FixedArray, state::Integer)
     @inbounds x = A[state]
     (x, state+1)
 end
-done(A::FixedArray, state::Integer)                 = length(A) < state
+done(A::FixedArray, state::Integer) = length(A) < state
 
 
-@generated function similar{FSA <: FixedVector}(::Type{FSA}, typ::DataType, n::Int)
+similar{FSA <: FixedVector, T}(::Type{FSA}, ::Type{T}, n::Tuple) = similar(FSA, T, n...)
+@generated function similar{FSA <: FixedVector, T}(::Type{FSA}, ::Type{T}, n::Int)
     name = parse(string("Main.", FSA.name))
-    :($name{n, typ, $(FSA.parameters[3:end]...)})
+    :($name{n, T, $(FSA.parameters[3:end]...)})
 end
-@generated function similar{FSA <: FixedVector}(::Type{FSA}, typ::DataType)
+@generated function similar{FSA <: FixedVector, T}(::Type{FSA}, ::Type{T})
     name = parse(string("Main.", FSA.name))
-    :($name{$(FSA.parameters[1]), typ, $(FSA.parameters[3:end]...)})
+    :($name{$(FSA.parameters[1]), T, $(FSA.parameters[3:end]...)})
 end
-@generated function similar{FSA <: FixedVectorNoTuple}(::Type{FSA}, typ::DataType)
+@generated function similar{FSA <: FixedVectorNoTuple, T}(::Type{FSA}, ::Type{T})
     name = parse(string("Main.", FSA.name))
-    :($name{typ, $(FSA.parameters[3:end]...)})
+    :($name{T, $(FSA.parameters[3:end]...)})
+end
+@generated function similar{FSA <: FixedVectorNoTuple, T}(::Type{FSA}, ::Type{T}, n::Int)
+    name = parse(string("Main.", FSA.name))
+    :($name{T, $(FSA.parameters[3:end]...)})
+end
+
+@generated function get_tuple{N, T}(f::FixedVectorNoTuple{N, T})
+    :(tuple($(ntuple(i->:(f[$i]), N)...)))
+end
+function get_tuple(f::FixedArray)
+    f.(1) # a little wonky, but there really no much sense if isn't the only field
 end
