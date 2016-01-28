@@ -78,9 +78,11 @@ for (op_all, op_el) in comparisonOps
     functor_name_el, functor_expr_el = gen_functor(op_el, 2)
     eval(quote
         $functor_expr_el
-        @inline $op_el{T <: FixedArray}(x::T, y::T) = map($functor_name_el(), x, y)
+        # TODO: Current hack is to `map(Bool, operation)` Should be removed when
+        #       map functionality is updated.
+        @inline $op_el{T <: FixedArray}(x::T, y::T) = map(Bool, map($functor_name_el(), x, y))
         @inline $op_el{T1 <: FixedArray, T2 <: FixedArray}(x::T1, y::T2) = $op_el(promote(x, y)...)
-
+        @inline $op_all{T <: FixedArray}(x::T, y::T) = all($op_el(x, y))
         @inline $op_all{T1 <: FixedArray, T2 <: FixedArray}(x::T1, y::T2) = all($op_el(x, y))
     end)
 
