@@ -952,14 +952,14 @@ const unaryOps = (
 # vec-vec and vec-scalar
 const binaryOps = (
     .+, .-,.*, ./, .\, /,
-    .==, .!=, .<, .<=, .>, .>=, +, -,
     min, max,
 
     atan2, besselj, bessely, hankelh1, hankelh2,
     besseli, besselk, beta, lbeta
 )
 
-
+const comparisonOps = ((:(==), :(.==)), (:(!=), :(.!=)), (:(<), :(.<)), (:(<=),
+                        :(.<=)), (:(>), :(.>)), (:(>=), :(.>=)))
 
 
 context("mapping operators") do
@@ -1000,6 +1000,18 @@ context("mapping operators") do
                 end
             end
         end
+    end
+    context("comparison: ") do
+
+        @fact Vec(1, 2, 3).<Vec(2, 1, 4) --> Vec(true, false, true)
+        @fact Vec(1, 2, 3)<Vec(2, 1, 4) --> false
+
+        @fact Mat((1.0, 2.0), (3.0, 4.0)).>Mat((2.0, 3.0), (4.0, 5.0)) --> Mat((false, false), (false, false))
+        @fact Mat((1.0, 2.0), (3.0, 4.0))>Mat((2.0, 3.0), (4.0, 5.0)) --> false
+
+        @fact Vec(1, 2, 3).==Vec(1, 2, 3) --> Vec(true, true, true)
+        @fact Vec(1, 2, 3)==Vec(1, 2, 3) --> true
+
     end
 end
 
