@@ -166,6 +166,7 @@ trace(A::FixedMatrix{2,2}) = A[1,1] + A[2,2]
 trace(A::FixedMatrix{3,3}) = A[1,1] + A[2,2] + A[3,3]
 trace(A::FixedMatrix{4,4}) = A[1,1] + A[2,2] + A[3,3] + A[4,4]
 
+\{m,n,T}(mat::Mat{m,n,T}, v::Vec{n, T}) = inv(mat)*v
 
 @inline inv{T}(A::Mat{1, 1, T}) = @inbounds return Mat{1, 1, T}(inv(A[1]))
 @inline function inv{T}(A::Mat{2, 2, T})
@@ -267,3 +268,17 @@ end
 
 # To support @test_approx_eq
 Base.Test.approx_full(a::FixedArray) = a
+
+# UniformScaling
+
+*(J::Base.LinAlg.UniformScaling, A::FixedArray) = J.λ*A
+*(A::FixedArray, J::Base.LinAlg.UniformScaling) = A*J.λ
+/(A::FixedArray, J::Base.LinAlg.UniformScaling) = A/J.λ
+
++{m, n, T}(A::Mat{m,n, T}, J::Base.LinAlg.UniformScaling) = A + J.λ*eye(Mat{m,n,T})
++{m, n, T}(J::Base.LinAlg.UniformScaling, A::Mat{m,n, T}) = A + J
+-{m, n, T}(A::Mat{m,n, T}, J::Base.LinAlg.UniformScaling) = A + (-J)
+-{m, n, T}(J::Base.LinAlg.UniformScaling, A::Mat{m,n, T}) = J.λ*eye(Mat{m,n,T}) - A
+
+
+

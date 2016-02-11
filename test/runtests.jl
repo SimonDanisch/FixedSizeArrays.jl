@@ -768,20 +768,31 @@ context("Matrix Math") do
 	for i=1:4, j=1:4
 		v = rand(j)
 		m = rand(i,j)
+		m2 = rand(i,j)
 		mc = rand(i,j) + im*rand(i,j)
 		vfs = Vec(v)
 		mfs = Mat(m)
-                mfsc = Mat(mc)
+        m2fs = Mat(m2)
+        mfsc = Mat(mc)
 
 		context("Matrix{$i, $j} * Vector{$j}") do
 			vm = m * v
 			@fact isapprox(@inferred(mfs * vfs), vm)  --> true
 		end
+        context("Matrix{$i, $j} * Matrix{$j, $i}") do
+			mm = m * m2'
+			@fact isapprox(@inferred(mfs * m2fs'), mm)  --> true
+		end
+        context("Matrix{$i, $j}*(2I)") do
+			mm = m*(2)
+			@fact isapprox(@inferred(m*(2I)), mm)  --> true
+		end
+
 		if i == j
-			context("Matrix{$i, $j} * Matrix{$i, $j}") do
-				mm = m * m
-				@fact isapprox(@inferred(mfs * mfs), mm)  --> true
-			end
+            context("(2*I + I*M)\\v") do
+			    mm = (2*I+I*m) \ v
+			    @fact isapprox(@inferred((2*I+I*mfs) \ vfs), mm)  --> true
+            end
 			context("det(M)") do
 				mm = det(m)
 				fmm = det(mfs)
