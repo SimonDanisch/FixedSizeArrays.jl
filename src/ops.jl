@@ -61,7 +61,7 @@ for op in binaryOps
     eval(quote
         $functor_expr
         @inline $op{T <: FixedArray}(x::T, y::T) = map($functor_name(), x, y)
-        @inline $op{T1 <: FixedArray, T2 <: FixedArray}(x::T1, y::T2) = $op(promote(x, y)...)
+        @inline $op{T, T2, NDIM, SIZE}(x::FixedArray{T, NDIM, SIZE}, y::FixedArray{T2, NDIM, SIZE}) = $op(promote(x, y)...)
         @inline $op{T <: Number}(x::T, y::FixedArray{T}) = map($functor_name(), x, y)
         @inline $op{T1 <: Number, T2}(x::T1, y::FixedArray{T2}) = $op(promote(x, y)...)
         @inline $op{T <: Number}(x::FixedArray{T}, y::T) = map($functor_name(), x, y)
