@@ -817,6 +817,11 @@ context("Matrix Math") do
 				fmm = expm(mfsc)
 				@fact isapprox(fmm, mm)  --> true
 			end
+            context("lyap(M,M2*M2')") do
+                mm = lyap(m, m2*m2')
+                fmm = lyap(mfs, m2fs*m2fs')
+                @fact isapprox(fmm, mm) --> true
+            end
 
 		else
             context("Matrix{$i, $j} * Matrix{$i, $j}") do
