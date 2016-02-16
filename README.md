@@ -27,7 +27,7 @@ immutable Vec{N, T} <: FixedVector{N, T} # defined in FixedSizeArrays already
     _::NTuple{N, T}
 end
 Vec{3, Float32}(0) # constructor with 1 argument already defined
-rand(Vec{3, Int})+sin(Vec(0,2,2)) # a lot of array functions are already defined
+rand(Vec{3, Float64})+sin(Vec(0.,2.,2.)) # a lot of array functions are already defined
 #There is also a matrix type
 eye(Mat{3,3,Float32}) * rand(Vec{3, Float32}) # will also "just work"
 a = Vec(1,2,3)[1:2] # returns (1,2)
