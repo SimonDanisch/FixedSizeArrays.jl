@@ -2,7 +2,7 @@ VERSION >= v"0.4.0-dev+6521" && __precompile__(true)
 module FixedSizeArrays
 
 importall Base
-import Base.Func
+import Base.Func, Base.LinAlg.chol!
 
 include("core.jl")
 include("functors.jl")
