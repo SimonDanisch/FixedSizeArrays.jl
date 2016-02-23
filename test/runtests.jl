@@ -822,7 +822,15 @@ context("Matrix Math") do
                 fmm = lyap(mfs, m2fs*m2fs')
                 @fact isapprox(fmm, mm) --> true
             end
+            context("chol(M2*M2')") do
+                mm = full(chol(m2*m2'))
+                mm2 = full(chol(map(Mat, m2*m2'))) # Matrix of Mat's
+                fmm = chol(m2fs*m2fs')
+                @fact isapprox(fmm, mm) --> true
+                @fact isapprox(mm, map(first, mm2)) --> true
 
+            end            
+    
 		else
             context("Matrix{$i, $j} * Matrix{$i, $j}") do
                 @fact_throws DimensionMismatch mfs * mfs
