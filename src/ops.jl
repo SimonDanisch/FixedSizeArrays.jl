@@ -241,6 +241,7 @@ function chol{T<:Base.LinAlg.BlasFloat}(m::Mat{2,2,T})
 end
 chol{n,T<:Base.LinAlg.BlasFloat}(m::Mat{n,n,T}) = Mat{n,n,T}(full(Base.LinAlg.chol!(Matrix(m))))
 chol!(m::Mat, ::Type{UpperTriangular}) = chol(m)
+chol!(m::Mat, ::Type{Val{:U}}) = chol!(m, UpperTriangular)  
 
 # Matrix
 (*){T, M, N, O, K}(a::FixedMatrix{M, N, T}, b::FixedMatrix{O, K, T}) = throw(DimensionMismatch("$N != $O in $(typeof(a)) and $(typeof(b))"))
