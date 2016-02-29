@@ -144,6 +144,10 @@ zero(fsa::FixedArray) = zero(typeof(fsa))
     T = eltype(FSA)
     map(RandFunctor(T(first(range)):T(step(range)):T(last(range))), FSA) # there's no easy way to convert eltypes of ranges (I think)
 end
+@inline randn{FSA <: FixedArray}(m::MersenneTwister, x::Type{FSA}) = map(RandnFunctor{eltype(FSA)}(m), FSA)
+@inline randn{FSA <: FixedArray}(x::Type{FSA}) = map(RandnFunctor{eltype(FSA)}(Base.Random.GLOBAL_RNG), FSA)
+
+
 """
 Macro `fsa` helps to create fixed size arrays like Julia arrays.
 E.g.
