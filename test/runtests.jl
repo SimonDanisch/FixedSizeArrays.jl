@@ -220,6 +220,13 @@ context("Constructor ") do
         @fact size(x) --> (4,4,4)
         @fact typeof(rand(Vec4d, 5,5)) --> Matrix{Vec4d}
     end
+    context("Randn") do
+        @fact typeof(randn(Base.Random.GLOBAL_RNG, Vec4d)) --> Vec4d
+        @fact typeof(randn(Vec4d)) --> Vec4d
+        @fact typeof(randn(Mat4d)) --> Mat4d
+        @fact typeof(randn(Mat{4,2, Complex{Float64}})) --> Mat{4,2, Complex{Float64}}
+        @fact typeof(randn(Vec{7, Complex{Float64}})) --> Vec{7, Complex{Float64}}
+    end
     context("Zero") do
         @fact typeof(zero(Vec4d)) --> Vec4d
         @fact typeof(zero(Mat4d)) --> Mat4d
