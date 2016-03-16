@@ -836,8 +836,8 @@ context("Matrix Math") do
                 @fact isapprox(fmm, mm) --> true
                 @fact isapprox(mm, map(first, mm2)) --> true
 
-            end            
-    
+            end
+
 		else
             context("Matrix{$i, $j} * Matrix{$i, $j}") do
                 @fact_throws DimensionMismatch mfs * mfs
@@ -936,6 +936,7 @@ context("Vector Math") do
         @fact isapprox(jfs, j) --> true
         @fact isapprox(kfs, k) --> true
         @fact isapprox(lfs, l) --> true
+        @fact isapprox(lfs, lfs) --> true
     end
 end
 
