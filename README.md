@@ -7,7 +7,8 @@
 [![codecov.io](http://codecov.io/github/SimonDanisch/FixedSizeArrays.jl/coverage.svg?branch=master)](http://codecov.io/github/SimonDanisch/FixedSizeArrays.jl?branch=master)
 [![Build status](https://ci.appveyor.com/api/projects/status/k6bqy1h4jk322cg6/branch/master?svg=true)](https://ci.appveyor.com/project/SimonDanisch/fixedsizearrays-jl/branch/master)
 
-#### This package is 0.4 only
+#### This package doesn't support 0.3
+
 #### Packages that use FixedSizeArrays:
 [GeometryTypes.jl](https://github.com/JuliaGeometry/GeometryTypes.jl)
 
