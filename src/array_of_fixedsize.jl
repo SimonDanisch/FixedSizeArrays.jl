@@ -12,7 +12,7 @@ call(::MaxFun, a, b) = max(a, b)
 call(::MinFun, a, b) = min(a, b)
 minimum{T <: FixedArray}(a::Vector{T}) = reduce(MinFun(), a)
 maximum{T <: FixedArray}(a::Vector{T}) = reduce(MaxFun(), a)
-function isapprox{FSA <: FixedArray}(a::FSA, b::Array)
+function isapprox{FSA <: FixedArray, A <: Union{Array, FixedArray}}(a::FSA, b::A)
     for i=1:length(a)
         !isapprox(a[i], b[i]) && return false
     end
