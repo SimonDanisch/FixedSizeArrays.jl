@@ -17,7 +17,7 @@ fill_tuples{N}(inner, SZ::NTuple{N, Int}) = _fill_tuples(inner, SZ, SZ)
 Constructors for homogenous non tuple arguments
 Is unrolled for the first 4, since a::T... leads to slow performance
 =#
-call{FSA <: FixedArray, T}(::Type{FSA}, a::T) = FSA(NTuple{1,T}((a,)))
+#call{FSA <: FixedArray, T}(::Type{FSA}, a::T) = FSA(NTuple{1,T}((a,)))
 call{FSA <: FixedArray, T}(::Type{FSA}, a::T, b::T) = FSA(NTuple{2,T}((a,b)))
 call{FSA <: FixedArray, T}(::Type{FSA}, a::T, b::T, c::T) = FSA(NTuple{3,T}((a,b,c)))
 call{FSA <: FixedArray, T}(::Type{FSA}, a::T, b::T, c::T, d::T) = FSA(NTuple{4,T}((a,b,c,d)))
@@ -37,7 +37,8 @@ Constructs a fixedsize array from a Base.Array
 @generated function call{FSA <: FixedArray, T <: Array}(::Type{FSA}, a::T)
     if eltype(a) <: AbstractString
         ElType = eltype_or(FSA, Void)
-        return :(map(ParseFunctor($ElType, a), FSA)) # can't be defined in another method as it leads to lots of ambigouity with the default constructor
+        # can't be defined in another method as it leads to lots of ambiguity with the default constructor
+        return :(map(ParseFunctor($ElType, a), FSA))
     end
     SZ     = size_or(FSA, :(size(a)))
     ElType = eltype_or(FSA, eltype(a))
@@ -56,7 +57,7 @@ end
 
 """
 Constructor for singular arguments.
-Can be a tuple, is not declared as that, because it will generate ambigouities
+Can be a tuple, is not declared as that, because it will generate ambiguities
 and overwrites the default constructor.
 """
 @generated function call{FSA <: FixedArray, X}(::Type{FSA}, a::X)
@@ -84,6 +85,7 @@ and overwrites the default constructor.
     end
     return :($FSAT($expr))
 end
+
 """
 Constructors for heterogenous multiple arguments.
 E.g. 1, 2f0, 4.0
