@@ -120,6 +120,7 @@ call(::DotFunctor, a, b) = a'*b
 immutable BilinearDotFunctor <: Func{2} end
 call(::BilinearDotFunctor, a, b) = a*b
 @inline bilindot{T <: Union{FixedArray, Tuple}}(a::T, b::T) = sum(map(DotFunctor(), a, b))
+@inline bilindot{T1 <: Tuple, T2 <: FixedArray}(a::T1, b::T2) = sum(map(DotFunctor(), a, b))
 
 @inline bilindot{T}(a::NTuple{1,T}, b::NTuple{1,T}) = @inbounds return a[1]*b[1]
 @inline bilindot{T}(a::NTuple{2,T}, b::NTuple{2,T}) = @inbounds return (a[1]*b[1] + a[2]*b[2])
@@ -250,6 +251,11 @@ chol!(m::Mat, ::Type{Val{:U}}) = chol!(m, UpperTriangular)
 @generated function *{T, N}(a::FixedVector{N, T}, b::FixedMatrix{1, N, T})
     expr = Expr(:tuple, [Expr(:tuple, [:(a[$i] * b[$j]) for i in 1:N]...) for j in 1:N]...)
     :( Mat($(expr)) )
+end
+
+@generated function *{T, M, N}(a::Mat{M, N, T}, b::FixedVectorNoTuple{N, T})
+    expr = [:(bilindot(row(a, $i), b)) for i=1:M]
+    :( Vec{M, T}($(expr...)))
 end
 
 @generated function *{T, M, N}(a::Mat{M, N, T}, b::Vec{N,T})
