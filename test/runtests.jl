@@ -872,6 +872,15 @@ context("Matrix Math") do
     context("expm(M::Mat{3,3, BigFloat})") do
         @fact norm(Matrix(expm(Mat(big([0.0 0.0 1.0; -1.0 1.0 0.0; -1.0 0.0 2.0])))) - big([-0.0 0.0  1.0; -0.5  1.0  -0.5; -1.0  0.0  2.0])*e,1) <  10eps(big(1.)) --> true
     end
+
+    context("Matrix * FixedVectorNoTuple") do
+        rgb = rand(3)
+        m = rand(3,3)
+        rgbfs = RGB(rgb)
+        mfs = Mat(m)
+        @fact isapprox(mfs * rgbfs, m * rgb) --> true
+    end
+
 end
 
 
