@@ -27,17 +27,18 @@ end
 immutable Vec{N, T} <: FixedVector{N, T} # defined in FixedSizeArrays already
     _::NTuple{N, T}
 end
-Vec{3, Float32}(0) # constructor with 1 argument already defined
+Vec{3, Float32}(77) # constructor with 1 argument already defined
 rand(Vec{3, Float64})+sin(Vec(0.,2.,2.)) # a lot of array functions are already defined
 #There is also a matrix type
 eye(Mat{3,3,Float32}) * rand(Vec{3, Float32}) # will also "just work"
 a = Vec(1,2,3)[1:2] # returns (1,2)
 ```
-This is expendable to a lot of other areas.
+Note that all of the above types are stack allocated and the speed of operations should be fairly fast!
+If you find operations to be slow, please file a bug report!
+
+FixedSizeArrays can be used in a lot of different ways.
 You can define color types the same way, and arbitrary other point types like normals, vertices etc.
 As they all inherit from FixedSizeArray, it's very easy to handle them in the same way.
-I'm using this for my GPU array types, which can take any fixedsizearray, if its a color, a point or what not, because I can be sure that all the important functions are defined and the GPU can handle them. 
-If we are able to to compile Julia directly to OpenCL, FixedSizeArrays will hopefully directly map to native OpenCL types.
 
 For some more advantages, you can take a look at [MeshIO](https://github.com/JuliaIO/MeshIO.jl).
 
