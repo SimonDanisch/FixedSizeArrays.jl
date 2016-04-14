@@ -46,8 +46,8 @@ function show{R,C,T}(io::IO, m::Mat{R,C,T})
 	println(io, ")")
 end
 
-showcompact(io::IO, v::FixedVector{0}) = print(io, typeof(v).name.name, "()")
-function showcompact{N}(io::IO, v::FixedVector{N})
+show(io::IO, v::FixedVector{0}) = print(io, typeof(v).name.name, "()")
+function show{N,T}(io::IO, v::FixedVector{N,T})
     print(io, typeof(v).name.name, "(", v[1])
     for i = 2:N
         print(io, ",", v[i])
