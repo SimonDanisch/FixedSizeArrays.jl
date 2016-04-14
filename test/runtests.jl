@@ -1051,6 +1051,19 @@ end
 
 end
 
+# subtyping:
+immutable TestType{N,T} <: FixedVector{N,T}
+    a::NTuple{N,T}
+end
+
+facts("show for subtype") do
+
+    Base.show(io::IO, x::TestType) = print(io, "$(x.a)")  # show for new type
+
+    x = TestType(1, 2)
+    @fact string(x) --> "(1,2)"
+end
+
 end
 
 FactCheck.exitstatus()
