@@ -75,8 +75,8 @@ and overwrites the default constructor.
         orlen = 1
         ortyp = a
     end
-    SZ      = size_or(FSA, (orlen, ntuple(x->1, ND-1)...))
-    T       = eltype_or(FSA, ortyp)
+    SZ      = size_or(FSA, (orlen, ntuple(x->1, ND-1)...))::NTuple{ND, Int}
+    T       = eltype_or(FSA, ortyp)::DataType
     FSAT    = similar(FSA, T, SZ)
     if X <: Tuple
         expr = fill_tuples_expr((inds...)->:($T(a[$(inds[1])])), SZ)

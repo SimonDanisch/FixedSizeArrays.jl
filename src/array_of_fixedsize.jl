@@ -15,6 +15,8 @@ call(::MaxFun, a, b) = max(a, b)
 call(::MinFun, a, b) = min(a, b)
 minimum{T <: FixedArray}(a::Vector{T}) = reduce(MinFun(), a)
 maximum{T <: FixedArray}(a::Vector{T}) = reduce(MaxFun(), a)
+extrema{T <: FixedArray}(a::AbstractVector{T}) = reduce(ExtremaFun(), a)
+
 
 function isapprox{FSA <: FixedArray, A <: FixedArray}(x::FSA, y::A; rtol::Real=Base.rtoldefault(eltype(x),eltype(y)), atol::Real=0, norm::Function=vecnorm)
     # Same behaviour as AbstractArray: julia/base/linalg/generic.jl
