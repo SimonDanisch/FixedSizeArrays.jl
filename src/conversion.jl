@@ -15,7 +15,7 @@ function convert{R, C, R2, C2, T}(MT::Type{Mat{R, C, T}}, b::Mat{R2, C2, T})
 end
 
 #conversion
-convert{T <: Tuple}(::Type{T}, x::Real)                   = ntuple(ConstFunctor(eltype(T)(x)), Val{length(T.parameters),})
+convert{N}(T::Type{NTuple{N}}, x::Real) = ntuple(ConstFunctor(eltype(T)(x)), Val{N})
 convert{T <: Tuple, FSA <: FixedArray}(::Type{T}, x::FSA) = convert(T, get_tuple(x))
 
 function convert{FSA1 <: FixedArray}(t::Type{FSA1}, f::FixedArray)
