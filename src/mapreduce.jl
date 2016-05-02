@@ -20,73 +20,103 @@ end
     red
 end
 
-index_expr{T <: Number}(::Type{T}, i::Int, inds::Int...) = :($(symbol("arg$i")))
-index_expr{T <: FixedArray}(::Type{T}, i::Int, inds::Int...) = :($(symbol("arg$i"))[$(inds...)])
-inner_expr{N}(args::NTuple{N, DataType}, inds::Int...) = :( F($(ntuple(i -> index_expr(args[i], i, inds...), N)...)) )
 
+# Get expression indexing collection `name` of type `T` for use in map()
+index_expr{T <: Number}(::Type{T},     name, inds::Int...) = :($name)
+index_expr{T <: FixedArray}(::Type{T}, name, inds::Int...) = :($name[$(inds...)])
+index_expr{T <: Array}(::Type{T}, name, inds::Int...) = :($name[$(inds...)])
 
-# This solves the combinational explosion from FixedVectorNoTuple while staying fast.
-function constructor_expr{T <: FixedVector}(::Type{T}, tuple_expr::Expr)
+# Get expression checking size of collection `name` against `SIZE`
+sizecheck_expr{T <: Number}(::Type{T}, name, SIZE) = :nothing
+function sizecheck_expr{FSA<:FixedArray}(::Type{FSA}, name, SIZE)
+    size(FSA) == SIZE || :(throw(DimensionMismatch(string($FSA)*" is wrong size")))
+    :nothing
+end
+function sizecheck_expr{A<:Array}(::Type{A}, name, SIZE)
     quote
-        $(Expr(:boundscheck, false))
+        # Note - should be marked with @boundscheck in 0.5
+        size($name) == $SIZE || throw(DimensionMismatch(string($A)*" is wrong size"))
+    end
+end
+
+# Get expression to construct FSA from a nested tuple
+constructor_expr{FSA <: FixedArray}(::Type{FSA}, tuple_expr::Expr) = :($FSA($tuple_expr))
+constructor_expr{FSA <: FixedVectorNoTuple}(::Type{FSA}, tuple_expr::Expr) = :($FSA($tuple_expr...))
+
+# Generate an unrolled nested tuple of calls mapping funcname across the input,
+# constructing an OutFSA to store the result.
+#
+# julia> FixedSizeArrays.unrolled_map_expr(:f, Vec{2,Bool}, (Vec{2,Int},Int), (:A,:b))
+#
+# generates, after cleaning up:
+#
+#    (FixedSizeArrays.Vec{2,Bool})(
+#        tuple(tuple(f(A[1,1],b), f(A[2,1],b)),
+#              tuple(f(A[1,2],b), f(A[2,2],b)))
+#    )
+function unrolled_map_expr(funcname, OutFSA, argtypes, argnames)
+    SIZE = size(OutFSA)
+    sizecheck = [sizecheck_expr(T,n,SIZE) for (T,n) in zip(argtypes,argnames)]
+    tuple_expr = fill_tuples_expr(SIZE) do inds...
+        Expr(:call, funcname,
+            [index_expr(argtypes[i], argnames[i], inds...) for i=1:length(argtypes)]...
+        )
+    end
+    quote
         $(Expr(:meta, :inline))
-        rvalue = FSA($(tuple_expr))
+        $(sizecheck...)
+        $(Expr(:boundscheck, false))
+        rvalue = $(constructor_expr(OutFSA, tuple_expr))
         $(Expr(:boundscheck,:pop))
         rvalue
     end
 end
-constructor_expr{T <: Mat}(::Type{T}, tuple_expr::Expr) = quote
-    $(Expr(:boundscheck, false))
-    $(Expr(:meta, :inline))
-    rvalue = Mat($(tuple_expr))
-    $(Expr(:boundscheck,:pop))
-    rvalue
+
+# Versions of map() with a given `OutFSA` output container as the second
+# argument.  Unary and binary versions are written explicitly since this
+# generates better code in 0.4.
+#
+# TODO: Nullary version is inconsistent, since it maps indices through the
+# functor.
+@generated function map{OutFSA<:FixedArray}(func, ::Type{OutFSA}, arg1)
+    unrolled_map_expr(:func, OutFSA, (arg1,), (:arg1,))
 end
-constructor_expr{T <: FixedVectorNoTuple}(::Type{T}, tuple_expr::Expr) = quote
-    $(Expr(:boundscheck, false))
-    $(Expr(:meta, :inline))
-    rvalue = FSA($(tuple_expr)...)
-    $(Expr(:boundscheck,:pop))
-    rvalue
+@generated function map{OutFSA<:FixedArray}(func, ::Type{OutFSA}, arg1, arg2)
+    unrolled_map_expr(:func, OutFSA, (arg1,arg2), (:arg1,:arg2))
 end
-@generated function map{FSA <: FixedArray}(F, arg1::FSA, arg2::FSA)
-    inner = fill_tuples_expr((inds...) -> inner_expr((arg1, arg2), inds...), size(FSA))
-    constructor_expr(FSA, inner)
+@generated function map{OutFSA<:FixedArray}(func, ::Type{OutFSA}, args...)
+    argexprs = ntuple(i->:(args[$i]), length(args))
+    unrolled_map_expr(:func, OutFSA, args, argexprs)
 end
-@generated function map{FSA <: FixedArray}(F, arg1::FSA, arg2::Number)
-    inner = fill_tuples_expr((inds...) -> inner_expr((arg1, arg2), inds...), size(FSA))
-    constructor_expr(FSA, inner)
-end
-@generated function map{FSA <: FixedArray}(F, arg1::Number, arg2::FSA)
-    inner = fill_tuples_expr((inds...) -> inner_expr((arg1, arg2), inds...), size(FSA))
-    constructor_expr(FSA, inner)
-end
+
+
+# Unary version
+@inline map{FSA <: FixedArray}(F, arg1::FSA) = map(F, FSA, arg1)
+
+immutable ConstructTypeFun{T}; end
+call{T}(::ConstructTypeFun{T}, x) = T(x)
+
+# Unary version for type conversion.  Need to override this explicitly for
+# output type inference and to prevent conflict with Base.
+@inline map{T,N,S}(::Type{T}, arg1::FixedArray{T,N,S}) = arg1 # nop version
+@inline map{T,FSA<:FixedArray}(::Type{T}, arg1::FSA) = map(ConstructTypeFun{T}(), similar(FSA, T), arg1)
+
+# Binary versions
+@inline map{FSA <: FixedArray}(F, arg1::FSA, arg2::FSA)    = map(F, FSA, arg1, arg2)
+@inline map{FSA <: FixedArray}(F, arg1::FSA, arg2::Number) = map(F, FSA, arg1, arg2)
+@inline map{FSA <: FixedArray}(F, arg1::Number, arg2::FSA) = map(F, FSA, arg1, arg2)
+
+# Nullary special case version for constructing FSAs
+# TODO: This is inconsistent with the above
 @generated function map{FSA <: FixedArray}(F, ::Type{FSA})
-    inner = fill_tuples_expr((inds...) -> :(F($(inds...))), size(FSA))
-    :( FSA($inner) )
-end
-
-@generated function map{FSA <: FixedArray}(F, arg1::FSA)
-    inner = fill_tuples_expr((inds...) -> :( F(arg1[$(inds...)]) ), size(FSA))
-    constructor_expr(FSA, inner)
+    tuple_expr = fill_tuples_expr((inds...) -> :(F($(inds...))), size(FSA))
+    constructor_expr(FSA, tuple_expr)
 end
 
 
-@generated function map{T}(::Type{T}, arg1::FixedArray)
-    eltype(arg1) == T && return :(arg1)
-    FSA = similar(arg1, T)
-    inner = fill_tuples_expr((inds...) -> :( T(arg1[$(inds...)]) ), size(FSA))
-    :( $FSA($(inner)) )
-end
 
-@inline map{R,C,T}(F::Type{T}, arg1::Mat{R,C,T}) = arg1
-@generated function map{R,C,T}(F::DataType, arg1::Mat{R,C,T})
-    inner = fill_tuples_expr((inds...) -> :( F(arg1[$(inds...)]) ), (R, C))
-    :( Mat{R, C, F}($(inner)) )
-end
+# Mixed mode arithmetic, fiddling
 
-@generated function map{FSA <: FixedVectorNoTuple}(F::DataType, arg1::FSA)
-    eltype(FSA) == F && return :(arg1)
-    inner = ntuple(i-> :(F(arg1[$i])), length(FSA))
-    :( similar(FSA, F)($(inner...)) )
-end
+#@inline map{T1,T2,N,S}(F, arg1::FixedArray{T1,N,S}, arg2::FixedArray{T2,N,S}) =
+#    map(F, promote_op(F, typeof(arg1), typeof(arg2)), arg1, arg2)
+
