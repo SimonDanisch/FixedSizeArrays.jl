@@ -13,13 +13,15 @@ if VERSION <= v"0.5.0"
 end
 
 # put them here due to #JuliaLang/julia#12814
-# needs to be befor indexing and ops, but after constructors
+# needs to be before indexing and ops, but after constructors
 immutable Mat{Row, Column, T} <: FixedMatrix{Row, Column, T}
     _::NTuple{Column, NTuple{Row, T}}
 end
 function similar{FSA <: Mat, T}(::Type{FSA}, ::Type{T}, SZ::NTuple{2, Int})
     Mat{SZ[1], SZ[2], T}
 end
+similar{FSA <: Mat, T}(::Type{FSA}, ::Type{T}) = similar(FSA, T, size(FSA))
+similar{FSA <: Mat}(::Type{FSA}, SZ::NTuple{2,Int}) = similar(FSA, eltype(FSA), SZ)
 
 # most common FSA types
 immutable Vec{N, T} <: FixedVector{N, T}
