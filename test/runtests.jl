@@ -957,6 +957,7 @@ context("Equality") do
     @fact Vec(1,2,3) --> [1,2,3]
     @fact Mat((1,2),(3,4)) --> Mat((1,2),(3,4))
     @fact one(Mat{4,1, Float32}) --> one(Vec{4, Float32})
+    @fact isapprox(Vec(1.0,0.0), Vec(1.0,1e-14)) --> true
 end
 #=
 #don't have this yet
