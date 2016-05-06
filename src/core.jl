@@ -34,12 +34,12 @@ end
 ndims{T <: FixedArray}(A::T) = ndims(T)
 
 
-size{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})           = _size(SZ)
-size{T <: FixedArray}(A::Type{T})                   = size_or(T, ())
-size{T <: FixedArray}(A::T)                         = size(T)
+size{T,N,SZ}(A::Type{FixedArray{T,N,SZ}}) = _size(SZ)
+size{T <: FixedArray}(A::Type{T}) = size_or(T, ())
+size{T <: FixedArray}(A::T) = size(T)
 
-size{T <: FixedArray}(A::Type{T}, d::Integer)       = size(T)[d]
-size{T <: FixedArray}(A::T, d::Integer)             = size(T, d)
+size{T <: FixedArray}(A::Type{T}, d::Integer) = size(T)[d]
+size{T <: FixedArray}(A::T, d::Integer) = size(T, d)
 
 @generated function fsa_abstract{FSA <: FixedArray}(::Type{FSA})
     ff = FSA
