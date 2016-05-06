@@ -32,7 +32,7 @@ const reductions = ((:sum,:+), (:prod,:*), (:minimum,:min), (:maximum,:max))
 
 function gen_functor(func::Symbol, unary::Int)
     functor_name  = gensym()
-    arguments     = ntuple(i->symbol("arg$i"), unary)
+    arguments     = ntuple(i->Symbol("arg$i"), unary)
     functor_expr  = quote
         immutable $functor_name <: Func{$unary} end
         @inline call(::$functor_name, $(arguments...)) = $func($(arguments...))

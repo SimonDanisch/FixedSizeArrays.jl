@@ -15,9 +15,9 @@ macro rotate3(A, c, s, i,j)
   l = setdiff(1:3, [i,j])[1]
   codeblock([
         quote
-             $(symbol("a",l,k)) = $(esc(A))[$l,$k]
-             $(symbol("a",i,k))  = $(esc(A))[$i,$k] * $(esc(c)) + $(esc(A))[$j,$k] * $(esc(s))
-             $(symbol("a",j,k))  = $(esc(A))[$j,$k] * $(esc(c)) - $(esc(A))[$i,$k] * $(esc(s))
+             $(Symbol("a$l$k")) = $(esc(A))[$l,$k]
+             $(Symbol("a$i$k"))  = $(esc(A))[$i,$k] * $(esc(c)) + $(esc(A))[$j,$k] * $(esc(s))
+             $(Symbol("a$j$k"))  = $(esc(A))[$j,$k] * $(esc(c)) - $(esc(A))[$i,$k] * $(esc(s))
         end
         for k in 1:3]...,        quote Mat(((a11,a21,a31),(a12,a22,a32),(a13,a23,a33))) end
     )
@@ -27,31 +27,31 @@ macro rotate3t(A, c, s, i,j)
   l = setdiff(1:3, [i,j])[1]
   codeblock([
         quote
-             $(symbol("a",k,l)) = $(esc(A))[$k,$l]
-             $(symbol("a",k,i)) = $(esc(A))[$k,$i] * $(esc(c)) + $(esc(A))[$k,$j] * $(esc(s))
-             $(symbol("a",k,j)) = $(esc(A))[$k,$j] * $(esc(c)) - $(esc(A))[$k,$i] * $(esc(s))
+             $(Symbol("a$k$l")) = $(esc(A))[$k,$l]
+             $(Symbol("a$k$i")) = $(esc(A))[$k,$i] * $(esc(c)) + $(esc(A))[$k,$j] * $(esc(s))
+             $(Symbol("a$k$j")) = $(esc(A))[$k,$j] * $(esc(c)) - $(esc(A))[$k,$i] * $(esc(s))
         end
         for k in 1:3]...,        quote Mat(((a11,a21,a31),(a12,a22,a32),(a13,a23,a33))) end
     )
 end
 
 macro dblrotate3(A, c, s, i,j)
-  k = setdiff(1:3, [i,j])[1]
-  quote
-             $(symbol("a",i,k)) = $(esc(A))[$i,$k] * $(esc(c)) + $(esc(A))[$j,$k] * $(esc(s))
-             $(symbol("a",j,k)) = $(esc(A))[$j,$k] * $(esc(c)) - $(esc(A))[$i,$k] * $(esc(s))
-             $(symbol("a",k,i)) = $(esc(A))[$k,$i] * $(esc(c)) + $(esc(A))[$k,$j] * $(esc(s))
-             $(symbol("a",k,j)) = $(esc(A))[$k,$j] * $(esc(c)) - $(esc(A))[$k,$i] * $(esc(s))
+    k = setdiff(1:3, [i,j])[1]
+    quote
+        $(Symbol("a$i$k")) = $(esc(A))[$i,$k] * $(esc(c)) + $(esc(A))[$j,$k] * $(esc(s))
+        $(Symbol("a$j$k")) = $(esc(A))[$j,$k] * $(esc(c)) - $(esc(A))[$i,$k] * $(esc(s))
+        $(Symbol("a$k$i")) = $(esc(A))[$k,$i] * $(esc(c)) + $(esc(A))[$k,$j] * $(esc(s))
+        $(Symbol("a$k$j")) = $(esc(A))[$k,$j] * $(esc(c)) - $(esc(A))[$k,$i] * $(esc(s))
 
-             $(symbol("a",j,j)) = $(esc(A))[$j,$j] * abs2($(esc(c))) + $(esc(A))[$i,$i] * abs2($(esc(s))) - ($(esc(A))[$i,$j] + $(esc(A))[$j,$i]) * $(esc(s)) * $(esc(c))
-             $(symbol("a",j,i)) = $(esc(A))[$j,$i] * abs2($(esc(c))) - $(esc(A))[$i,$j] * abs2($(esc(s))) + ($(esc(A))[$j,$j] - $(esc(A))[$i,$i]) * $(esc(c)) * $(esc(s))
-             $(symbol("a",i,j)) = $(esc(A))[$i,$j] * abs2($(esc(c))) - $(esc(A))[$j,$i] * abs2($(esc(s))) + ($(esc(A))[$j,$j] - $(esc(A))[$i,$i]) * $(esc(c)) * $(esc(s))
-             $(symbol("a",i,i)) = $(esc(A))[$i,$i] * abs2($(esc(c))) + $(esc(A))[$j,$j] * abs2($(esc(s))) + ($(esc(A))[$i,$j] + $(esc(A))[$j,$i]) * $(esc(s)) * $(esc(c))
+        $(Symbol("a$j$j")) = $(esc(A))[$j,$j] * abs2($(esc(c))) + $(esc(A))[$i,$i] * abs2($(esc(s))) - ($(esc(A))[$i,$j] + $(esc(A))[$j,$i]) * $(esc(s)) * $(esc(c))
+        $(Symbol("a$j$i")) = $(esc(A))[$j,$i] * abs2($(esc(c))) - $(esc(A))[$i,$j] * abs2($(esc(s))) + ($(esc(A))[$j,$j] - $(esc(A))[$i,$i]) * $(esc(c)) * $(esc(s))
+        $(Symbol("a$i$j")) = $(esc(A))[$i,$j] * abs2($(esc(c))) - $(esc(A))[$j,$i] * abs2($(esc(s))) + ($(esc(A))[$j,$j] - $(esc(A))[$i,$i]) * $(esc(c)) * $(esc(s))
+        $(Symbol("a$i$i")) = $(esc(A))[$i,$i] * abs2($(esc(c))) + $(esc(A))[$j,$j] * abs2($(esc(s))) + ($(esc(A))[$i,$j] + $(esc(A))[$j,$i]) * $(esc(s)) * $(esc(c))
 
-             $(symbol("a",k,k)) = $(esc(A))[$k,$k]
+        $(Symbol("a$k$k")) = $(esc(A))[$k,$k]
 
-            Mat(((a11,a21,a31),(a12,a22,a32),(a13,a23,a33)))
-   end
+        Mat(((a11,a21,a31),(a12,a22,a32),(a13,a23,a33)))
+    end
 end
 function hessenberg3(A)
     c, s, _ = LinAlg.givensAlgorithm(A[2,1],A[3,1])
@@ -268,4 +268,3 @@ function putzer{T}(t, A::Mat{3,3,T}, x, y, d)
     R = r2 - la2*r3
     r3 * A*A +  real(R - la1*r3)*A +  real(r1 - la1 * R)*eye(Mat{3,3,T})
 end
-
