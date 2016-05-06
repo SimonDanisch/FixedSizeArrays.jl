@@ -9,7 +9,7 @@
     red
 end
 
-@inline function reduce(f::Base.Func{2}, a::Mat)
+@inline function reduce(f::Functor{2}, a::Mat)
     length(a) == 1 && return a[1,1]
     @inbounds begin
         red = reduce(f, a.(1)[1])
@@ -119,4 +119,3 @@ end
 
 #@inline map{T1,T2,N,S}(F, arg1::FixedArray{T1,N,S}, arg2::FixedArray{T2,N,S}) =
 #    map(F, promote_op(F, typeof(arg1), typeof(arg2)), arg1, arg2)
-
