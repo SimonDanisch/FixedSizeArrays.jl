@@ -23,7 +23,7 @@ call{FSA <: FixedArray, T}(::Type{FSA}, a::T, b::T, c::T) = FSA(NTuple{3,T}((a,b
 call{FSA <: FixedArray, T}(::Type{FSA}, a::T, b::T, c::T, d::T) = FSA(NTuple{4,T}((a,b,c,d)))
 call{FSA <: FixedArray, T}(::Type{FSA}, a::T...) = FSA(a)
 
-immutable ParseFunctor{T, S <: AbstractString} <: Func{1}
+immutable ParseFunctor{T, S <: AbstractString} <: Functor{1}
     t::Type{T}
     a::Vector{S}
 end

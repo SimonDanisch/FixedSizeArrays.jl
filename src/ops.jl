@@ -34,7 +34,7 @@ function gen_functor(func::Symbol, unary::Int)
     functor_name  = gensym()
     arguments     = ntuple(i->symbol("arg$i"), unary)
     functor_expr  = quote
-        immutable $functor_name <: Func{$unary} end
+        immutable $functor_name <: Functor{$unary} end
         @inline call(::$functor_name, $(arguments...)) = $func($(arguments...))
     end
     return (functor_name, functor_expr)
@@ -113,11 +113,11 @@ end
 end
 @inline Base.hypot{T}(v::FixedVector{2,T}) = hypot(v[1],v[2])
 
-immutable DotFunctor <: Func{2} end
+immutable DotFunctor <: Functor{2} end
 call(::DotFunctor, a, b) = a'*b
 @inline dot{T <:  FixedArray}(a::T, b::T) = sum(map(DotFunctor(), a, b))
 
-immutable BilinearDotFunctor <: Func{2} end
+immutable BilinearDotFunctor <: Functor{2} end
 call(::BilinearDotFunctor, a, b) = a*b
 @inline bilindot{T <: Union{FixedArray, Tuple}}(a::T, b::T) = sum(map(DotFunctor(), a, b))
 @inline bilindot{T1 <: Tuple, T2 <: FixedArray}(a::T1, b::T2) = sum(map(DotFunctor(), a, b))

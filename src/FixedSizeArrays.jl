@@ -2,7 +2,10 @@ VERSION >= v"0.4.0-dev+6521" && __precompile__(true)
 module FixedSizeArrays
 
 importall Base
-import Base.Func, Base.LinAlg.chol!
+import Base.LinAlg.chol!
+
+# for 0.5 and 0.4 compat, use our own functor type
+abstract Functor{N}
 
 include("core.jl")
 include("functors.jl")
@@ -73,5 +76,9 @@ export setindex
 export eltype_or, size_or, ndims_or
 export @fslice
 export destructure
+
+
+
+
 
 end

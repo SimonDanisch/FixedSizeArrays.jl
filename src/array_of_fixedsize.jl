@@ -6,8 +6,11 @@ function show{FSA <: FixedVector}(io::IO, a::Vector{FSA})
 		println(io)
 	end
 end
-immutable MaxFun <: Func{2} end
-immutable MinFun <: Func{2} end
+
+immutable MaxFun <: Functor{2} end
+immutable MinFun <: Functor{2} end
+immutable ExtremaFun <: Functor{2} end
+
 call(::MaxFun, a, b) = max(a, b)
 call(::MinFun, a, b) = min(a, b)
 minimum{T <: FixedArray}(a::Vector{T}) = reduce(MinFun(), a)

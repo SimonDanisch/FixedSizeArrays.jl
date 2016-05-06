@@ -9,7 +9,7 @@
     red
 end
 
-@inline function reduce(f::Base.Func{2}, a::Mat)
+@inline function reduce(f::Functor{2}, a::Mat)
     length(a) == 1 && return a[1,1]
     @inbounds begin
         red = reduce(f, a.(1)[1])
