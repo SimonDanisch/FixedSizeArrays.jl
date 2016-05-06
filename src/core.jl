@@ -11,17 +11,15 @@ abstract FixedVectorNoTuple{CARDINALITY, T} <: FixedVector{CARDINALITY, T}
 export FixedVectorNoTuple
 
 
-_size{T <: Tuple}(::Type{T})						= (T.parameters...)
-_size{N, N2}(::Type{Tuple{N, N2}})					= (N,N2)
-_size{N}(::Type{Tuple{N}})							= (N,)
+_size{T <: Tuple}(::Type{T}) = (T.parameters...)
+_size{N, N2}(::Type{Tuple{N, N2}}) = (N,N2)
+_size{N}(::Type{Tuple{N}}) = (N,)
 
-eltype{T <: FixedArray}(A::Type{T})                 = eltype_or(T, Any)
+eltype{T <: FixedArray}(A::Type{T}) = eltype_or(T, Any)
 eltype{T <: FixedArray,N,SZ}(A::FixedArray{T,N,SZ}) = T
 
 
-function length{T <: FixedArray}(A::Type{T})
-    prod(size(T))
-end
+length{T <: FixedArray}(A::Type{T}) = prod(size(T))
 length{T <: FixedArray}(A::T) = length(T)
 
 endof{T <: FixedArray}(A::Type{T}) = length(T)
