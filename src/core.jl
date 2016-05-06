@@ -76,22 +76,25 @@ function next(A::FixedArray, state::Integer)
 end
 done(A::FixedArray, state::Integer) = length(A) < state
 
+@generated function basetype{T<:FixedArray}(::Type{T})
+    :($(T.name.primary))
+end
 
 similar{FSA <: FixedVector, T}(::Type{FSA}, ::Type{T}, n::Tuple) = similar(FSA, T, n...)
 @generated function similar{FSA <: FixedVector, T}(::Type{FSA}, ::Type{T}, n::Int)
-    name = parse(string("Main.", FSA.name))
+    name = basetype(FSA)
     :($name{n, T, $(FSA.parameters[3:end]...)})
 end
 @generated function similar{FSA <: FixedVector, T}(::Type{FSA}, ::Type{T})
-    name = parse(string("Main.", FSA.name))
+    name = basetype(FSA)
     :($name{$(FSA.parameters[1]), T, $(FSA.parameters[3:end]...)})
 end
 @generated function similar{FSA <: FixedVectorNoTuple, T}(::Type{FSA}, ::Type{T})
-    name = parse(string("Main.", FSA.name))
+    name = basetype(FSA)
     :($name{T, $(FSA.parameters[3:end]...)})
 end
 @generated function similar{FSA <: FixedVectorNoTuple, T}(::Type{FSA}, ::Type{T}, n::Int)
-    name = parse(string("Main.", FSA.name))
+    name = basetype(FSA)
     :($name{T, $(FSA.parameters[3:end]...)})
 end
 
