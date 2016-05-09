@@ -13,6 +13,8 @@ immutable ExtremaFun <: Functor{2} end
 
 call(::MaxFun, a, b) = max(a, b)
 call(::MinFun, a, b) = min(a, b)
+call(::ExtremaFun, reducevalue, a) = min(reducevalue[1], a), max(reducevalue[2], a)
+
 minimum{T <: FixedArray}(a::Vector{T}) = reduce(MinFun(), a)
 maximum{T <: FixedArray}(a::Vector{T}) = reduce(MaxFun(), a)
 extrema{T <: FixedArray}(a::AbstractVector{T}) = reduce(ExtremaFun(), a)
