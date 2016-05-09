@@ -373,21 +373,21 @@ context("Complex Ops") do
 end
 
 context("Destructure") do
-    rgb_ref = [1 2 3 4;
+    rgb_ref = Int[1 2 3 4;
                2 4 6 8;
                3 6 9 12]
-    rgb_ref_set = [1 10 10 4;
+    rgb_ref_set = Int[1 10 10 4;
                    2 10 10 8;
                    3 10 10 12]
     # Test destructure
-    rgb = [RGB(i,2*i,3*i) for i=1:4]
+    rgb = RGB{Int}[RGB(i,2*i,3*i) for i=1:4]
     @fact destructure(rgb) --> rgb_ref
     destructure(rgb)[:,2:end-1] = 10
     @fact destructure(rgb) --> rgb_ref_set
 
     # Explicitly test DestructuredArray.  This wrapper type isn't used by
     # destructure() for plain old dense arrays, since a reinterpret is faster.
-    rgb = [RGB(i,2*i,3*i) for i=1:4]
+    rgb = RGB{Int}[RGB(i,2*i,3*i) for i=1:4]
     @fact FixedSizeArrays.DestructuredArray(rgb) --> rgb_ref
     destructure(rgb)[:,2:end-1] = 10
     @fact FixedSizeArrays.DestructuredArray(rgb) --> rgb_ref_set
@@ -448,7 +448,7 @@ context("Indexing") do
 
     context("fslice") do
         context("getindex") do
-            rgb = [RGB(i,2*i,3*i) for i=1:10]
+            rgb = RGB{Int}[RGB(i,2*i,3*i) for i=1:10]
 
             # Plain indexing
             @fact @fslice(rgb[1,2]) --> rgb[2].r
@@ -480,11 +480,11 @@ context("Indexing") do
         end
 
         context("setindex") do
-            rgb = [RGB(i,2*i,3*i) for i=1:10]
+            rgb = RGB{Int}[RGB(i,2*i,3*i) for i=1:10]
 
             @fslice rgb[:r,:] = -1
             @fslice rgb[3,:] = -3
-            @fact rgb --> [RGB(-1,2*i,-3) for i=1:10]
+            @fact rgb --> RGB{Int}[RGB(-1,2*i,-3) for i=1:10]
         end
     end
 end
@@ -585,7 +585,7 @@ context("Ops") do
 
     context("reduce") do
         a = rand(Vec{7, Float32})
-        x = reduce(Base.AddFun(), a)
+        x = reduce(+, a)
         y = 0f0
         for elem in a
             y += elem
@@ -593,7 +593,7 @@ context("Ops") do
         @fact y --> x
 
         a = rand(Mat{7, 9, Cuint})
-        x2 = reduce(Base.AddFun(), a)
+        x2 = reduce(+, a)
         y2 = Cuint(0)
         for elem in a
             y2 += elem

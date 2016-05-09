@@ -11,17 +11,15 @@ abstract FixedVectorNoTuple{CARDINALITY, T} <: FixedVector{CARDINALITY, T}
 export FixedVectorNoTuple
 
 
-_size{T <: Tuple}(::Type{T})						= (T.parameters...)
-_size{N, N2}(::Type{Tuple{N, N2}})					= (N,N2)
-_size{N}(::Type{Tuple{N}})							= (N,)
+_size{T <: Tuple}(::Type{T}) = (T.parameters...)
+_size{N, N2}(::Type{Tuple{N, N2}}) = (N,N2)
+_size{N}(::Type{Tuple{N}}) = (N,)
 
-eltype{T <: FixedArray}(A::Type{T})                 = eltype_or(T, Any)
+eltype{T <: FixedArray}(A::Type{T}) = eltype_or(T, Any)
 eltype{T <: FixedArray,N,SZ}(A::FixedArray{T,N,SZ}) = T
 
 
-function length{T <: FixedArray}(A::Type{T})
-    prod(size(T))
-end
+length{T <: FixedArray}(A::Type{T}) = prod(size(T))
 length{T <: FixedArray}(A::T) = length(T)
 
 endof{T <: FixedArray}(A::Type{T}) = length(T)
@@ -34,12 +32,12 @@ end
 ndims{T <: FixedArray}(A::T) = ndims(T)
 
 
-size{T,N,SZ}(A::Type{FixedArray{T,N,SZ}})           = _size(SZ)
-size{T <: FixedArray}(A::Type{T})                   = size_or(T, ())
-size{T <: FixedArray}(A::T)                         = size(T)
+size{T,N,SZ}(A::Type{FixedArray{T,N,SZ}}) = _size(SZ)
+size{T <: FixedArray}(A::Type{T}) = size_or(T, ())
+size{T <: FixedArray}(A::T) = size(T)
 
-size{T <: FixedArray}(A::Type{T}, d::Integer)       = size(T)[d]
-size{T <: FixedArray}(A::T, d::Integer)             = size(T, d)
+size{T <: FixedArray}(A::Type{T}, d::Integer) = size(T)[d]
+size{T <: FixedArray}(A::T, d::Integer) = size(T, d)
 
 @generated function fsa_abstract{FSA <: FixedArray}(::Type{FSA})
     ff = FSA

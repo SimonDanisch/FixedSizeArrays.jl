@@ -23,7 +23,7 @@ call{FSA <: FixedArray, T}(::Type{FSA}, a::T, b::T, c::T) = FSA(NTuple{3,T}((a,b
 call{FSA <: FixedArray, T}(::Type{FSA}, a::T, b::T, c::T, d::T) = FSA(NTuple{4,T}((a,b,c,d)))
 call{FSA <: FixedArray, T}(::Type{FSA}, a::T...) = FSA(a)
 
-immutable ParseFunctor{T, S <: AbstractString} <: Func{1}
+immutable ParseFunctor{T, S <: AbstractString} <: Functor{1}
     t::Type{T}
     a::Vector{S}
 end
@@ -75,8 +75,8 @@ and overwrites the default constructor.
         orlen = 1
         ortyp = a
     end
-    SZ      = size_or(FSA, (orlen, ntuple(x->1, ND-1)...))
-    T       = eltype_or(FSA, ortyp)
+    SZ      = size_or(FSA, (orlen, ntuple(x->1, ND-1)...))::NTuple{ND, Int}
+    T       = eltype_or(FSA, ortyp)::DataType
     FSAT    = similar(FSA, T, SZ)
     if X <: Tuple
         expr = fill_tuples_expr((inds...)->:($T(a[$(inds[1])])), SZ)

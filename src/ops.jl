@@ -32,9 +32,9 @@ const reductions = ((:sum,:+), (:prod,:*), (:minimum,:min), (:maximum,:max))
 
 function gen_functor(func::Symbol, unary::Int)
     functor_name  = gensym()
-    arguments     = ntuple(i->symbol("arg$i"), unary)
+    arguments     = ntuple(i->Symbol("arg$i"), unary)
     functor_expr  = quote
-        immutable $functor_name <: Func{$unary} end
+        immutable $functor_name <: Functor{$unary} end
         @inline call(::$functor_name, $(arguments...)) = $func($(arguments...))
     end
     return (functor_name, functor_expr)
@@ -113,14 +113,14 @@ end
 end
 @inline Base.hypot{T}(v::FixedVector{2,T}) = hypot(v[1],v[2])
 
-immutable DotFunctor <: Func{2} end
+immutable DotFunctor <: Functor{2} end
 call(::DotFunctor, a, b) = a'*b
 @inline dot{T <:  FixedArray}(a::T, b::T) = sum(map(DotFunctor(), a, b))
 
-immutable BilinearDotFunctor <: Func{2} end
+immutable BilinearDotFunctor <: Functor{2} end
 call(::BilinearDotFunctor, a, b) = a*b
-@inline bilindot{T <: Union{FixedArray, Tuple}}(a::T, b::T) = sum(map(DotFunctor(), a, b))
-@inline bilindot{T1 <: Tuple, T2 <: FixedArray}(a::T1, b::T2) = sum(map(DotFunctor(), a, b))
+@inline bilindot{T <: Union{FixedArray, Tuple}}(a::T, b::T) = sum(map(BilinearDotFunctor(), a, b))
+@inline bilindot{T1 <: Tuple, T2 <: FixedArray}(a::T1, b::T2) = sum(map(BilinearDotFunctor(), a, b))
 
 @inline bilindot{T}(a::NTuple{1,T}, b::NTuple{1,T}) = @inbounds return a[1]*b[1]
 @inline bilindot{T}(a::NTuple{2,T}, b::NTuple{2,T}) = @inbounds return (a[1]*b[1] + a[2]*b[2])
@@ -135,8 +135,11 @@ call(::BilinearDotFunctor, a, b) = a*b
     a[1]*b[2]-a[2]*b[1]
 )
 
-@inline norm{T, N}(a::FixedVector{T, N})     = sqrt(dot(a,a))
+@inline norm{N, T}(a::FixedVector{N, T})     = sqrt(dot(a,a))
 @inline normalize{FSA <: FixedArray}(a::FSA) = a / norm(a)
+
+
+
 
 #Matrix
 @inline det{T}(A::FixedMatrix{1, 1, T}) = @inbounds return ( A[1] )
@@ -224,7 +227,7 @@ end
 
 
 lyap{T}(a::Mat{1, 1, T}, c::Mat{1, 1, T}) = Mat{1,1,T}(lyap(a[1,1],c[1,1]))
-function lyap{T}(a::Mat{2, 2, T}, c::Mat{2, 2, T}) 
+function lyap{T}(a::Mat{2, 2, T}, c::Mat{2, 2, T})
     d = det(a)
     t = trace(a)
      -(d*c  + (a - t*I)*c*(a-t*I)')/(2*d*t) # http://www.nber.org/papers/w8956.pdf
@@ -242,7 +245,7 @@ function chol{T<:Base.LinAlg.BlasFloat}(m::Mat{2,2,T})
 end
 chol{n,T<:Base.LinAlg.BlasFloat}(m::Mat{n,n,T}) = Mat{n,n,T}(full(Base.LinAlg.chol!(Matrix(m))))
 chol!(m::Mat, ::Type{UpperTriangular}) = chol(m)
-chol!(m::Mat, ::Type{Val{:U}}) = chol!(m, UpperTriangular)  
+chol!(m::Mat, ::Type{Val{:U}}) = chol!(m, UpperTriangular)
 
 # Matrix
 (*){T, M, N, O, K}(a::FixedMatrix{M, N, T}, b::FixedMatrix{O, K, T}) = throw(DimensionMismatch("$N != $O in $(typeof(a)) and $(typeof(b))"))
@@ -306,6 +309,3 @@ Base.Test.approx_full(a::FixedArray) = a
 +{m, n, T}(J::Base.LinAlg.UniformScaling, A::Mat{m,n, T}) = A + J
 -{m, n, T}(A::Mat{m,n, T}, J::Base.LinAlg.UniformScaling) = A + (-J)
 -{m, n, T}(J::Base.LinAlg.UniformScaling, A::Mat{m,n, T}) = J.λ*eye(Mat{m,n,T}) - A
-
-
-
