@@ -17,6 +17,11 @@ immutable RGB{T} <: FixedVectorNoTuple{3, T}
         new{T}(a[1], a[2], a[3])
     end
 end
+# subtyping:
+immutable TestType{N,T} <: FixedVector{N,T}
+    a::NTuple{N,T}
+end
+
 
 typealias Vec1d Vec{1, Float64}
 typealias Vec2d Vec{2, Float64}
@@ -36,6 +41,9 @@ else
 end
 
 facts("FixedSizeArrays") do
+
+include("typeinf.jl")
+
 
 context("fsa macro") do
     a = 1
@@ -141,6 +149,8 @@ context("Array of FixedArrays") do
 
         @fact maximum(d) --> RGB(typemax(Float64))
         @fact minimum(d) --> RGB(typemin(Float64))
+
+        @fact extrema(c) --> (minimum(c), maximum(c))
     end
 
     context("array ops") do
@@ -1050,13 +1060,6 @@ context("Base.Test") do
     @fact Base.Test.@test_approx_eq(a, Vec(a)) --> nothing
 end
 
-end
-
-# subtyping:
-immutable TestType{N,T} <: FixedVector{N,T}
-    a::NTuple{N,T}
-end
-
 facts("show for subtype") do
 
     Base.show(io::IO, x::TestType) = print(io, "$(x.a)")  # show for new type
@@ -1065,6 +1068,13 @@ facts("show for subtype") do
     @fact string(x) --> "(1,2)"
 end
 
+
 end
+
+end
+
+
+
+
 
 FactCheck.exitstatus()
