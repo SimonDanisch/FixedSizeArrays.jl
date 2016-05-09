@@ -15,7 +15,6 @@ immutable TestFunctor end
 call(::TestFunctor, a, b) = a+b
 
 function use_operations()
-    results = FixedArray[]
 
     a = Vec{3, Float32}(0)
     b = Vec{3, Float32}(0.0)
@@ -61,11 +60,13 @@ end
 # This seems to be the easiest way to test,
 # that all variables even if they come from inlining,
 # are inferred as a concrete type.
+# seems like it's hard to turn of inlining when doing coverage, though...
+# so this must be executed locally to test for it.
 context("type inference") do
     io = IOBuffer()
     use_operations()
     code_warntype(io, use_operations, ())
     str = takebuf_string(io)
     x = matchall(r"Any", str)
-    @fact length(x) --> 1
+    @fact length(x) --> 0
 end
