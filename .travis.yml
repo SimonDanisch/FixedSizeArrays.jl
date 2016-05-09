@@ -4,10 +4,11 @@ os:
   - osx
 julia:
   - 0.4
+  - nightly
 notifications:
   email: false
 script:
     - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-    - julia --inline=no -e 'Pkg.clone(pwd()); Pkg.test("FixedSizeArrays"; coverage=true)'
+    - julia -e 'Pkg.clone(pwd()); Pkg.test("FixedSizeArrays"; coverage=true)'
 after_success:
   - julia -e 'cd(Pkg.dir("FixedSizeArrays")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder()); Codecov.submit(process_folder())'
