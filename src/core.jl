@@ -102,3 +102,64 @@ end
 function get_tuple(f::FixedArray)
     f._
 end
+
+
+# Infrastructure for construct_similar
+"Compute promoted element type of the potentially nested Tuple type `ty`"
+function promote_type_nested(ty)
+    if ty.name.primary === Tuple
+        promote_type([promote_type_nested(t) for t in ty.parameters]...)
+    else
+        ty
+    end
+end
+
+"""
+Construct tuple expression converting inner elements of the nested Tuple type
+`ty` with name `varexpr` to the scalar `outtype`
+"""
+function convert_nested_tuple_expr(outtype, varexpr, ty)
+    if ty.name.primary === Tuple
+        Expr(:tuple, [convert_nested_tuple_expr(outtype, :($varexpr[$i]), t)
+                      for (i,t) in enumerate(ty.parameters)]...)
+    else
+        :(convert($outtype, $varexpr))
+    end
+end
+
+"""
+Compute the N-dimensional array shape of a nested Tuple if it were used as
+column-major storage for a FixedArray.
+"""
+function nested_Tuple_shape(ty)
+    if ty.name.primary !== Tuple
+        return 0
+    end
+    subshapes = [nested_Tuple_shape(t) for t in ty.parameters]
+    if isempty(subshapes)
+        return ()
+    end
+    if any(subshapes .!= subshapes[1])
+        throw(DimensionMismatch("Nested tuples must have equal length to form a FixedSizeArray"))
+    end
+    if subshapes[1] == 0
+        return (length(subshapes),) # Scalar elements
+    end
+    return (subshapes[1]..., length(subshapes))
+end
+
+"""
+    construct_similar(::Type{FSA}, elements::Tuple)
+
+Construct FixedArray as similar as possible to `FSA`, but with shape given by
+the shape of the nested tuple `elements` and with `eltype` equal to the
+promoted element type of the nested tuple `elements`.
+"""
+@generated function construct_similar{FSA <: FixedArray}(::Type{FSA}, elements::Tuple)
+    etype = promote_type_nested(elements)
+    shape = nested_Tuple_shape(elements)
+    simtype = similar(FSA, etype, shape)
+    converted_elements = convert_nested_tuple_expr(etype, :elements, elements)
+    :($simtype($converted_elements))
+end
+
