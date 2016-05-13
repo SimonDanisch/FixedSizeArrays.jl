@@ -80,12 +80,11 @@ for op in binaryOps
     functor_name, functor_expr = gen_functor(op, 2)
     eval(quote
         $functor_expr
-        @inline $op{T <: FixedArray}(x::T, y::T) = map($functor_name(), x, y)
-        @inline $op{T, T2, NDIM, SIZE}(x::FixedArray{T, NDIM, SIZE}, y::FixedArray{T2, NDIM, SIZE}) = $op(promote(x, y)...)
-        @inline $op{T <: Number}(x::T, y::FixedArray{T}) = map($functor_name(), x, y)
-        @inline $op{T1 <: Number, T2}(x::T1, y::FixedArray{T2}) = $op(promote(x, y)...)
-        @inline $op{T <: Number}(x::FixedArray{T}, y::T) = map($functor_name(), x, y)
-        @inline $op{T1, T2 <: Number}(x::FixedArray{T1}, y::T2) = $op(promote(x, y)...)
+        @inline $op{F1<:FixedArray, F2<:FixedArray}(x::F1, y::F2) = map($functor_name(), x, y)
+        @inline $op{F<:FixedArray}(x::F, y::Number) = map($functor_name(), x, y)
+        @inline $op{F<:FixedArray}(x::Number, y::F) = map($functor_name(), x, y)
+        @inline $op{T,N}(x::FixedArray{T,N}, y::AbstractArray{T,N}) = map($functor_name(), x, y)
+        @inline $op{T,N}(x::AbstractArray{T,N}, y::FixedArray{T,N}) = map($functor_name(), x, y)
     end)
 end
 
