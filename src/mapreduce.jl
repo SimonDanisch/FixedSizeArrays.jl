@@ -100,11 +100,6 @@ call{T}(::ConstructTypeFun{T}, x) = T(x)
 @inline map{T,N,S}(::Type{T}, arg1::FixedArray{T,N,S}) = arg1 # nop version
 @inline map{T,FSA<:FixedArray}(::Type{T}, arg1::FSA) = map(ConstructTypeFun{T}(), similar(FSA, T), arg1)
 
-# Binary versions
-@inline map{FSA <: FixedArray}(F, arg1::FSA, arg2::FSA)    = map(F, FSA, arg1, arg2)
-@inline map{FSA <: FixedArray}(F, arg1::FSA, arg2::Number) = map(F, FSA, arg1, arg2)
-@inline map{FSA <: FixedArray}(F, arg1::Number, arg2::FSA) = map(F, FSA, arg1, arg2)
-
 # Nullary special case version for constructing FSAs
 # TODO: This is inconsistent with the above
 @generated function map{FSA <: FixedArray}(F, ::Type{FSA})
@@ -112,10 +107,36 @@ call{T}(::ConstructTypeFun{T}, x) = T(x)
     constructor_expr(FSA, tuple_expr)
 end
 
+#immutable InferFSAConstructor{FSA}; end
 
+# Type-inferred versions of map()
+function unrolled_map_expr2(funcname, templateFSA, SIZE, argtypes, argnames)
+    sizecheck = [sizecheck_expr(T,n,SIZE) for (T,n) in zip(argtypes,argnames)]
+    tuple_expr = fill_tuples_expr(SIZE) do inds...
+        Expr(:call, funcname,
+            [index_expr(argtypes[i], argnames[i], inds...) for i=1:length(argtypes)]...
+        )
+    end
+    quote
+        $(Expr(:meta, :inline))
+        $(sizecheck...)
+        $(Expr(:boundscheck, false))
+        rvalue = construct_similar($templateFSA, $tuple_expr)
+        $(Expr(:boundscheck,:pop))
+        rvalue
+    end
+end
 
-# Mixed mode arithmetic, fiddling
-
-#@inline map{T1,T2,N,S}(F, arg1::FixedArray{T1,N,S}, arg2::FixedArray{T2,N,S}) =
-#    map(F, promote_op(F, typeof(arg1), typeof(arg2)), arg1, arg2)
+@generated function map{F<:FixedArray}(func, arg1::F)
+    unrolled_map_expr2(:func, arg1, size(F), (arg1,), (:arg1,))
+end
+@generated function map{F1<:FixedArray, F2<:FixedArray}(func, arg1::F1, arg2::F2)
+    unrolled_map_expr2(:func, arg1, size(F1), (arg1,arg2), (:arg1,:arg2))
+end
+@generated function map{F<:FixedArray}(func, arg1::F, arg2::Union{Number,AbstractArray})
+    unrolled_map_expr2(:func, arg1, size(F), (arg1,arg2), (:arg1,:arg2))
+end
+@generated function map{F<:FixedArray}(func, arg1::Union{Number,AbstractArray}, arg2::F)
+    unrolled_map_expr2(:func, arg2, size(F), (arg1,arg2), (:arg1,:arg2))
+end
 
