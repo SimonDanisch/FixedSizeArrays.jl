@@ -36,7 +36,7 @@ const unaryOps = (:-, :~, :conj, :abs,
                   :gamma, :lfact, :frexp, :modf, :airy, :airyai,
                   :airyprime, :airyaiprime, :airybi, :airybiprime,
                   :besselj0, :besselj1, :bessely0, :bessely1,
-                  :eta, :zeta, :digamma)
+                  :eta, :zeta, :digamma, :real, :imag)
 
 # vec-vec and vec-scalar
 const binaryOps = (:.+, :.-,:.*, :./, :.\, :.^,
