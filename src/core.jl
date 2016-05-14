@@ -158,8 +158,9 @@ promoted element type of the nested tuple `elements`.
 @generated function construct_similar{FSA <: FixedArray}(::Type{FSA}, elements::Tuple)
     etype = promote_type_nested(elements)
     shape = nested_Tuple_shape(elements)
-    simtype = similar(FSA, etype, shape)
+    outtype = similar(FSA, etype, shape)
     converted_elements = convert_nested_tuple_expr(etype, :elements, elements)
-    :($simtype($converted_elements))
+    constructor_expr(outtype, converted_elements)
 end
+
 
