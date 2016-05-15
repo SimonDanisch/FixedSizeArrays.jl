@@ -100,5 +100,5 @@ end
     :(tuple($(ntuple(i->:(f[$i]), N)...)))
 end
 function get_tuple(f::FixedArray)
-    f.(1) # a little wonky, but there really no much sense if isn't the only field
+    f._
 end
