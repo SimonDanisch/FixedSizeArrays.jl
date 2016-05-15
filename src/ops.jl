@@ -262,7 +262,7 @@ end
 end
 
 @generated function *{T, M, N}(a::Mat{M, N, T}, b::Vec{N,T})
-    expr = [:(bilindot(row(a, $i), b.(1))) for i=1:M]
+    expr = [:(bilindot(row(a, $i), b._)) for i=1:M]
     :( Vec($(expr...)) )
 end
 @generated function *{T, M, N, R}(a::Mat{M, N, T}, b::Mat{N, R, T})
@@ -280,10 +280,10 @@ function (==)(a::FixedVectorNoTuple, b::FixedVectorNoTuple)
     end
     true
 end
-(==)(a::FixedArray, b::FixedArray) = a.(1) == b.(1)
+(==)(a::FixedArray, b::FixedArray) = a._ == b._
 
-(==){R, T, FSA <: FixedVector}(a::FSA, b::Mat{R, 1, T}) = a.(1) == column(b,1)
-(==){R, T, FSA <: FixedVector}(a::Mat{R, 1, T}, b::FSA) = column(a,1) == b.(1)
+(==){R, T, FSA <: FixedVector}(a::FSA, b::Mat{R, 1, T}) = a._ == column(b,1)
+(==){R, T, FSA <: FixedVector}(a::Mat{R, 1, T}, b::FSA) = column(a,1) == b._
 function (==)(a::FixedArray, b::AbstractArray)
     s_a = size(a)
     s_b = size(b)
