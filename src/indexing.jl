@@ -1,5 +1,5 @@
 @inline getindex{T <: FixedVector}(x::T, i::Union{Range, Integer}) = x._[i]
-@inline getindex{T <: FixedVectorNoTuple}(x::T, i::Integer) = x.(i)
+@inline getindex{T <: FixedVectorNoTuple}(x::T, i::Integer) = getfield(x,i)
 @inline getindex{N, M, T}(a::Mat{N, M, T}, i::Range, j::Int) = ntuple(IndexFunc(a, j), Val{length(i)})::NTuple{length(i), T}
 @inline getindex{N, M, T}(a::Mat{N, M, T}, i::Int, j::Union{Range, Int}) = a._[j][i]
 @inline getindex{N, M, T}(a::Mat{N, M, T}, i::Int) = a[ind2sub((N,M), i)...]
