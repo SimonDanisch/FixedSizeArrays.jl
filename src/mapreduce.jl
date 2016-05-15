@@ -26,12 +26,17 @@ index_expr{T <: FixedArray}(::Type{T}, name, inds::Int...) = :($name[$(inds...)]
 index_expr{T <: Array}(::Type{T}, name, inds::Int...) = :($name[$(inds...)])
 
 # Get expression checking size of collection `name` against `SIZE`
-sizecheck_expr{T <: Number}(::Type{T}, name, SIZE) = :nothing
-function sizecheck_expr{FSA<:FixedArray}(::Type{FSA}, name, SIZE)
-    size(FSA) == SIZE || :(throw(DimensionMismatch(string($FSA)*" is wrong size")))
+function sizecheck_expr{T <: Number}(::Type{T}, name, SIZE)
     :nothing
 end
-function sizecheck_expr{A<:Array}(::Type{A}, name, SIZE)
+function sizecheck_expr{FSA<:FixedArray}(::Type{FSA}, name, SIZE)
+    if size(FSA) == SIZE
+        :nothing
+    else
+        :(throw(DimensionMismatch(string($FSA)*" is wrong size")))
+    end
+end
+function sizecheck_expr{A<:AbstractArray}(::Type{A}, name, SIZE)
     quote
         # Note - should be marked with @boundscheck in 0.5
         size($name) == $SIZE || throw(DimensionMismatch(string($A)*" is wrong size"))
