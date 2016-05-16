@@ -155,7 +155,7 @@ context("Array of FixedArrays") do
     end
 
     context("array ops") do
-        for op in (.+, .-,.*, ./, .\, .^, +, -)
+        for op in (.+, .-,.*, ./, .\, +, -)
             @fact typeof(op(a, 1f0)) --> typeof(a)
             @fact typeof(op(1f0, a)) --> typeof(a)
         end
@@ -1021,7 +1021,7 @@ const binaryOps = (
 
 
 context("mapping operators") do
-     context("binary: ") do
+    context("binary: ") do
         test1 = (Vec(1,2,typemax(Int)), Mat((typemin(Int),2,5), (2,3,5), (-2,3,6)), Vec{4, Float32}(0.777))
         test2 = (Vec(1,0,typemax(Int)), Mat((typemin(Int),77,1), (2,typemax(Int),5), (-2,3,6)), Vec{4, Float32}(-23.2929))
         for op in binaryOps
@@ -1061,6 +1061,7 @@ context("mapping operators") do
     end
 end
 
+
 context("Base.Test") do
     a = rand(2)
     @fact Base.Test.@test_approx_eq(a, Vec(a)) --> nothing
@@ -1073,7 +1074,6 @@ facts("show for subtype") do
     x = TestType(1, 2)
     @fact string(x) --> "(1,2)"
 end
-
 
 end
 
