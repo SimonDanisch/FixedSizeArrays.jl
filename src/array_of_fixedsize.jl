@@ -7,16 +7,16 @@ function show{FSA <: FixedVector}(io::IO, a::Vector{FSA})
 	end
 end
 
-immutable MaxFun <: Functor{2} end
-immutable MinFun <: Functor{2} end
+immutable MaxFunctor <: Functor{2} end
+immutable MinFunctor <: Functor{2} end
 immutable ExtremaFun <: Functor{2} end
 
-call(::MaxFun, a, b) = max(a, b)
-call(::MinFun, a, b) = min(a, b)
+call(::MaxFunctor, a, b) = max(a, b)
+call(::MinFunctor, a, b) = min(a, b)
 call(::ExtremaFun, reducevalue, a) = min(reducevalue[1], a), max(reducevalue[2], a)
 
-minimum{T <: FixedArray}(a::Vector{T}) = reduce(MinFun(), a)
-maximum{T <: FixedArray}(a::Vector{T}) = reduce(MaxFun(), a)
+minimum{T <: FixedArray}(a::Vector{T}) = reduce(MinFunctor(), a)
+maximum{T <: FixedArray}(a::Vector{T}) = reduce(MaxFunctor(), a)
 extrema{T <: FixedArray}(a::AbstractVector{T}) = reduce(ExtremaFun(), a)
 
 
