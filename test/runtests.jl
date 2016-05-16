@@ -155,6 +155,11 @@ context("Array of FixedArrays") do
     end
 
     context("array ops") do
+        for op in (.+, .-,.*, ./, .\, .^, +, -)
+            @fact typeof(op(a, 1f0)) --> typeof(a)
+            @fact typeof(op(1f0, a)) --> typeof(a)
+        end
+
         af = a + 1f0
         bf = b + 1f0
         aff = a + Point{3, Float32}(1)
