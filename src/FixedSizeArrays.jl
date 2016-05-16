@@ -1,6 +1,8 @@
 VERSION >= v"0.4.0-dev+6521" && __precompile__(true)
 module FixedSizeArrays
 
+using Compat
+
 importall Base
 import Base.LinAlg.chol!
 
