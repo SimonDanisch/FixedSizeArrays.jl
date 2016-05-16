@@ -8,6 +8,17 @@ function Base.promote_array_type{FSA <: FixedArray, N, T<:Number}(
     )
     FSA
 end
+function Base.promote_array_type{FSA <: FixedArray, N, T<:Number}(
+        F, ::Type{T}, ::Type{FSA}
+    )
+    FSA
+end
+function Base.promote_array_type{FSA <: FixedArray, N, T<:Number}(
+        F, ::Type{FSA}, ::Type{T}
+    )
+    FSA
+end
+
 
 # operations
 const unaryOps = (:-, :~, :conj, :abs,
