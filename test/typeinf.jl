@@ -12,7 +12,7 @@ macro ret()
     :(tuple($(syms...)))
 end
 immutable TestFunctor end
-call(::TestFunctor, a, b) = a+b
+@compat (::TestFunctor)(a, b) = a+b
 
 function use_operations()
 

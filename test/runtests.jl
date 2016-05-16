@@ -2,6 +2,7 @@ module FSAtesting
 
 using FixedSizeArrays
 using FactCheck, Base.Test
+using Compat
 
 immutable Normal{N, T} <: FixedVector{N, T}
     _::NTuple{N, T}
