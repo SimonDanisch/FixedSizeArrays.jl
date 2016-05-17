@@ -70,6 +70,7 @@ export MutableFixedVector
 export MutableFixedMatrix
 export Mat, Vec, Point
 export @fsa
+export construct_similar
 
 export unit
 export normalize
