@@ -118,6 +118,25 @@ context("core") do
     context("similar") do
         @fact similar(Vec{3}, Float32) --> Vec{3, Float32}
         @fact similar(Vec, Float32, 3) --> Vec{3, Float32}
+
+        @fact similar(RGB, Float32) --> RGB{Float32}
+        @fact similar(RGB{Float32}, Int) --> RGB{Int}
+
+        @fact similar(Mat{3,3,Int}, Float32) --> Mat{3,3,Float32}
+        @fact similar(Mat, Float32, (3,3))   --> Mat{3,3,Float32}
+        @fact similar(Mat{2,2,Int}, (3,3))   --> Mat{3,3,Int}
+    end
+
+    context("construct_similar") do
+        @fact construct_similar(Vec{3,Int}, (1.0f0,2)) === Vec{2,Float32}(1,2) --> true
+        @fact construct_similar(Vec{2}, (1,2,3))       === Vec{3,Int}(1,2,3)   --> true
+        @fact construct_similar(Vec, (1.0,2))          === Vec{2,Float64}(1,2) --> true
+
+        @fact construct_similar(RGB, (1,2,3)) === RGB{Int}(1,2,3) --> true
+        @fact construct_similar(RGB{Float32}, (1.0,2.0,3.0)) === RGB{Float64}(1.0,2.0,3.0) --> true
+
+        @fact construct_similar(Mat{3,3,Int}, ((1.0f0,2),(1.0,2))) === Mat{2,2,Float64}((1,2),(1,2)) --> true
+        @fact construct_similar(Mat, ((1,2),))                     === Mat{2,1,Int}(((1,2),)) --> true
     end
 
 end
