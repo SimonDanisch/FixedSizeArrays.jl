@@ -999,12 +999,12 @@ const unaryOps = (
     exp2, expm1, cbrt, sqrt, erf,
     erfc, erfcx, erfi, dawson,
 
-    #trunc, round, ceil, floor, #see JuliaLang/julia#12163
+    trunc, round, ceil, floor,
     significand, lgamma,
     gamma, lfact, frexp, modf, airy, airyai,
     airyprime, airyaiprime, airybi, airybiprime,
     besselj0, besselj1, bessely0, bessely1,
-    eta, zeta, digamma
+    eta, zeta, digamma, real, imag
 )
 
 # vec-vec and vec-scalar
