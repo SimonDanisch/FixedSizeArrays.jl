@@ -39,12 +39,15 @@ const unaryOps = (:-, :~, :conj, :abs,
                   :eta, :zeta, :digamma)
 
 # vec-vec and vec-scalar
-const binaryOps = (:.+, :.-,:.*, :./, :.\, :.^,
-                   :.==, :.!=, :.<, :.<=, :.>, :.>=, :+, :-,
+const binaryOps = (:.+, :.-,:.*, :./, :.\, :.^, :+, :-,
                    :min, :max,
                    :div, :fld, :rem, :mod, :mod1, :cmp,
                    :atan2, :besselj, :bessely, :hankelh1, :hankelh2,
                    :besseli, :besselk, :beta, :lbeta)
+
+# Pair by comparison of all elements and element wise comparisons
+const comparisonOps = ((:(==), :(.==)), (:(!=), :(.!=)), (:(<), :(.<)), (:(<=),
+                        :(.<=)), (:(>), :(.>)), (:(>=), :(.>=)))
 
 const matrixOps = (:*, :/)
 
@@ -87,6 +90,22 @@ for op in binaryOps
         @inline $op{T <: Number}(x::FixedArray{T}, y::T) = map($functor_name(), x, y)
         @inline $op{T1, T2 <: Number}(x::FixedArray{T1}, y::T2) = $op(promote(x, y)...)
     end)
+end
+
+for (op_all, op_el) in comparisonOps
+
+    # Define element wise operations
+    functor_name_el, functor_expr_el = gen_functor(op_el, 2)
+    eval(quote
+        $functor_expr_el
+        # TODO: Current hack is to `map(Bool, operation)` Should be removed when
+        #       map functionality is updated.
+        @inline $op_el{T <: FixedArray}(x::T, y::T) = map(Bool, map($functor_name_el(), x, y))
+        @inline $op_el{T1 <: FixedArray, T2 <: FixedArray}(x::T1, y::T2) = $op_el(promote(x, y)...)
+        @inline $op_all{T <: FixedArray}(x::T, y::T) = all($op_el(x, y))
+        @inline $op_all{T1 <: FixedArray, T2 <: FixedArray}(x::T1, y::T2) = all($op_el(x, y))
+    end)
+
 end
 
 for op in matrixOps
