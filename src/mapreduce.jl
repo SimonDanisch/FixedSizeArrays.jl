@@ -26,9 +26,9 @@ end
 # map() machinery
 
 # Get an expression indexing the collection `name` of type `T` for use in map()
-index_expr{T <: Number}(::Type{T},     name, inds::Int...) = :($name)
-index_expr{T <: FixedArray}(::Type{T}, name, inds::Int...) = :($name[$(inds...)])
-index_expr{T <: Array}(::Type{T}, name, inds::Int...) = :($name[$(inds...)])
+index_expr{T <: Number}(::Type{T},     name, inds::Int...)    = :($name)
+index_expr{T <: FixedArray}(::Type{T}, name, inds::Int...)    = :($name[$(inds...)])
+index_expr{T <: AbstractArray}(::Type{T}, name, inds::Int...) = :($name[$(inds...)])
 
 # Get expression checking size of collection `name` against `SIZE`
 function sizecheck_expr{T <: Number}(::Type{T}, name, SIZE)
