@@ -395,13 +395,16 @@ context("map") do
         # Unary, binary & ternary map with specified output type
         @fact map(-, Vec{3,Float64}, Vec(1,2,3)) --> exactly(Vec{3,Float64}(-1,-2,-3))
         @fact map(+, Vec{3,Float64}, [1,2,3], Vec(1,2,3)) --> exactly(Vec{3,Float64}(2,4,6))
-        @fact map(+, Vec{3,Float64}, [1,2,3], Vec(1,2,3), [1,2,3]) --> exactly(Vec{3,Float64}(3,6,9))
+        @fact map(+, Vec{3,Float64}, [1,2,3], Vec(1,2,3), 1:3) --> exactly(Vec{3,Float64}(3,6,9))
 
         # Unary and binary map with deduced output types
         @fact map(-, Vec(1,2,3)) --> exactly(Vec{3,Int}(-1,-2,-3))
         @fact map(+, Vec(1,2,3), [1,2,3]) --> exactly(Vec{3,Int}(2,4,6))
         @fact map(+, [1,2,3], Vec(1,2,3)) --> exactly(Vec{3,Int}(2,4,6))
         @fact map(+, Vec(1,2,3), Vec(1,2,3)) --> exactly(Vec{3,Int}(2,4,6))
+        # Some other `AbstractArray`s
+        @fact map(+, Vec(1,2,3), 1:3) --> exactly(Vec{3,Int}(2,4,6))
+        @fact map(+, 1:3, Vec(1,2,3)) --> exactly(Vec{3,Int}(2,4,6))
 
         # Binary map with mixed types
         @fact map(>, Vec(0.0,2.0), Vec(1,1)) --> exactly(Vec{2,Bool}(false,true))
@@ -431,7 +434,8 @@ context("map") do
         @fact_throws DimensionMismatch map(+, Vec(1,1), Vec(1,2,3))
         @fact_throws DimensionMismatch map(+, Vec(1,2,3), [1,1])
         @fact_throws DimensionMismatch map(+, [1,1], Vec(1,2,3))
-        @fact_throws DimensionMismatch map(+, Vec(1,2,3), [1 2 3])
+        @fact_throws DimensionMismatch map(+, Vec(1,2,3), 1:2)
+        @fact_throws DimensionMismatch map(+, 1:2, Vec(1,2,3))
         @fact_throws DimensionMismatch map(+, Vec(1,2,3), [1 2 3])
     end
 
