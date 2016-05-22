@@ -390,6 +390,60 @@ context("Constructors") do
 end
 
 
+context("map") do
+    context("Vec and AbstractVector") do
+        # Unary, binary & ternary map with specified output type
+        @fact map(-, Vec{3,Float64}, Vec(1,2,3)) --> exactly(Vec{3,Float64}(-1,-2,-3))
+        @fact map(+, Vec{3,Float64}, [1,2,3], Vec(1,2,3)) --> exactly(Vec{3,Float64}(2,4,6))
+        @fact map(+, Vec{3,Float64}, [1,2,3], Vec(1,2,3), [1,2,3]) --> exactly(Vec{3,Float64}(3,6,9))
+
+        # Unary and binary map with deduced output types
+        @fact map(-, Vec(1,2,3)) --> exactly(Vec{3,Int}(-1,-2,-3))
+        @fact map(+, Vec(1,2,3), [1,2,3]) --> exactly(Vec{3,Int}(2,4,6))
+        @fact map(+, [1,2,3], Vec(1,2,3)) --> exactly(Vec{3,Int}(2,4,6))
+        @fact map(+, Vec(1,2,3), Vec(1,2,3)) --> exactly(Vec{3,Int}(2,4,6))
+
+        # Binary map with mixed types
+        @fact map(>, Vec(0.0,2.0), Vec(1,1)) --> exactly(Vec{2,Bool}(false,true))
+        @fact map(+, Vec(0.0,0.0), Vec(1,1)) --> exactly(Vec{2,Float64}(1.0,1.0))
+    end
+
+    context("FixedVectorNoTuple") do
+        # RGB with specified output
+        @fact map(-, RGB{Float64}, RGB(1.0, 2.0, 3.0)) --> exactly(RGB{Float64}(-1.0, -2.0, -3.0))
+        @fact map(-, RGB{Float64}, [1.0, 2.0, 3.0]) --> exactly(RGB{Float64}(-1.0, -2.0, -3.0))
+
+        # RGB and AbstractVector interop
+        @fact map(+, RGB(1.0, 2.0, 3.0), RGB(1.0, 2.0, 3.0)) --> exactly(RGB{Float64}(2.0, 4.0, 6.0))
+        @fact map(+, RGB(1.0, 2.0, 3.0), [1.0, 2.0, 3.0]) --> exactly(RGB{Float64}(2.0, 4.0, 6.0))
+        @fact map(+, [1.0, 2.0, 3.0], RGB(1.0, 2.0, 3.0)) --> exactly(RGB{Float64}(2.0, 4.0, 6.0))
+        @fact map(+, RGB{Int}(1, 2, 3), RGB(1.0, 2.0, 3.0)) --> exactly(RGB{Float64}(2.0, 4.0, 6.0))
+    end
+
+    context("Mat and AbstractMatrix") do
+        @fact map(+, Mat{2,2,Int}(((1,2),(3,4))), Mat{2,2,Int}(((1,2),(3,4)))) --> exactly(Mat{2,2,Int}(((2,4),(6,8))))
+        @fact map(+, Mat{2,2,Int}(((1,2),(3,4))), [1 3; 2 4]) --> exactly(Mat{2,2,Int}(((2,4),(6,8))))
+        @fact map(+, [1 3; 2 4], Mat{2,2,Int}(((1,2),(3,4)))) --> exactly(Mat{2,2,Int}(((2,4),(6,8))))
+    end
+
+    context("Size checking") do
+        @fact_throws DimensionMismatch map(+, Vec(1,2,3), Vec(1,1))
+        @fact_throws DimensionMismatch map(+, Vec(1,1), Vec(1,2,3))
+        @fact_throws DimensionMismatch map(+, Vec(1,2,3), [1,1])
+        @fact_throws DimensionMismatch map(+, [1,1], Vec(1,2,3))
+        @fact_throws DimensionMismatch map(+, Vec(1,2,3), [1 2 3])
+        @fact_throws DimensionMismatch map(+, Vec(1,2,3), [1 2 3])
+    end
+
+    context("Broadcast of scalars") do
+        # Arguably not the right thing for map(), but neither do we have a full
+        # broadcast implementation yet...
+        @fact map(+, Vec{3,Float64}, Vec(1,2,3), 1.0) --> exactly(Vec{3,Float64}(2,3,4))
+        @fact map(+, Vec{3,Float64}, 1.0, Vec(1,2,3)) --> exactly(Vec{3,Float64}(2,3,4))
+        @fact map(+, 1.0, Vec(1,2,3)) --> exactly(Vec{3,Float64}(2,3,4))
+        @fact map(+, Vec(1,2,3), 1.0) --> exactly(Vec{3,Float64}(2,3,4))
+    end
+end
 
 
 v2 = Vec(6.0,5.0,4.0)
@@ -1054,7 +1108,6 @@ context("mapping operators") do
                             for j=1:length(v1)
                                 @fact r[j] --> op(v1[j], v2[j])
                             end
-
                         end
                     end
                 end
