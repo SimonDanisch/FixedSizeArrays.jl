@@ -18,9 +18,13 @@ immutable RGB{T} <: FixedVectorNoTuple{3, T}
         new{T}(a[1], a[2], a[3])
     end
 end
+function FixedSizeArrays.similar_type{FSA<:RGB,T}(::Type{FSA}, ::Type{T}, n::Tuple{Int})
+    n[1] == 3 ? RGB{T} : similar_type(FixedArray, T, n)
+end
+
 # subtyping:
 immutable TestType{N,T} <: FixedVector{N,T}
-    a::NTuple{N,T}
+    _::NTuple{N,T}
 end
 
 
@@ -115,16 +119,16 @@ context("core") do
 
         @fact ndims_or(FixedArray, nothing) --> nothing
     end
-    context("similar") do
-        @fact similar(Vec{3}, Float32) --> Vec{3, Float32}
-        @fact similar(Vec, Float32, 3) --> Vec{3, Float32}
+    context("similar_type") do
+        @fact similar_type(Vec{3}, Float32) --> Vec{3, Float32}
+        @fact similar_type(Vec, Float32, 3) --> Vec{3, Float32}
 
-        @fact similar(RGB, Float32) --> RGB{Float32}
-        @fact similar(RGB{Float32}, Int) --> RGB{Int}
+        @fact similar_type(RGB, Float32) --> RGB{Float32}
+        @fact similar_type(RGB{Float32}, Int) --> RGB{Int}
 
-        @fact similar(Mat{3,3,Int}, Float32) --> Mat{3,3,Float32}
-        @fact similar(Mat, Float32, (3,3))   --> Mat{3,3,Float32}
-        @fact similar(Mat{2,2,Int}, (3,3))   --> Mat{3,3,Int}
+        @fact similar_type(Mat{3,3,Int}, Float32) --> Mat{3,3,Float32}
+        @fact similar_type(Mat, Float32, (3,3))   --> Mat{3,3,Float32}
+        @fact similar_type(Mat{2,2,Int}, (3,3))   --> Mat{3,3,Int}
     end
 
     context("construct_similar") do
@@ -1145,7 +1149,7 @@ end
 
 facts("show for subtype") do
 
-    Base.show(io::IO, x::TestType) = print(io, "$(x.a)")  # show for new type
+    Base.show(io::IO, x::TestType) = print(io, "$(x._)")  # show for new type
 
     x = TestType(1, 2)
     @fact string(x) --> "(1,2)"

@@ -22,11 +22,8 @@ end
 immutable Mat{Row, Column, T} <: FixedMatrix{Row, Column, T}
     _::NTuple{Column, NTuple{Row, T}}
 end
-function similar{FSA <: Mat, T}(::Type{FSA}, ::Type{T}, SZ::NTuple{2, Int})
-    Mat{SZ[1], SZ[2], T}
-end
-similar{FSA <: Mat}(::Type{FSA}, SZ::NTuple{2,Int}) = similar(FSA, eltype(FSA), SZ)
-similar{N,M,S, T}(::Type{Mat{N,M,S}}, ::Type{T}) = Mat{N,M,T}
+similar_type{FSA<:Mat,T}(::Type{FSA}, ::Type{T}, sz::NTuple{2, Int}) = Mat{sz[1], sz[2], T}
+similar_type{N,M,S, T}(::Type{Mat{N,M,S}}, ::Type{T}) = Mat{N,M,T}
 
 # most common FSA types
 immutable Vec{N, T} <: FixedVector{N, T}
@@ -35,6 +32,7 @@ end
 immutable Point{N, T} <: FixedVector{N, T}
     _::NTuple{N, T}
 end
+similar_type{FSA<:Point,T}(::Type{FSA}, ::Type{T}, sz::Tuple{Int}) = Point{sz[1],T}
 
 include("mapreduce.jl")
 include("destructure.jl")
@@ -70,6 +68,7 @@ export MutableFixedVector
 export MutableFixedMatrix
 export Mat, Vec, Point
 export @fsa
+export similar_type
 export construct_similar
 
 export unit

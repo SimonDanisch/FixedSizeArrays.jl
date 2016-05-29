@@ -78,23 +78,36 @@ done(A::FixedArray, state::Integer) = length(A) < state
     :($(T.name.primary))
 end
 
-similar{FSA <: FixedVector, T}(::Type{FSA}, ::Type{T}, n::Tuple) = similar(FSA, T, n...)
-@generated function similar{FSA <: FixedVector, T}(::Type{FSA}, ::Type{T}, n::Int)
-    name = basetype(FSA)
-    :($name{n, T, $(FSA.parameters[3:end]...)})
+if VERSION < v"0.5.0-dev+698"
+    macro pure(ex)
+        esc(ex)
+    end
+else
+    import Base: @pure
 end
-@generated function similar{FSA <: FixedVector, T}(::Type{FSA}, ::Type{T})
-    name = basetype(FSA)
-    :($name{$(FSA.parameters[1]), T, $(FSA.parameters[3:end]...)})
+
+@pure function similar_type{FSA <: FixedArray, T}(::Type{FSA}, ::Type{T}, n::Tuple)
+    # Exact match - return the same type again
+    if eltype(FSA) == T && n == size(FSA)
+        return FSA
+    end
+    # Fallback - return a standard FixedArray container by default
+    if length(n) == 1
+        return Vec{n[1],T}
+    elseif length(n) == 2
+        return Mat{n[1],n[2],T}
+    else
+        throw(ArgumentError("similar_type not implemented for size = $n"))
+    end
 end
-@generated function similar{FSA <: FixedVectorNoTuple, T}(::Type{FSA}, ::Type{T})
-    name = basetype(FSA)
-    :($name{T, $(FSA.parameters[3:end]...)})
-end
-@generated function similar{FSA <: FixedVectorNoTuple, T}(::Type{FSA}, ::Type{T}, n::Int)
-    name = basetype(FSA)
-    :($name{T, $(FSA.parameters[3:end]...)})
-end
+
+# Versions with defaults
+@pure similar_type{FSA <: FixedArray, T}(::Type{FSA}, ::Type{T}) = similar_type(FSA, T, size(FSA))
+@pure similar_type{FSA <: FixedArray}(::Type{FSA}, sz::Tuple) = similar_type(FSA, eltype(FSA), sz)
+
+# Convenience function
+@pure similar_type{FSA <: FixedArray, T}(::Type{FSA}, ::Type{T}, sz::Int...) = similar_type(FSA, T, sz)
+
 
 @generated function get_tuple{N, T}(f::FixedVectorNoTuple{N, T})
     :(tuple($(ntuple(i->:(f[$i]), N)...)))
@@ -158,7 +171,7 @@ promoted element type of the nested tuple `elements`.
 @generated function construct_similar{FSA <: FixedArray}(::Type{FSA}, elements::Tuple)
     etype = promote_type_nested(elements)
     shape = nested_Tuple_shape(elements)
-    outtype = similar(FSA, etype, shape)
+    outtype = similar_type(FSA, etype, shape)
     converted_elements = convert_nested_tuple_expr(etype, :elements, elements)
     constructor_expr(outtype, converted_elements)
 end
