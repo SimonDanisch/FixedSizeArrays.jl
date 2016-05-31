@@ -4,6 +4,8 @@ using FixedSizeArrays
 using FactCheck, Base.Test
 using Compat
 
+import FixedSizeArrays: similar_type
+
 immutable Normal{N, T} <: FixedVector{N, T}
     _::NTuple{N, T}
 end
@@ -18,13 +20,22 @@ immutable RGB{T} <: FixedVectorNoTuple{3, T}
         new{T}(a[1], a[2], a[3])
     end
 end
-function FixedSizeArrays.similar_type{FSA<:RGB,T}(::Type{FSA}, ::Type{T}, n::Tuple{Int})
+function similar_type{FSA<:RGB,T}(::Type{FSA}, ::Type{T}, n::Tuple{Int})
     n[1] == 3 ? RGB{T} : similar_type(FixedArray, T, n)
 end
 
 # subtyping:
 immutable TestType{N,T} <: FixedVector{N,T}
     _::NTuple{N,T}
+end
+
+# Test similar_type usage for custom FSA with non-parameterized size and eltype
+immutable Coord2D <: FixedVectorNoTuple{2,Float64}
+    x::Float64
+    y::Float64
+end
+function similar_type{T}(::Type{Coord2D}, ::Type{T}, n::Tuple{Int})
+    n[1] == 2 && T == Float64 ? Coord2D : similar_type(FixedArray, T, n)
 end
 
 
@@ -594,11 +605,15 @@ context("Ops") do
 		@fact isa(-v1, Vec3d) --> true
 	end
 
-	context("Negation") do
+	context("Addition") do
 		@fact @inferred(v1+v2) --> Vec3d(7.0,7.0,7.0)
+		@fact @inferred(RGB(1,2,3) + RGB(2,2,2)) --> exactly(RGB{Int}(3,4,5))
+		@fact @inferred(Coord2D(1,2) + Coord2D(3,4)) --> exactly(Coord2D(4,6))
 	end
-	context("Negation") do
+	context("Subtraction") do
 		@fact @inferred(v2-v1) --> Vec3d(5.0,3.0,1.0)
+		@fact @inferred(RGB(1,2,3) - RGB(2,2,2)) --> exactly(RGB{Int}(-1,0,1))
+		@fact @inferred(Coord2D(1,2) - Coord2D(3,4)) --> exactly(Coord2D(-2,-2))
 	end
 	context("Multiplication") do
 		@fact @inferred(v1.*v2) --> Vec3d(6.0,10.0,12.0)
@@ -606,6 +621,12 @@ context("Ops") do
 	context("Division") do
 		@fact @inferred(v1 ./ v1) --> Vec3d(1.0,1.0,1.0)
 	end
+
+	context("Relational") do
+	    @fact Vec(1,3) .< Vec(2,2) --> exactly(Vec{2,Bool}(true,false))
+	    @fact RGB(1,2,3) .< RGB(2,2,2) --> exactly(RGB{Bool}(true,false,false))
+	    @fact Coord2D(1,3) .< Coord2D(2,2) --> exactly(Vec{2,Bool}(true,false))
+        end
 
 	context("Scalar") do
 		@fact @inferred(1.0 + v1) --> Vec3d(2.0,3.0,4.0)
