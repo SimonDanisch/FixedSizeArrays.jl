@@ -78,14 +78,6 @@ done(A::FixedArray, state::Integer) = length(A) < state
     :($(T.name.primary))
 end
 
-if VERSION < v"0.5.0-dev+698"
-    macro pure(ex)
-        esc(ex)
-    end
-else
-    import Base: @pure
-end
-
 @pure function similar_type{FSA <: FixedArray, T}(::Type{FSA}, ::Type{T}, n::Tuple)
     # Exact match - return the same type again
     if eltype(FSA) == T && n == size(FSA)
@@ -101,12 +93,9 @@ end
     end
 end
 
-# Versions with defaults
+# Versions with defaulted eltype and size
 @pure similar_type{FSA <: FixedArray, T}(::Type{FSA}, ::Type{T}) = similar_type(FSA, T, size(FSA))
 @pure similar_type{FSA <: FixedArray}(::Type{FSA}, sz::Tuple) = similar_type(FSA, eltype(FSA), sz)
-
-# Convenience function
-@pure similar_type{FSA <: FixedArray, T}(::Type{FSA}, ::Type{T}, sz::Int...) = similar_type(FSA, T, sz)
 
 
 @generated function get_tuple{N, T}(f::FixedVectorNoTuple{N, T})

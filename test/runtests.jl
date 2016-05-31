@@ -132,7 +132,7 @@ context("core") do
     end
     context("similar_type") do
         @fact similar_type(Vec{3}, Float32) --> Vec{3, Float32}
-        @fact similar_type(Vec, Float32, 3) --> Vec{3, Float32}
+        @fact similar_type(Vec, Float32, (3,)) --> Vec{3, Float32}
 
         @fact similar_type(RGB, Float32) --> RGB{Float32}
         @fact similar_type(RGB{Float32}, Int) --> RGB{Int}
