@@ -936,6 +936,8 @@ context("Matrix Math") do
 			@fact isapprox(@inferred(mifs * vfs), vmi)  --> true
 			vmi = m * vi
 			@fact isapprox(@inferred(mfs * vifs), vmi)  --> true
+			# Custom vector types
+			@fact @inferred(eye(Mat{3,3,Float64}) * RGB{Int}(1,2,3)) --> exactly(RGB{Float64}(1,2,3))
 		end
 		context("Matrix{$i, $j, T} * Matrix{$j, $i, U}") do
 			mmi = mi * m2'
@@ -943,7 +945,6 @@ context("Matrix Math") do
 			mmi = m * mi2'
 			@fact isapprox(@inferred(mfs * mi2fs'), mmi)  --> true
 		end
-
 
 		if i == j
             context("(2*I + I*M)\\v") do

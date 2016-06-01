@@ -134,38 +134,20 @@ end
 
 immutable DotFunctor <: Functor{2} end
 call(::DotFunctor, a, b) = a'*b
-@inline dot{T, N}(a::FixedArray{T,1,Tuple{N}}, b::FixedArray{T,1,Tuple{N}}) = sum(map(DotFunctor(), a, b))
-@inline dot{T1, T2, N}(a::FixedArray{T1,1,Tuple{N}}, b::FixedArray{T2,1,Tuple{N}}) = sum(map(DotFunctor(), promote(a, b)...))
+@inline dot(a::FixedVector, b::FixedVector) = sum(map(DotFunctor(), a, b))
 
 immutable BilinearDotFunctor <: Functor{2} end
 call(::BilinearDotFunctor, a, b) = a*b
-@inline bilindot{T <: Union{FixedArray, Tuple}}(a::T, b::T) = sum(map(BilinearDotFunctor(), a, b))
-
-@inline bilindot{T, N}(a::FixedArray{T,1,Tuple{N}}, b::FixedArray{T,1,Tuple{N}}) = sum(map(DotFunctor(), a, b))
-@inline bilindot{T1, T2, N}(a::FixedArray{T1,1,Tuple{N}}, b::FixedArray{T2,1,Tuple{N}}) = sum(map(DotFunctor(), promote(a, b)...))
-
-@inline bilindot{T, N}(a::FixedArray{T,1,Tuple{N}}, b::NTuple{N,T}) = sum(map(DotFunctor(), a, b))
-@inline bilindot{T1, T2, N}(a::FixedArray{T1,1,Tuple{N}}, b::NTuple{N,T2}) = sum(map(DotFunctor(), promote(a, b)...))
-
-@inline bilindot{T, N}(a::NTuple{N,T}, b::FixedArray{T,1,Tuple{N}}) = sum(map(DotFunctor(), a, b))
-@inline bilindot{T1, T2, N}(a::NTuple{N,T1}, b::FixedArray{T2,1,Tuple{N}}) = sum(map(DotFunctor(), promote(a, b)...))
-
-
-@inline bilindot{T1, T2}(a::NTuple{1,T1}, b::NTuple{1,T2}) = @inbounds return a[1]*b[1]
-@inline bilindot{T1, T2}(a::NTuple{2,T1}, b::NTuple{2,T2}) = @inbounds return (a[1]*b[1] + a[2]*b[2])
-@inline bilindot{T1, T2}(a::NTuple{3,T1}, b::NTuple{3,T2}) = @inbounds return (a[1]*b[1] + a[2]*b[2] + a[3]*b[3])
-@inline bilindot{T1, T2}(a::NTuple{4,T1}, b::NTuple{4,T2}) = @inbounds return (a[1]*b[1] + a[2]*b[2] + a[3]*b[3]+a[4]*b[4])
-@inline bilindot{T1, T2, N}(a::NTuple{N,T1}, b::NTuple{N,T2}) = sum(map(DotFunctor(), promote(a, b)...))
-
-
+@inline bilindot(a::FixedVector, b::FixedVector) = sum(map(BilinearDotFunctor(), a, b))
 
 
 #cross{T}(a::FixedVector{2, T}, b::FixedVector{2, T}) = a[1]*b[2]-a[2]*b[1] # not really used!?
-@inline cross{T1 <: Number, T2 <: Number}(a::FixedVector{3, T1}, b::FixedVector{3, T2}) = @inbounds return similar(typeof(a), promote_type(T1, T2))(
-    a[2]*b[3]-a[3]*b[2],
-    a[3]*b[1]-a[1]*b[3],
-    a[1]*b[2]-a[2]*b[1]
-)
+@inline function cross{T1, T2}(a::FixedVector{3, T1}, b::FixedVector{3, T2})
+    @inbounds elements = (a[2]*b[3]-a[3]*b[2],
+                          a[3]*b[1]-a[1]*b[3],
+                          a[1]*b[2]-a[2]*b[1])
+    construct_similar(typeof(a), elements)
+end
 
 @inline norm{N, T}(a::FixedVector{N, T})     = sqrt(dot(a,a))
 @inline normalize{FSA <: FixedArray}(a::FSA) = a / norm(a)
@@ -279,28 +261,24 @@ chol{n,T<:Base.LinAlg.BlasFloat}(m::Mat{n,n,T}) = Mat{n,n,T}(full(Base.LinAlg.ch
 chol!(m::Mat, ::Type{UpperTriangular}) = chol(m)
 chol!(m::Mat, ::Type{Val{:U}}) = chol!(m, UpperTriangular)
 
-# Matrix
+# Matrix products
+# General shape mismatched versions are errors
 (*){T1, T2, M, N, O, K}(a::FixedMatrix{M, N, T1}, b::FixedMatrix{O, K, T2}) = throw(DimensionMismatch("$N != $O in $(typeof(a)) and $(typeof(b))"))
 (*){T1, T2, M, N, O}(a::FixedMatrix{M, N, T1}, b::FixedVector{O, T2}) = throw(DimensionMismatch("$N != $O in $(typeof(a)) and $(typeof(b))"))
-
+# vector * (row vector)
 @generated function *{T1, T2, N}(a::FixedVector{N, T1}, b::FixedMatrix{1, N, T2})
-    expr = Expr(:tuple, [Expr(:tuple, [:(a[$i] * b[$j]) for i in 1:N]...) for j in 1:N]...)
-    :( Mat($(expr)) )
+    elements = Expr(:tuple, [Expr(:tuple, [:(a[$i] * b[$j]) for i in 1:N]...) for j in 1:N]...)
+    :(construct_similar($b, $elements))
 end
-
-@generated function *{T1, T2, M, N}(a::Mat{M, N, T1}, b::FixedVectorNoTuple{N, T2})
-    oT = promote_type(T1, T2)
-    expr = [:(bilindot(row(a, $i), b)::$(oT)) for i=1:M]
-    :( Vec{$(M), $(oT)}($(expr...)))
+# matrix * vector
+@generated function *{T1, T2, M, N}(a::FixedMatrix{M, N, T1}, b::FixedVector{N, T2})
+    elements = Expr(:tuple, [Expr(:call, :+, [:(a[$i,$k]*b[$k]) for k = 1:N]...) for i in 1:M]...)
+    :(construct_similar($b, $elements))
 end
-
-@generated function *{T1, T2, M, N}(a::Mat{M, N, T1}, b::Vec{N,T2})
-    expr = [:(bilindot(row(a, $i), b._)) for i=1:M]
-    :( Vec($(expr...)) )
-end
-@generated function *{T1, T2, M, N, R}(a::Mat{M, N, T1}, b::Mat{N, R, T2})
-    expr = Expr(:tuple, [Expr(:tuple, [:(bilindot(row(a, $i), column(b,$j))) for i in 1:M]...) for j in 1:R]...)
-    :( Mat($(expr)) )
+# matrix * matrix
+@generated function *{T1, T2, M, N, R}(a::FixedMatrix{M, N, T1}, b::FixedMatrix{N, R, T2})
+    elements = Expr(:tuple, [Expr(:tuple, [Expr(:call, :+, [:(a[$i,$k]*b[$k,$j]) for k = 1:N]...) for i in 1:M]...) for j in 1:R]...)
+    :(construct_similar($a, $elements))
 end
 
 
