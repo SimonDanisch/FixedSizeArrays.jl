@@ -45,6 +45,91 @@ For some more advantages, you can take a look at [MeshIO](https://github.com/Jul
 Because it's so easy to define different types like Point3, RGB, HSV or Normal3, one can create customized code for these types via multiple dispatch. This is great for visualizing data, as you can offer default visualizations based on the type.
 Without FixedSizeArrays, this would end up in a lot of types which would all need to define the same functions over and over again.
 
+#### FixedArray abstract types
+
+The package provides several abstract types:
+
+  * `FixedArray{T,NDim,SIZE}` is the abstract base type for all fixed
+    arrays.  `T` and `NDim` mirror the eltype and number of dimension type
+    parameters in `AbstractArray`.  In addition there's a `SIZE` Tuple which
+    defines the extent of each fixed dimension as an integer.
+
+There's some convenient type aliases:
+
+  * `FixedVector{N,T}` is a convenient type alias for a one dimensional fixed
+    vector of length `N` and eltype `T`.
+  * `FixedMatrix{N,M,T}` is a convenient type alias for a two dimensional fixed
+    matrix of size `(N,M)` and eltype `T`.
+
+Finally there's an abstract type `FixedVectorNoTuple{N, T}` for use when you'd
+like to name the fields of a `FixedVector` explicitly rather than accessing them
+via an index.
+
+
+#### FixedArray concrete types
+
+The package currently provides three concrete FixedArray types
+
+  * `Vec{N,T}` is a length `N` vector of eltype `T`.
+  * `Mat{N,M,T}` is an `N×M` matrix of eltype `T`
+
+These two types are intended to behave the same as `Base.Vector` and
+`Base.Matrix`, but with fixed size.  That is, the interface is a convenient
+union of elementwise array-like functionality and vector space / linear algebra
+operations.  Hopefully we'll have more general higher dimensional fixed size
+containers in the future (note that the total number of elements of a higher
+dimensional container quickly grows beyond the size where having a fixed stack
+allocated container really makes sense).
+
+  * `Point{N,T}` is a position type which is structurally identical to `Vec{N,T}`.
+
+Semantically `Point{N,T}` should be used to represent position in an
+`N`-dimensional Cartesian space.  The distinction between this and `Vec` is
+particularly relevant when overloading functions which deal with geometric data.
+For instance, a geometric transformation applies differently depending on
+whether you're transforming a *position* (`Point`) versus a *direction* (`Vec`).
+
+
+#### User-supplied functions for FixedArray subtypes
+
+Most array functionality comes for free when inheriting from one of the abstract
+types `FixedArray`, `FixedVector`, `FixedMatrix`, or `FixedVectorNoTuple`.
+However, the user may want to overload a few things.  At the moment,
+`similar_type` is the main function you may want to customize.  The signature is
+
+```julia
+similar_type{FSA<:FixedArray, T, NDim}(::Type{FSA}, ::Type{T}, sz::NTuple{NDim,Int})
+```
+
+This is quite similar to `Base.similar` but the first argument is a type rather
+than a value.  Given a custom FixedArray type, eltype and size, this function
+should return a similar output type which will be used to store the results of
+elementwise operations, general `map()` invocations, etc.
+
+By default, `similar_type` introspects `FSA` to determine whether it can be
+reparameterized by both `eltype(FSA) == T` and `size(FSA) == sz`.  If not, the
+canonical concrete FixedArray type (a `Vec` or `Mat`) are returned by calling
+the fallback `similar_type(FixedArray, T, sz)`.  Sometimes this may not make
+sense for your custom FixedArray subtype.
+
+For example, suppose you define the type `RGB{T}` as above, and you'd prefer
+relational operators to return a `Vec{3,Bool}` as a mask rather than an
+`RGB{Bool}`.  In this case you could write something like:
+
+```julia
+function FixedSizeArrays.similar_type{FSA<:RGB,T}(::Type{FSA}, ::Type{T}, n::Tuple{Int})
+    n == (3,) && T != Bool ? RGB{T} : similar_type(FixedArray, T, n)
+end
+```
+
+We then have `RGB(1,2,3) .< RGB(2,2,2) === Vec{3,Bool}(true,false,false)`.
+
+Note that `similar_type` isn't type stable in julia-0.4.  For the internal
+use in `FixedSizeArrays` (type deduction inside `@generated` functions) this
+isn't a problem, but you may want to annotate your custom overlads with
+`Base.@pure` if you're using julia-0.5 and you want to use `similar_type` in a
+normal function.
+
 
 #### Roadmap
 * improve coverage

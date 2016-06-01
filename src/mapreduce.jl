@@ -124,12 +124,6 @@ end
 @generated function map{F<:FixedArray}(func, arg1::F)
     unrolled_map_expr(:func, SimilarTo{arg1}, size(F), (arg1,), (:arg1,))
 end
-# Unary versions for type conversion.  Need to override these explicitly to
-# prevent conflicts with Base.
-@inline map{T,N,S}(::Type{T}, arg1::FixedArray{T,N,S}) = arg1 # nop version
-immutable ConstructTypeFun{T}; end
-call{T}(::ConstructTypeFun{T}, x) = T(x)
-@inline map{T,FSA<:FixedArray}(::Type{T}, arg1::FSA) = map(ConstructTypeFun{T}(), similar(FSA, T), arg1)
 
 
 # Nullary special case version.

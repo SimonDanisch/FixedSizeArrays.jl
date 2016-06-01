@@ -9,24 +9,27 @@ import Base.LinAlg.chol!
 # for 0.5 and 0.4 compat, use our own functor type
 abstract Functor{N}
 
-include("core.jl")
-include("functors.jl")
-include("constructors.jl")
-
 if VERSION <= v"0.5.0"
     supertype(x) = super(x)
 end
+
+if VERSION < v"0.5.0-dev+698"
+    macro pure(ex)
+        esc(ex)
+    end
+else
+    import Base: @pure
+end
+
+include("core.jl")
+include("functors.jl")
+include("constructors.jl")
 
 # put them here due to #JuliaLang/julia#12814
 # needs to be before indexing and ops, but after constructors
 immutable Mat{Row, Column, T} <: FixedMatrix{Row, Column, T}
     _::NTuple{Column, NTuple{Row, T}}
 end
-function similar{FSA <: Mat, T}(::Type{FSA}, ::Type{T}, SZ::NTuple{2, Int})
-    Mat{SZ[1], SZ[2], T}
-end
-similar{FSA <: Mat}(::Type{FSA}, SZ::NTuple{2,Int}) = similar(FSA, eltype(FSA), SZ)
-similar{N,M,S, T}(::Type{Mat{N,M,S}}, ::Type{T}) = Mat{N,M,T}
 
 # most common FSA types
 immutable Vec{N, T} <: FixedVector{N, T}
@@ -70,6 +73,7 @@ export MutableFixedVector
 export MutableFixedMatrix
 export Mat, Vec, Point
 export @fsa
+export similar_type
 export construct_similar
 
 export unit

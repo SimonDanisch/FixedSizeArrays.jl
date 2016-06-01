@@ -4,6 +4,8 @@ using FixedSizeArrays
 using FactCheck, Base.Test
 using Compat
 
+import FixedSizeArrays: similar_type
+
 immutable Normal{N, T} <: FixedVector{N, T}
     _::NTuple{N, T}
 end
@@ -18,9 +20,16 @@ immutable RGB{T} <: FixedVectorNoTuple{3, T}
         new{T}(a[1], a[2], a[3])
     end
 end
+
 # subtyping:
 immutable TestType{N,T} <: FixedVector{N,T}
-    a::NTuple{N,T}
+    _::NTuple{N,T}
+end
+
+# Custom FSA with non-parameterized size and eltype
+immutable Coord2D <: FixedVectorNoTuple{2,Float64}
+    x::Float64
+    y::Float64
 end
 
 
@@ -115,16 +124,25 @@ context("core") do
 
         @fact ndims_or(FixedArray, nothing) --> nothing
     end
-    context("similar") do
-        @fact similar(Vec{3}, Float32) --> Vec{3, Float32}
-        @fact similar(Vec, Float32, 3) --> Vec{3, Float32}
 
-        @fact similar(RGB, Float32) --> RGB{Float32}
-        @fact similar(RGB{Float32}, Int) --> RGB{Int}
+    context("similar_type") do
+        @fact similar_type(Vec{3,Int}, Float32) --> Vec{3, Float32}
+        @fact similar_type(Vec{3}, Float32) --> Vec{3, Float32}
+        @fact similar_type(Vec, Float32, (3,)) --> Vec{3, Float32}
+        @fact similar_type(Vec, Float32, (1,2)) --> Mat{1,2, Float32}
 
-        @fact similar(Mat{3,3,Int}, Float32) --> Mat{3,3,Float32}
-        @fact similar(Mat, Float32, (3,3))   --> Mat{3,3,Float32}
-        @fact similar(Mat{2,2,Int}, (3,3))   --> Mat{3,3,Int}
+        @fact similar_type(RGB, Float32) --> RGB{Float32}
+        @fact similar_type(RGB{Float32}, Int) --> RGB{Int}
+        @fact similar_type(RGB{Float32}, Int, (3,)) --> RGB{Int}
+        @fact similar_type(RGB{Float32}, Int, (2,2)) --> Mat{2,2,Int}
+
+        @fact similar_type(Mat{3,3,Int}, Float32) --> Mat{3,3,Float32}
+        @fact similar_type(Mat, Float32, (3,3))   --> Mat{3,3,Float32}
+        @fact similar_type(Mat{2,2,Int}, (3,3))   --> Mat{3,3,Int}
+
+        @fact similar_type(Coord2D, Float64, (2,)) --> Coord2D
+        @fact similar_type(Coord2D, Int, (2,))     --> Vec{2,Int}
+        @fact similar_type(Coord2D, Float64, (3,)) --> Vec{3,Float64}
     end
 
     context("construct_similar") do
@@ -590,11 +608,15 @@ context("Ops") do
 		@fact isa(-v1, Vec3d) --> true
 	end
 
-	context("Negation") do
+	context("Addition") do
 		@fact @inferred(v1+v2) --> Vec3d(7.0,7.0,7.0)
+		@fact @inferred(RGB(1,2,3) + RGB(2,2,2)) --> exactly(RGB{Int}(3,4,5))
+		@fact @inferred(Coord2D(1,2) + Coord2D(3,4)) --> exactly(Coord2D(4,6))
 	end
-	context("Negation") do
+	context("Subtraction") do
 		@fact @inferred(v2-v1) --> Vec3d(5.0,3.0,1.0)
+		@fact @inferred(RGB(1,2,3) - RGB(2,2,2)) --> exactly(RGB{Int}(-1,0,1))
+		@fact @inferred(Coord2D(1,2) - Coord2D(3,4)) --> exactly(Coord2D(-2,-2))
 	end
 	context("Multiplication") do
 		@fact @inferred(v1.*v2) --> Vec3d(6.0,10.0,12.0)
@@ -602,6 +624,12 @@ context("Ops") do
 	context("Division") do
 		@fact @inferred(v1 ./ v1) --> Vec3d(1.0,1.0,1.0)
 	end
+
+	context("Relational") do
+	    @fact Vec(1,3) .< Vec(2,2) --> exactly(Vec{2,Bool}(true,false))
+	    @fact RGB(1,2,3) .< RGB(2,2,2) --> exactly(RGB{Bool}(true,false,false))
+	    @fact Coord2D(1,3) .< Coord2D(2,2) --> exactly(Vec{2,Bool}(true,false))
+        end
 
 	context("Scalar") do
 		@fact @inferred(1.0 + v1) --> Vec3d(2.0,3.0,4.0)
@@ -1145,7 +1173,7 @@ end
 
 facts("show for subtype") do
 
-    Base.show(io::IO, x::TestType) = print(io, "$(x.a)")  # show for new type
+    Base.show(io::IO, x::TestType) = print(io, "$(x._)")  # show for new type
 
     x = TestType(1, 2)
     @fact string(x) --> "(1,2)"
