@@ -30,7 +30,6 @@ include("constructors.jl")
 immutable Mat{Row, Column, T} <: FixedMatrix{Row, Column, T}
     _::NTuple{Column, NTuple{Row, T}}
 end
-@pure similar_type{FSA<:Mat,T}(::Type{FSA}, ::Type{T}, sz::NTuple{2, Int}) = Mat{sz[1], sz[2], T}
 
 # most common FSA types
 immutable Vec{N, T} <: FixedVector{N, T}
@@ -39,7 +38,6 @@ end
 immutable Point{N, T} <: FixedVector{N, T}
     _::NTuple{N, T}
 end
-@pure similar_type{FSA<:Point,T}(::Type{FSA}, ::Type{T}, sz::Tuple{Int}) = Point{sz[1],T}
 
 include("mapreduce.jl")
 include("destructure.jl")

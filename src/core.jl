@@ -78,22 +78,80 @@ done(A::FixedArray, state::Integer) = length(A) < state
     :($(T.name.primary))
 end
 
-@pure function similar_type{FSA <: FixedArray, T}(::Type{FSA}, ::Type{T}, n::Tuple)
-    # Exact match - return the same type again
-    if eltype(FSA) == T && n == size(FSA)
-        return FSA
-    end
-    # Fallback - return a standard FixedArray container by default
-    if length(n) == 1
-        return Vec{n[1],T}
-    elseif length(n) == 2
-        return Mat{n[1],n[2],T}
+"""
+    similar_type(::Type{FSA}, [::Type{T}=eltype(FSA)], [sz=size(FSA)])
+
+Given an array type `FSA`, element type `T` and size `sz`, return a `FixedArray`
+subtype which is as similar as possible.  `similar_type` is used in the same
+spirit as `Base.similar` to store the results of `map()` operations, etc.
+(`similar` cannot work here, because the types are generally immutable.)
+
+By default, `similar_type` introspects `FSA` to determine whether `T` and `sz`
+can be used; if not a canonical FixedArray container is returned instead.
+"""
+@pure function similar_type{T}(::Type{FixedArray}, ::Type{T}, sz::Tuple)
+    if length(sz) == 1
+        return Vec{sz[1],T}
+    elseif length(sz) == 2
+        return Mat{sz[1],sz[2],T}
     else
-        throw(ArgumentError("similar_type not implemented for size = $n"))
+        throw(ArgumentError("No built in FixedArray type is implemented for eltype $T and size $sz"))
     end
 end
 
-# Versions with defaulted eltype and size
+@pure function similar_type{FSA <: FixedArray, T}(::Type{FSA}, ::Type{T}, sz::Tuple)
+    fsa_size = fsa_abstract(FSA).parameters[3].parameters
+    if eltype(FSA) == T && fsa_size == sz
+        return FSA # Common case optimization
+    end
+
+    # The default implementation for similar_type is follows.  It involves a
+    # fair bit of crazy type introspection: We check whether the type `FSA` has
+    # the necessary type parameters to replace with `T` and `sz`, and if so
+    # figure out how to do the replacement.  It's complicated because users may
+    # arbitrarily rearrange type parameters in their subtypes, and possibly
+    # even add new type parameters which aren't related to the abstract
+    # FixedArray but should be preserved.
+
+    # Propagate the available type parameters of FSA down to the abstract base
+    # FixedArray as `TypeVar`s.
+    pritype = FSA.name.primary
+    fsatype = fsa_abstract(pritype)
+    T_parameter    = fsatype.parameters[1]
+    ndim_parameter = fsatype.parameters[2]
+    sz_parameter   = fsatype.parameters[3]
+    sz_parameters  = fsatype.parameters[3].parameters
+
+    # Figure out whether FSA can accommodate the new eltype `T` and size `sz`.
+    # If not, delegate to the fallback by default.
+    if !((eltype(FSA) == T          || isa(T_parameter,    TypeVar)) &&
+         (ndims(FSA)  == length(sz) || isa(ndim_parameter, TypeVar)) &&
+         (fsa_size    == sz         || all(i -> (sz[i] == fsa_size[i] || isa(sz_parameters[i],TypeVar)), 1:length(sz))))
+        return similar_type(FixedArray, T, sz)
+    end
+
+    # Iterate type parameters, replacing as necessary with T and sz
+    params = collect(FSA.parameters)
+    priparams = pritype.parameters
+    for i=1:length(params)
+        if priparams[i] === T_parameter
+            params[i] = T
+        elseif priparams[i] === ndim_parameter
+            params[i] = length(sz)
+        elseif priparams[i] === sz_parameter
+            params[i] = Tuple{sz...}
+        else
+            for j = 1:length(sz_parameters)
+                if priparams[i] === sz_parameters[j]
+                    params[i] = sz[j]
+                end
+            end
+        end
+    end
+    pritype{params...}
+end
+
+# similar_type versions with defaulted eltype and size
 @pure similar_type{FSA <: FixedArray, T}(::Type{FSA}, ::Type{T}) = similar_type(FSA, T, size(FSA))
 @pure similar_type{FSA <: FixedArray}(::Type{FSA}, sz::Tuple) = similar_type(FSA, eltype(FSA), sz)
 

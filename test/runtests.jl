@@ -20,22 +20,16 @@ immutable RGB{T} <: FixedVectorNoTuple{3, T}
         new{T}(a[1], a[2], a[3])
     end
 end
-function similar_type{FSA<:RGB,T}(::Type{FSA}, ::Type{T}, n::Tuple{Int})
-    n[1] == 3 ? RGB{T} : similar_type(FixedArray, T, n)
-end
 
 # subtyping:
 immutable TestType{N,T} <: FixedVector{N,T}
     _::NTuple{N,T}
 end
 
-# Test similar_type usage for custom FSA with non-parameterized size and eltype
+# Custom FSA with non-parameterized size and eltype
 immutable Coord2D <: FixedVectorNoTuple{2,Float64}
     x::Float64
     y::Float64
-end
-function similar_type{T}(::Type{Coord2D}, ::Type{T}, n::Tuple{Int})
-    n[1] == 2 && T == Float64 ? Coord2D : similar_type(FixedArray, T, n)
 end
 
 
@@ -130,16 +124,25 @@ context("core") do
 
         @fact ndims_or(FixedArray, nothing) --> nothing
     end
+
     context("similar_type") do
+        @fact similar_type(Vec{3,Int}, Float32) --> Vec{3, Float32}
         @fact similar_type(Vec{3}, Float32) --> Vec{3, Float32}
         @fact similar_type(Vec, Float32, (3,)) --> Vec{3, Float32}
+        @fact similar_type(Vec, Float32, (1,2)) --> Mat{1,2, Float32}
 
         @fact similar_type(RGB, Float32) --> RGB{Float32}
         @fact similar_type(RGB{Float32}, Int) --> RGB{Int}
+        @fact similar_type(RGB{Float32}, Int, (3,)) --> RGB{Int}
+        @fact similar_type(RGB{Float32}, Int, (2,2)) --> Mat{2,2,Int}
 
         @fact similar_type(Mat{3,3,Int}, Float32) --> Mat{3,3,Float32}
         @fact similar_type(Mat, Float32, (3,3))   --> Mat{3,3,Float32}
         @fact similar_type(Mat{2,2,Int}, (3,3))   --> Mat{3,3,Int}
+
+        @fact similar_type(Coord2D, Float64, (2,)) --> Coord2D
+        @fact similar_type(Coord2D, Int, (2,))     --> Vec{2,Int}
+        @fact similar_type(Coord2D, Float64, (3,)) --> Vec{3,Float64}
     end
 
     context("construct_similar") do

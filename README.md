@@ -103,35 +103,32 @@ similar_type{FSA<:FixedArray, T, NDim}(::Type{FSA}, ::Type{T}, sz::NTuple{NDim,I
 
 This is quite similar to `Base.similar` but the first argument is a type rather
 than a value.  Given a custom FixedArray type, eltype and size, this function
-should return a similar output type which will be used to store the results of a
-elementwise operations, general `map()` invocation, etc.
+should return a similar output type which will be used to store the results of
+elementwise operations, general `map()` invocations, etc.
 
-By default, `similar_type` returns the input type `FSA` if both `eltype(FSA) == T`
-and `size(FSA) == sz`.  If not, the canonical concrete FixedArray type (a `Vec`
-or `Mat`) are returned.  If your custom FixedArray subtype is parameterized on
-size or eltype this may not be the right thing.
+By default, `similar_type` introspects `FSA` to determine whether it can be
+reparameterized by both `eltype(FSA) == T` and `size(FSA) == sz`.  If not, the
+canonical concrete FixedArray type (a `Vec` or `Mat`) are returned by calling
+the fallback `similar_type(FixedArray, T, sz)`.  Sometimes this may not make
+sense for your custom FixedArray subtype.
 
-For example, suppose you define the type `RGB{T}` as above.  This inherently has
-a fixed size but variable eltype.  Perhaps you want mixed operations with
-`RGB{Int}` and `RGB{Float64}` to return an `RGB{Float64}`.  In this case you
-should write something like:
+For example, suppose you define the type `RGB{T}` as above, and you'd prefer
+relational operators to return a `Vec{3,Bool}` as a mask rather than an
+`RGB{Bool}`.  In this case you could write something like:
 
 ```julia
-function FixedSizeArrrays.similar_type{FSA<:RGB,T}(::Type{FSA}, ::Type{T}, n::Tuple{Int})
-    n[1] == 3 ? RGB{T} : similar_type(FixedArray, T, n)
+function FixedSizeArrays.similar_type{FSA<:RGB,T}(::Type{FSA}, ::Type{T}, n::Tuple{Int})
+    n == (3,) && T != Bool ? RGB{T} : similar_type(FixedArray, T, n)
 end
 ```
 
-We then have `RGB(1,2,3) + RGB(1.0,1.0,1.0) === RGB(2.0,3.0,4.0)`, but also more
-exotic things, such as `RGB(1,2,3) + RGB(1.0im,1.0im,1.0im) === RGB(1.0 +
-1.0im,2.0 + 1.0im,3.0 + 1.0im)`.  More usefully, this all works with types such
-as `Dual{T}` from DualNumbers which allows derivative information to be
-naturally propagated in FixedArray elements.
+We then have `RGB(1,2,3) .< RGB(2,2,2) === Vec{3,Bool}(true,false,false)`.
 
-Note that `similar_type` as written above isn't type stable.  For the internal
+Note that `similar_type` isn't type stable in julia-0.4.  For the internal
 use in `FixedSizeArrays` (type deduction inside `@generated` functions) this
-isn't a problem, but you may want to annotate it with `Base.@pure` if you're
-using julia-0.5 and you want to use `similar_type` in a normal function.
+isn't a problem, but you may want to annotate your custom overlads with
+`Base.@pure` if you're using julia-0.5 and you want to use `similar_type` in a
+normal function.
 
 
 #### Roadmap
