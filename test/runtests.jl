@@ -470,6 +470,7 @@ end
 
 v2 = Vec(6.0,5.0,4.0)
 v1 = Vec(1.0,2.0,3.0)
+vi = Vec(1,2,3)
 v2 = Vec(6.0,5.0,4.0)
 v1c = Vec(6.0+3.0im,5.0-2im,4.0+0.0im)
 v2c = v1 + v2*im
@@ -621,6 +622,9 @@ context("Ops") do
 	context("Multiplication") do
 		@fact @inferred(v1.*v2) --> Vec3d(6.0,10.0,12.0)
 	end
+    context("Mixed Type Multiplication") do
+		@fact @inferred(vi.*v2) --> Vec3d(6.0,10.0,12.0)
+	end
 	context("Division") do
 		@fact @inferred(v1 ./ v1) --> Vec3d(1.0,1.0,1.0)
 	end
@@ -688,6 +692,9 @@ context("Ops") do
         # cross product
         @fact cross(v1,v2) --> Vec3d(-7.0,14.0,-7.0)
         @fact isa(cross(v1,v2),Vec3d)  --> true
+
+        @fact cross(vi,v2) --> Vec3d(-7.0,14.0,-7.0)
+        @fact isa(cross(vi,v2),Vec3d)  --> true
     end
 
     context("hypot") do
@@ -903,6 +910,13 @@ context("Matrix Math") do
         m2fs = Mat(m2)
         mfsc = Mat(mc)
 
+        vi = randperm(j)
+        mi = reshape(randperm(i*j), i, j)
+        mi2 = reshape(randperm(i*j), i, j)
+        vifs = Vec(vi)
+        mifs = Mat(mi)
+        mi2fs = Mat(mi2)
+
 		context("Matrix{$i, $j} * Vector{$j}") do
 			vm = m * v
 			@fact isapprox(@inferred(mfs * vfs), vm)  --> true
@@ -916,6 +930,22 @@ context("Matrix Math") do
 			@fact isapprox(@inferred(m*(2I)), mm)  --> true
 		end
 
+		# test different element types
+		context("Matrix{$i, $j, T} * Vector{$j, U}") do
+			vmi = mi * v
+			@fact isapprox(@inferred(mifs * vfs), vmi)  --> true
+			vmi = m * vi
+			@fact isapprox(@inferred(mfs * vifs), vmi)  --> true
+			# Custom vector types
+			@fact @inferred(eye(Mat{3,3,Float64}) * RGB{Int}(1,2,3)) --> exactly(RGB{Float64}(1,2,3))
+		end
+		context("Matrix{$i, $j, T} * Matrix{$j, $i, U}") do
+			mmi = mi * m2'
+			@fact isapprox(@inferred(mifs * m2fs'), mmi)  --> true
+			mmi = m * mi2'
+			@fact isapprox(@inferred(mfs * mi2fs'), mmi)  --> true
+		end
+
 		if i == j
             context("(2*I + I*M)\\v") do
 			    mm = (2*I+I*m) \ v
@@ -926,11 +956,11 @@ context("Matrix Math") do
 				fmm = det(mfs)
 				@fact isapprox(fmm, mm)  --> true
 			end
-                        context("trace(M)") do
-                                mm = trace(m)
-                                fmm = trace(mfs)
-                                @fact isapprox(fmm, mm)  --> true
-                        end
+            context("trace(M)") do
+				mm = trace(m)
+				fmm = trace(mfs)
+				@fact isapprox(fmm, mm)  --> true
+            end
 			context("inv(M)") do
 				mm = inv(m)
 				fmm = inv(mfs)
@@ -964,7 +994,6 @@ context("Matrix Math") do
                 @fact_throws DimensionMismatch mfs * mfs
             end
         end
-
 		context("transpose M") do
 			mm = m'
 			fmm = mfs'
@@ -1009,13 +1038,16 @@ end
 
 
 ac = rand(3)
+aci = randperm(3)
 bc = rand(3)
+
 
 a = rand(4)
 b = rand(4)
 c = rand(4,4)
 
 d = cross(ac, bc)
+di = cross(aci, bc)
 d2 = a+b
 f = c*a
 g = c*b
@@ -1026,6 +1058,7 @@ k = abs(f)
 l = abs(-f)
 
 acfs = Vec(ac)
+acifs = Vec(aci)
 bcfs = Vec(bc)
 
 afs = Vec(a)
@@ -1033,6 +1066,7 @@ bfs = Vec(b)
 cfs = Mat(c)
 
 dfs = cross(acfs, bcfs)
+difs = cross(acifs, bcfs)
 d2fs = afs+bfs
 ffs = cfs*afs
 gfs = cfs*bfs
@@ -1058,6 +1092,7 @@ context("Vector Math") do
         @fact isapprox(cfs, c) --> true
 
         @fact isapprox(dfs, d) --> true
+        @fact isapprox(difs, di) --> true
         @fact isapprox(d2fs, d2) --> true
         @fact isapprox(ffs, f) --> true
         @fact isapprox(gfs, g) --> true
