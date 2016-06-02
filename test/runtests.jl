@@ -920,10 +920,14 @@ context("Matrix Math") do
 		context("Matrix{$i, $j} * Vector{$j}") do
 			vm = m * v
 			@fact isapprox(@inferred(mfs * vfs), vm)  --> true
+            @fact isapprox(@inferred(Matrix(mfs) * vfs), vm)  --> true
+            @fact isapprox(@inferred(mfs * Vector(vfs)), vm)  --> true
 		end
         context("Matrix{$i, $j} * Matrix{$j, $i}") do
 			mm = m * m2'
 			@fact isapprox(@inferred(mfs * m2fs'), mm)  --> true
+            @fact isapprox(@inferred(Matrix(mfs) * m2fs'), mm)  --> true
+            @fact isapprox(@inferred(mfs * Matrix(m2fs')), mm)  --> true
 		end
         context("Matrix{$i, $j}*(2I)") do
 			mm = m*(2)
