@@ -16,9 +16,6 @@ immutable RGB{T} <: FixedVectorNoTuple{3, T}
     r::T
     g::T
     b::T
-    function RGB(a::NTuple{3, T})
-        new{T}(a[1], a[2], a[3])
-    end
 end
 
 # subtyping:
@@ -234,6 +231,7 @@ context("Constructor FixedVectorNoTuple") do
             @fact RGB(["0.222", "9.8822", "29.999"]) --> RGB{Float64}(0.222, 9.8822, 29.999)
             @fact typeof(map(RGB{Float32}, x))  --> Vector{RGB{Float32}}
             @fact RGB{T}(r)                     --> RGB(r,r,r)
+            @fact RGB{T}(Vec(r,r,r))            --> RGB(r,r,r)
             @fact RGB{T}([r,r,r])               --> RGB(r,r,r)
             @fact length(RGB{T}([r,r,r]))       --> 3
             @fact length(RGB{T})                --> 3
