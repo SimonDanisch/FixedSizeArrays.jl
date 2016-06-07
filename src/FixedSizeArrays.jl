@@ -1,8 +1,6 @@
 __precompile__(true)
 module FixedSizeArrays
 
-using Compat
-
 importall Base
 import Base.LinAlg.chol!
 
@@ -83,6 +81,7 @@ export @fslice
 export destructure
 
 
+include("userimg_fsa.jl")
 
 
 
