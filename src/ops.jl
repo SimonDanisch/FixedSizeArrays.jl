@@ -275,12 +275,27 @@ end
     elements = Expr(:tuple, [Expr(:call, :+, [:(a[$i,$k]*b[$k]) for k = 1:N]...) for i in 1:M]...)
     :(construct_similar($b, $elements))
 end
+function *(a::AbstractMatrix, b::FixedVector)
+    a*Vector(b)
+end
+@generated function *{T1, T2, M, N}(a::FixedMatrix{M, N, T1}, b::AbstractVector{T2})
+    elements = Expr(:tuple, [Expr(:call, :+, [:(a[$i,$k]*b[$k]) for k = 1:N]...) for i in 1:M]...)
+    quote
+        length(b) == $N || throw(DimensionMismatch("$b is wrong size - expecting vector of length $N"))
+        @inbounds return Vec($elements)
+    end
+end
 # matrix * matrix
 @generated function *{T1, T2, M, N, R}(a::FixedMatrix{M, N, T1}, b::FixedMatrix{N, R, T2})
     elements = Expr(:tuple, [Expr(:tuple, [Expr(:call, :+, [:(a[$i,$k]*b[$k,$j]) for k = 1:N]...) for i in 1:M]...) for j in 1:R]...)
     :(construct_similar($a, $elements))
 end
-
+function *(a::AbstractMatrix, b::FixedMatrix)
+    a*Matrix(b)
+end
+function *(a::FixedMatrix, b::AbstractMatrix)
+    Matrix(a)*b
+end
 
 function (==)(a::FixedVectorNoTuple, b::FixedVectorNoTuple)
     s_a = size(a)
