@@ -155,6 +155,11 @@ end
 @pure similar_type{FSA <: FixedArray, T}(::Type{FSA}, ::Type{T}) = similar_type(FSA, T, size(FSA))
 @pure similar_type{FSA <: FixedArray}(::Type{FSA}, sz::Tuple) = similar_type(FSA, eltype(FSA), sz)
 
+# Deprecated similar() -> similar_type()
+function similar{FSA <: FixedArray}(::Type{FSA}, args...)
+    Base.depwarn("similar{FSA<:FixedArray}(::Type{FSA}, ...) is deprecated, use similar_type instead", :similar)
+    similar_type(FSA, args...)
+end
 
 @generated function get_tuple{N, T}(f::FixedVectorNoTuple{N, T})
     :(tuple($(ntuple(i->:(f[$i]), N)...)))
