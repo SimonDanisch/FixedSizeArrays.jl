@@ -103,6 +103,10 @@ E.g. 1, 2f0, 4.0
 end
 
 @generated function call{FSV <: FixedVectorNoTuple, N}(::Type{FSV}, a::FixedVector{N})
+    if length(FSV) != N
+        message = "length($FSV) != length($a))"
+        return :(throw(DimensionMismatch($message)))
+    end
     return Expr(:call, FSV, ntuple(i->:(a[$i]), N)...)
 end
 
