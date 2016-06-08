@@ -20,9 +20,6 @@ immutable RGB{T} <: FixedVectorNoTuple{3, T}
     r::T
     g::T
     b::T
-    function RGB(a::NTuple{3, T}) #needs to be like this to keep constructor code sane
-        new{T}(a[1], a[2], a[3])
-    end
 end
 immutable Vec{N, T} <: FixedVector{N, T} # defined in FixedSizeArrays already
     _::NTuple{N, T}
