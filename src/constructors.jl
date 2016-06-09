@@ -17,24 +17,24 @@ fill_tuples{N}(inner, SZ::NTuple{N, Int}) = _fill_tuples(inner, SZ, SZ)
 Constructors for homogenous non tuple arguments
 Is unrolled for the first 4, since a::T... leads to slow performance
 =#
-#call{FSA <: FixedArray, T}(::Type{FSA}, a::T) = FSA(NTuple{1,T}((a,)))
-call{FSA <: FixedArray, T}(::Type{FSA}, a::T, b::T) = FSA(NTuple{2,T}((a,b)))
-call{FSA <: FixedArray, T}(::Type{FSA}, a::T, b::T, c::T) = FSA(NTuple{3,T}((a,b,c)))
-call{FSA <: FixedArray, T}(::Type{FSA}, a::T, b::T, c::T, d::T) = FSA(NTuple{4,T}((a,b,c,d)))
-call{FSA <: FixedArray, T}(::Type{FSA}, a::T...) = FSA(a)
+#@compat (::Type{FSA}){FSA <: FixedArray, T}(a::T) = FSA(NTuple{1,T}((a,)))
+@compat (::Type{FSA}){FSA <: FixedArray, T}(a::T, b::T) = FSA(NTuple{2,T}((a,b)))
+@compat (::Type{FSA}){FSA <: FixedArray, T}(a::T, b::T, c::T) = FSA(NTuple{3,T}((a,b,c)))
+@compat (::Type{FSA}){FSA <: FixedArray, T}(a::T, b::T, c::T, d::T) = FSA(NTuple{4,T}((a,b,c,d)))
+@compat (::Type{FSA}){FSA <: FixedArray, T}(a::T...) = FSA(a)
 
 immutable ParseFunctor{T, S <: AbstractString} <: Functor{1}
     t::Type{T}
     a::Vector{S}
 end
-call{T}(pf::ParseFunctor{T}, i::Int) = parse(T, pf.a[i])
-call(pf::ParseFunctor{Void}, i::Int) = parse(pf.a[i])
+@compat (pf::ParseFunctor{T}){T}(i::Int) = parse(T, pf.a[i])
+@compat (pf::ParseFunctor{Void})(i::Int) = parse(pf.a[i])
 
 
 """
 Constructs a fixedsize array from a Base.Array
 """
-@generated function call{FSA <: FixedArray, T <: Array}(::Type{FSA}, a::T)
+@compat @generated function (::Type{FSA}){FSA <: FixedArray, T <: Array}(a::T)
     if eltype(a) <: AbstractString
         ElType = eltype_or(FSA, Void)
         # can't be defined in another method as it leads to lots of ambiguity with the default constructor
@@ -60,7 +60,7 @@ Constructor for singular arguments.
 Can be a tuple, is not declared as that, because it will generate ambiguities
 and overwrites the default constructor.
 """
-@generated function call{FSA <: FixedArray, X}(::Type{FSA}, a::X)
+@compat @generated function (::Type{FSA}){FSA <: FixedArray, X}(a::X)
     ND = ndims(FSA)
     if X <: Tuple
         types_svec = a.parameters
@@ -94,7 +94,7 @@ end
 Constructors for heterogenous multiple arguments.
 E.g. 1, 2f0, 4.0
 """
-@generated function call{FSA <: FixedArray}(::Type{FSA}, a...)
+@compat @generated function (::Type{FSA}){FSA <: FixedArray}(a...)
     SZ     = size_or(FSA, (length(a),))
     ElType = eltype_or(FSA, promote_type(a...))
     all(x-> x <: Tuple, a) && return :( $FSA(a) ) # TODO be smarter about this
@@ -102,7 +102,7 @@ E.g. 1, 2f0, 4.0
     return :($FSA(a))
 end
 
-@generated function call{FSV <: FixedVectorNoTuple, N}(::Type{FSV}, a::FixedVector{N})
+@compat @generated function (::Type{FSV}){FSV <: FixedVectorNoTuple, N}(a::FixedVector{N})
     if length(FSV) != N
         message = "length($FSV) != length($a))"
         return :(throw(DimensionMismatch($message)))
@@ -114,7 +114,7 @@ end
 Construction from other FixedSizeArrays + X arguments
 E.g. Vec4f0(Vec3f0(1), 0)
 """
-@generated function call{FSA <: FixedArray, T1 <: FixedArray}(::Type{FSA}, a::T1, b...)
+@compat @generated function (::Type{FSA}){FSA <: FixedArray, T1 <: FixedArray}(a::T1, b...)
     if isempty(b) # this is the conversion constructor for 2 FSA's
         #easiest way is to just construct from the tuple
         expr = :(FSA(get_tuple(a)))
