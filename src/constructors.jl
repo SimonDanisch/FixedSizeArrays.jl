@@ -1,8 +1,8 @@
 
 _fill_tuples_expr(inner::Function, SZ::Tuple{Int}, inds...) =
-    :(tuple($(ntuple(i->inner(i, inds...), SZ[1])...)))
+    Expr(:tuple, ntuple(i->inner(i, inds...), SZ[1])...)
 _fill_tuples_expr{N}(inner::Function, SZ::NTuple{N, Int}, inds...) =
-    :(tuple($(ntuple(i->_fill_tuples_expr(inner, SZ[1:end-1], i, inds...),SZ[end])...)))
+    Expr(:tuple, ntuple(i->_fill_tuples_expr(inner, SZ[1:end-1], i, inds...),SZ[end])...)
 fill_tuples_expr(inner::Function, SZ::Tuple) = _fill_tuples_expr(inner, SZ)
 
 
@@ -83,7 +83,11 @@ and overwrites the default constructor.
     else
         expr = fill_tuples_expr((inds...)->:($T(a)), SZ)
     end
-    return :($FSAT($expr))
+    if FSAT <: FixedVectorNoTuple
+        return Expr(:call, FSAT, expr.args...)
+    else
+        return :($FSAT($expr))
+    end
 end
 
 """
@@ -96,6 +100,14 @@ E.g. 1, 2f0, 4.0
     all(x-> x <: Tuple, a) && return :( $FSA(a) ) # TODO be smarter about this
     any(x-> x != ElType, a) && return :($FSA(map($ElType, a)))
     return :($FSA(a))
+end
+
+@generated function call{FSV <: FixedVectorNoTuple, N}(::Type{FSV}, a::FixedVector{N})
+    if length(FSV) != N
+        message = "length($FSV) != length($a))"
+        return :(throw(DimensionMismatch($message)))
+    end
+    return Expr(:call, FSV, ntuple(i->:(a[$i]), N)...)
 end
 
 """

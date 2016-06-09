@@ -162,7 +162,7 @@ function similar{FSA <: FixedArray}(::Type{FSA}, args...)
 end
 
 @generated function get_tuple{N, T}(f::FixedVectorNoTuple{N, T})
-    :(tuple($(ntuple(i->:(f[$i]), N)...)))
+    return Expr(:tuple, ntuple(i->:(f[$i]), N)...)
 end
 function get_tuple(f::FixedArray)
     f._
@@ -227,5 +227,3 @@ promoted element type of the nested tuple `elements`.
     converted_elements = convert_nested_tuple_expr(etype, :elements, elements)
     constructor_expr(outtype, converted_elements)
 end
-
-
