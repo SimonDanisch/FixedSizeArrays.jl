@@ -11,9 +11,9 @@ immutable MaxFunctor <: Functor{2} end
 immutable MinFunctor <: Functor{2} end
 immutable ExtremaFun <: Functor{2} end
 
-call(::MaxFunctor, a, b) = max(a, b)
-call(::MinFunctor, a, b) = min(a, b)
-call(::ExtremaFun, reducevalue, a) = min(reducevalue[1], a), max(reducevalue[2], a)
+@compat (::MaxFunctor)(a, b) = max(a, b)
+@compat (::MinFunctor)(a, b) = min(a, b)
+@compat (::ExtremaFun)(reducevalue, a) = min(reducevalue[1], a), max(reducevalue[2], a)
 
 minimum{T <: FixedArray}(a::Vector{T}) = reduce(MinFunctor(), a)
 maximum{T <: FixedArray}(a::Vector{T}) = reduce(MaxFunctor(), a)
