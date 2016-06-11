@@ -116,7 +116,7 @@ function promote_rule{N, T, X<:Number}(::Type{Vec{N,T}}, ::Type{X})
     Vec{N, promote_type(T, X)}
 end
 
-@inline ctranspose{R, C, T}(a::Mat{R, C, T}) = Mat(ntuple(CRowFunctor(a), Val{R}))
+@inline ctranspose{R, C, T}(a::Mat{R, C, T}) = Mat{C,R,T}(ntuple(CRowFunctor(a), Val{R}))
 @generated function ctranspose{N,T}(b::Vec{N,T})
     expr = [:(b._[$i]',) for i=1:N]
     return quote
