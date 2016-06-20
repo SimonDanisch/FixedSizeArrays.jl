@@ -5,6 +5,8 @@ using Compat
 
 importall Base
 import Base.LinAlg.chol!
+import Base.LinAlg._chol!
+
 
 # for 0.5 and 0.4 compat, use our own functor type
 abstract Functor{N}
