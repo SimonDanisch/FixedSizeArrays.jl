@@ -593,8 +593,9 @@ context("Indexing") do
             rgb = RGB{Int}[RGB(i,2*i,3*i) for i=1:10]
 
             @fslice rgb[:r,:] = -1
+            @fslice rgb[:g,:] .+= 1
             @fslice rgb[3,:] = -3
-            @fact rgb --> RGB{Int}[RGB(-1,2*i,-3) for i=1:10]
+            @fact rgb --> RGB{Int}[RGB(-1,2*i+1,-3) for i=1:10]
         end
     end
 end

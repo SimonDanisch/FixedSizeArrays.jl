@@ -48,32 +48,36 @@ end
 #
 # Also works on the left side of an assignment
 function fixed_slice_expr(expr)
-    assignrhs = nothing
-    if expr.head == :(=)
-        @assert length(expr.args) == 2
-        assignrhs = expr.args[2]
-        expr = expr.args[1]
+    assignexpr = nothing
+    if expr.head == :ref
+        refexpr = expr
+    else
+        refexpr = expr.args[1]
+        assignexpr = Expr(expr.head, nothing, expr.args[2:end]...)
     end
-    expr.head == :ref || error("Array reference not found in expression $expr")
+    refexpr.head == :ref || error("Array reference not found in expression $expr")
+
     inds = Any[]
-    name = expr.args[1]
-    for i = 2:length(expr.args)
-        ind = expr.args[i]
+    name = refexpr.args[1]
+    for i = 2:length(refexpr.args)
+        ind = refexpr.args[i]
         if isa(ind,Expr) && ind.head == :quote
             push!(inds, :(fieldindex(eltype(tmp), $(esc(ind)))))
         else
             push!(inds, esc(ind))
         end
     end
-    if assignrhs === nothing
+    if assignexpr === nothing
         quote
             tmp = $(esc(name))
             destructure(tmp)[$(inds...)]
         end
     else
+        assignexpr.args[1] = :(destructure(tmp)[$(inds...)])
+        assignexpr.args[2] = esc(assignexpr.args[2])
         quote
             tmp = $(esc(name))
-            destructure(tmp)[$(inds...)] = $(esc(assignrhs))
+            $assignexpr
         end
     end
 end
