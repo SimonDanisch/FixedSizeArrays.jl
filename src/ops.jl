@@ -248,7 +248,7 @@ function lyap{T}(a::Mat{2, 2, T}, c::Mat{2, 2, T})
 end
 lyap{m,T}(a::Mat{m,m,T},c::Mat{m,m,T}) = Mat(lyap(Matrix(a),Matrix(c)))
 
-chol{T<:Base.LinAlg.BlasFloat}(m::Mat{1, 1, T}) = Mat{1,1,T}(chol(m[1,1]))
+chol{T<:Base.LinAlg.BlasFloat}(m::Mat{1, 1, T}) = Mat{1,1}(chol(m[1,1]))
 function chol{T<:Base.LinAlg.BlasFloat}(m::Mat{2,2,T})
     m[1,2]==m[2,1]' || error("Matrix not symmetric")
     l11 = chol(m[1,1])
@@ -258,8 +258,9 @@ function chol{T<:Base.LinAlg.BlasFloat}(m::Mat{2,2,T})
     )
 end
 chol{n,T<:Base.LinAlg.BlasFloat}(m::Mat{n,n,T}) = Mat{n,n,T}(full(Base.LinAlg.chol!(Matrix(m))))
-chol!(m::Mat, ::Type{UpperTriangular}) = chol(m)
-chol!(m::Mat, ::Type{Val{:U}}) = chol!(m, UpperTriangular)
+chol!(m::Mat, ::Type{UpperTriangular}) = chol(m) # for 0.4
+_chol!(m::Mat, ::Type{UpperTriangular}) = chol(m) # for 0.5
+chol!(m::Mat, ::Type{Val{:U}}) = chol!(m, UpperTriangular) # for pre-0.5
 
 # Matrix products
 # General shape mismatched versions are errors
@@ -297,6 +298,8 @@ function *(a::FixedMatrix, b::AbstractMatrix)
     Matrix(a)*b
 end
 
+
+# Predicates
 function (==)(a::FixedVectorNoTuple, b::FixedVectorNoTuple)
     s_a = size(a)
     s_b = size(b)
@@ -321,6 +324,16 @@ function (==)(a::FixedArray, b::AbstractArray)
 end
 
 (==)(a::AbstractArray, b::FixedArray) = b == a
+
+isinteger{FSA<:FixedArray}(A::FSA) = all(isinteger, A)
+isinteger{T<:Integer}(A::FixedArray{T}) = true
+
+isreal{FSA<:FixedArray}(A::FSA) = all(isreal, A)
+isreal{T<:Real}(A::FixedArray{T}) = true
+
+ishermitian{FSA<:FixedMatrix}(A::FSA) = (A == A')
+
+
 
 # To support @test_approx_eq
 Base.Test.approx_full(a::FixedArray) = a
