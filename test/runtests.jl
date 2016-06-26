@@ -686,14 +686,19 @@ context("Ops") do
                 @fact @inferred(0.2f0*a) --> Vec{1,Float32}(3.2f0*0.2f0)
 	end
     context("vector norm+cross product") do
+
         @fact norm(Vec3d(1.0,2.0,2.0)) --> 3.0
 
         # cross product
         @fact cross(v1,v2) --> Vec3d(-7.0,14.0,-7.0)
-        @fact isa(cross(v1,v2),Vec3d)  --> true
+        @fact isa(cross(v1,v2), Vec3d)  --> true
 
         @fact cross(vi,v2) --> Vec3d(-7.0,14.0,-7.0)
         @fact isa(cross(vi,v2),Vec3d)  --> true
+        
+        a,b = Vec2d(0,1), Vec2d(1,0)
+        @fact cross(a,b) --> -1.0
+        @fact isa(cross(a,b), Float64) --> true
     end
 
     context("hypot") do
