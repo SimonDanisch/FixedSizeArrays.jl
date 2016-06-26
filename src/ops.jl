@@ -118,14 +118,14 @@ end
 
 @inline ctranspose{R, C, T}(a::Mat{R, C, T}) = Mat{C,R,T}(ntuple(CRowFunctor(a), Val{R}))
 @generated function ctranspose{N,T}(b::Vec{N,T})
-    expr = [:(b._[$i]',) for i=1:N]
+    expr = [:(Tuple(b)[$i]',) for i=1:N]
     return quote
         Mat{1,N,T}($(expr...))
     end
 end
 @inline transpose{R, C, T}(a::Mat{R, C, T}) = Mat(ntuple(RowFunctor(a), Val{R}))
 @generated function transpose{N,T}(b::Vec{N,T})
-    expr = [:(transpose(b._[$i]),) for i=1:N]
+    expr = [:(transpose(Tuple(b)[$i]),) for i=1:N]
     return quote
         Mat{1,N,T}($(expr...))
     end
@@ -141,7 +141,9 @@ immutable BilinearDotFunctor <: Functor{2} end
 @inline bilindot(a::FixedVector, b::FixedVector) = sum(map(BilinearDotFunctor(), a, b))
 
 
-#cross{T}(a::FixedVector{2, T}, b::FixedVector{2, T}) = a[1]*b[2]-a[2]*b[1] # not really used!?
+function cross{T}(a::FixedVector{2, T}, b::FixedVector{2, T})
+    return a[1]*b[2]-a[2]*b[1]
+end
 @inline function cross{T1, T2}(a::FixedVector{3, T1}, b::FixedVector{3, T2})
     @inbounds elements = (a[2]*b[3]-a[3]*b[2],
                           a[3]*b[1]-a[1]*b[3],
@@ -309,10 +311,10 @@ function (==)(a::FixedVectorNoTuple, b::FixedVectorNoTuple)
     end
     true
 end
-(==)(a::FixedArray, b::FixedArray) = a._ == b._
+(==)(a::FixedArray, b::FixedArray) = Tuple(a) == Tuple(b)
 
-(==){R, T, FSA <: FixedVector}(a::FSA, b::Mat{R, 1, T}) = a._ == column(b,1)
-(==){R, T, FSA <: FixedVector}(a::Mat{R, 1, T}, b::FSA) = column(a,1) == b._
+(==){R, T, FSA <: FixedVector}(a::FSA, b::Mat{R, 1, T}) = Tuple(a) == column(b, 1)
+(==){R, T, FSA <: FixedVector}(a::Mat{R, 1, T}, b::FSA) = column(a,1) == Tuple(b)
 function (==)(a::FixedArray, b::AbstractArray)
     s_a = size(a)
     s_b = size(b)

@@ -7,10 +7,10 @@ using Compat
 import FixedSizeArrays: similar_type
 
 immutable Normal{N, T} <: FixedVector{N, T}
-    _::NTuple{N, T}
+    values::NTuple{N, T}
 end
 immutable D3{N1, N2, N3, T} <: FixedArray{T, 3, Tuple{N1, N2, N3}}
-    _::NTuple{N1, NTuple{N2, NTuple{N3, T}}}
+    values::NTuple{N1, NTuple{N2, NTuple{N3, T}}}
 end
 immutable RGB{T} <: FixedVectorNoTuple{3, T}
     r::T
@@ -20,7 +20,7 @@ end
 
 # subtyping:
 immutable TestType{N,T} <: FixedVector{N,T}
-    _::NTuple{N,T}
+    values::NTuple{N,T}
 end
 
 # Custom FSA with non-parameterized size and eltype
@@ -686,14 +686,19 @@ context("Ops") do
                 @fact @inferred(0.2f0*a) --> Vec{1,Float32}(3.2f0*0.2f0)
 	end
     context("vector norm+cross product") do
+
         @fact norm(Vec3d(1.0,2.0,2.0)) --> 3.0
 
         # cross product
         @fact cross(v1,v2) --> Vec3d(-7.0,14.0,-7.0)
-        @fact isa(cross(v1,v2),Vec3d)  --> true
+        @fact isa(cross(v1,v2), Vec3d)  --> true
 
         @fact cross(vi,v2) --> Vec3d(-7.0,14.0,-7.0)
         @fact isa(cross(vi,v2),Vec3d)  --> true
+        
+        a,b = Vec2d(0,1), Vec2d(1,0)
+        @fact cross(a,b) --> -1.0
+        @fact isa(cross(a,b), Float64) --> true
     end
 
     context("hypot") do
@@ -1211,7 +1216,7 @@ end
 
 facts("show for subtype") do
 
-    Base.show(io::IO, x::TestType) = print(io, "$(x._)")  # show for new type
+    Base.show(io::IO, x::TestType) = print(io, "$(Tuple(x))")  # show for new type
 
     x = TestType(1, 2)
     @fact string(x) --> "(1,2)"

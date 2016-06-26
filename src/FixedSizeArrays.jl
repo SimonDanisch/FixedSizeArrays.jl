@@ -30,15 +30,15 @@ include("constructors.jl")
 # put them here due to #JuliaLang/julia#12814
 # needs to be before indexing and ops, but after constructors
 immutable Mat{Row, Column, T} <: FixedMatrix{Row, Column, T}
-    _::NTuple{Column, NTuple{Row, T}}
+    values::NTuple{Column, NTuple{Row, T}}
 end
 
 # most common FSA types
 immutable Vec{N, T} <: FixedVector{N, T}
-    _::NTuple{N, T}
+    values::NTuple{N, T}
 end
 immutable Point{N, T} <: FixedVector{N, T}
-    _::NTuple{N, T}
+    values::NTuple{N, T}
 end
 
 include("mapreduce.jl")
