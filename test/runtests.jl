@@ -46,7 +46,7 @@ if VERSION < v"0.5.0-dev+1195"
 else
     compatsqueeze(A) = A
 end
-
+function test()
 facts("FixedSizeArrays") do
 
 include("typeinf.jl")
@@ -1157,7 +1157,7 @@ const unaryOps = (
 
 # vec-vec and vec-scalar
 const binaryOps = (
-    .+, .-,.*, ./, .\, /,
+    .+, .-, .*, ./, .\, /,
     .==, .!=, .<, .<=, .>, .>=, +, -,
     min, max,
 
@@ -1223,6 +1223,11 @@ facts("show for subtype") do
 end
 
 end
+
+
+end
+
+test()
 
 end
 
