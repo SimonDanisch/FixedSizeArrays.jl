@@ -141,7 +141,9 @@ immutable BilinearDotFunctor <: Functor{2} end
 @inline bilindot(a::FixedVector, b::FixedVector) = sum(map(BilinearDotFunctor(), a, b))
 
 
-#cross{T}(a::FixedVector{2, T}, b::FixedVector{2, T}) = a[1]*b[2]-a[2]*b[1] # not really used!?
+function cross{T}(a::FixedVector{2, T}, b::FixedVector{2, T})
+    return a[1]*b[2]-a[2]*b[1]
+end
 @inline function cross{T1, T2}(a::FixedVector{3, T1}, b::FixedVector{3, T2})
     @inbounds elements = (a[2]*b[3]-a[3]*b[2],
                           a[3]*b[1]-a[1]*b[3],
