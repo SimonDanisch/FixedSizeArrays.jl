@@ -167,7 +167,7 @@ end
 similar{FSA <: FixedArray}(::Type{FSA}, sz::Int...) = similar(FSA, eltype(FSA), sz)
 similar{FSA <: FixedArray,T}(::Type{FSA}, ::Type{T}, sz::Int...) = similar(FSA, T, sz)
 
-@generated function (::Type{T}){T<:Tuple, N, T1}(f::FixedVectorNoTuple{N, T1})
+@compat @generated function (::Type{T}){T<:Tuple, N, T1}(f::FixedVectorNoTuple{N, T1})
     return Expr(:tuple, ntuple(i->:(f[$i]), N)...)
 end
 @compat function (::Type{T}){T<:Tuple}(f::FixedArray)
