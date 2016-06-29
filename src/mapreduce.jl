@@ -78,9 +78,7 @@ function unrolled_map_expr(funcname, OutFSA, SIZE, argtypes, argnames)
     quote
         $(Expr(:meta, :inline))
         $(sizecheck...)
-        $(Expr(:boundscheck, false))
-        rvalue = $(constructor_expr(OutFSA, tuple_expr))
-        $(Expr(:boundscheck,:pop))
+        @inbounds rvalue = $(constructor_expr(OutFSA, tuple_expr))
         rvalue
     end
 end
