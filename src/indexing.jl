@@ -110,3 +110,7 @@ Examples:
 macro fslice(expr)
     fixed_slice_expr(expr)
 end
+
+@inline function Base.indexed_next(t::FixedVector, i::Int, state)
+    @inbounds return (t[i], i+1)
+end
