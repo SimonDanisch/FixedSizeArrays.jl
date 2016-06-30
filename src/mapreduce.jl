@@ -135,3 +135,5 @@ end
     constructor_expr(FSA, tuple_expr)
 end
 
+@inline map{T}(::Type{T}, v::FixedArray{T}) = v
+

@@ -1,33 +1,11 @@
-module FSAtesting
-
-using FixedSizeArrays
+using FixedSizeArrays, GeometryTypes
 using Base.Test
 using Compat
 
 import FixedSizeArrays: similar_type
 
-immutable Normal{N, T} <: FixedVector{N, T}
-    values::NTuple{N, T}
-end
-immutable D3{N1, N2, N3, T} <: FixedArray{T, 3, Tuple{N1, N2, N3}}
-    values::NTuple{N1, NTuple{N2, NTuple{N3, T}}}
-end
-immutable RGB{T} <: FixedVectorNoTuple{3, T}
-    r::T
-    g::T
-    b::T
-end
 
-# subtyping:
-immutable TestType{N,T} <: FixedVector{N,T}
-    values::NTuple{N,T}
-end
-
-# Custom FSA with non-parameterized size and eltype
-immutable Coord2D <: FixedVectorNoTuple{2,Float64}
-    x::Float64
-    y::Float64
-end
+import FixedSizeArrays: similar_type
 
 
 typealias Vec1d Vec{1, Float64}
@@ -48,8 +26,6 @@ else
 end
 
 #include("typeinf.jl")
-
-
 a = 1
 a1 = @fsa([a,2,3])
 a2 = @fsa([a 2 3])
@@ -735,17 +711,17 @@ mat30 = Mat(((30.0,),))
 
 # type conversion
 #@test isa(convert(Matrix1x4{Float32},r),Matrix1x4{Float32})
-jm = rand(4,4)
-im = Mat(jm)
+jma = rand(4,4)
+ima = Mat(jma)
 for i=1:4*2
-	@test jm[i] == im[i]
+	@test jma[i] == ima[i]
 end
 #im = Matrix4x4(jm)
-@test isa(im, Mat4d)  == true
+@test isa(ima, Mat4d)  == true
 
-jm2 = convert(Array{Float64,2}, im)
+jm2 = convert(Array{Float64,2}, ima)
 @test isa(jm2, Array{Float64,2})  == true
-@test jm == jm2
+@test jma == jm2
 
 #Single valued constructor
 @test Mat4d(0.0) == zero(Mat4d)
@@ -768,95 +744,95 @@ b = Mat([1,2,3,4])
 @test b == Mat((1,2,3,4))
 @test b == Mat([1,2,3,4]'')
 
-# for i=1:4, j=1:4
-# 	v = rand(j)
-# 	m = rand(i,j)
-# 	m2 = rand(i,j)
-# 	mc = rand(i,j) + im*rand(i,j)
-# 	vfs = Vec(v)
-# 	mfs = Mat(m)
-#     m2fs = Mat(m2)
-#     mfsc = Mat(mc)
+for i=1:4, j=1:4
+	v = rand(j)
+	m = rand(i,j)
+	m2 = rand(i,j)
+	mc = rand(i,j) + im*rand(i,j)
+	vfs = Vec(v)
+	mfs = Mat(m)
+    m2fs = Mat(m2)
+    mfsc = Mat(mc)
 
-#     vi = randperm(j)
-#     mi = reshape(randperm(i*j), i, j)
-#     mi2 = reshape(randperm(i*j), i, j)
-#     vifs = Vec(vi)
-#     mifs = Mat(mi)
-#     mi2fs = Mat(mi2)
+    vi = randperm(j)
+    mi = reshape(randperm(i*j), i, j)
+    mi2 = reshape(randperm(i*j), i, j)
+    vifs = Vec(vi)
+    mifs = Mat(mi)
+    mi2fs = Mat(mi2)
 
-# 	vm = m * v
-# 	@test isapprox(@inferred(mfs * vfs), vm)  == true
-#     @test isapprox(@inferred(Matrix(mfs) * vfs), vm)  == true
-#     @test isapprox(@inferred(mfs * Vector(vfs)), vm)  == true
-# 	mm = m * m2'
-# 	@test isapprox(@inferred(mfs * m2fs'), mm)  == true
-#     @test isapprox(@inferred(Matrix(mfs) * m2fs'), mm)  == true
-#     @test isapprox(@inferred(mfs * Matrix(m2fs')), mm)  == true
-# 	mm = m*(2)
-# 	@test isapprox(@inferred(m*(2I)), mm)  == true
+	vm = m * v
+	@test isapprox(@inferred(mfs * vfs), vm)  == true
+    @test isapprox(@inferred(Matrix(mfs) * vfs), vm)  == true
+    @test isapprox(@inferred(mfs * Vector(vfs)), vm)  == true
+	mm = m * m2'
+	@test isapprox(@inferred(mfs * m2fs'), mm)  == true
+    @test isapprox(@inferred(Matrix(mfs) * m2fs'), mm)  == true
+    @test isapprox(@inferred(mfs * Matrix(m2fs')), mm)  == true
+	mm = m*(2)
+	@test isapprox(@inferred(m*(2I)), mm)  == true
 
-# 	# test different element types
-# 	vmi = mi * v
-# 	@test isapprox(@inferred(mifs * vfs), vmi)  == true
-# 	vmi = m * vi
-# 	@test isapprox(@inferred(mfs * vifs), vmi)  == true
-# 	# Custom vector types
-# 	@test @inferred(eye(Mat{3,3,Float64}) * RGB{Int}(1,2,3)) == RGB{Float64}(1,2,3)
-# 	mmi = mi * m2'
-# 	@test isapprox(@inferred(mifs * m2fs'), mmi)  == true
-# 	mmi = m * mi2'
-# 	@test isapprox(@inferred(mfs * mi2fs'), mmi)  == true
+	# test different element types
+	vmi = mi * v
+	@test isapprox(@inferred(mifs * vfs), vmi)  == true
+	vmi = m * vi
+	@test isapprox(@inferred(mfs * vifs), vmi)  == true
+	# Custom vector types
+	@test @inferred(eye(Mat{3,3,Float64}) * RGB{Int}(1,2,3)) == RGB{Float64}(1,2,3)
+	mmi = mi * m2'
+	@test isapprox(@inferred(mifs * m2fs'), mmi)  == true
+	mmi = m * mi2'
+	@test isapprox(@inferred(mfs * mi2fs'), mmi)  == true
 
-# 	if i == j
-# 	    mm = (2*I+I*m) \ v
-# 	    @test isapprox(@inferred((2*I+I*mfs) \ vfs), mm)  == true
-# 		mm = det(m)
-# 		fmm = det(mfs)
-# 		@test isapprox(fmm, mm)  == true
-# 		mm = trace(m)
-# 		fmm = trace(mfs)
-# 		@test isapprox(fmm, mm)  == true
-# 		mm = inv(m)
-# 		fmm = inv(mfs)
-# 		@test isapprox(fmm, mm)  == true
-# 		mm = expm(m)
-# 		fmm = expm(mfs)
-# 		@test isapprox(fmm, mm)  == true
+	if i == j
+	    mm = (2*I+I*m) \ v
+	    @test isapprox(@inferred((2*I+I*mfs) \ vfs), mm)  == true
+		mm = det(m)
+		fmm = det(mfs)
+		@test isapprox(fmm, mm)  == true
+		mm = trace(m)
+		fmm = trace(mfs)
+		@test isapprox(fmm, mm)  == true
+		mm = inv(m)
+		fmm = inv(mfs)
+		@test isapprox(fmm, mm)  == true
+		mm = expm(m)
+		fmm = expm(mfs)
+		@test isapprox(fmm, mm)  == true
 
-# 		mm = expm(mc)
-# 		fmm = expm(mfsc)
-# 		@test isapprox(fmm, mm)  == true
-#         mm = lyap(m, m2*m2')
-#         fmm = lyap(mfs, m2fs*m2fs')
-#         @test isapprox(fmm, mm) == true
-#         mm = full(chol(m2*m2'))
-#         mm2 = full(chol(map(Mat, m2*m2'))) # Matrix of Mat's
-#         fmm = chol(m2fs*m2fs')
-#         @test isapprox(fmm, mm) == true
-#         @test isapprox(mm, map(first, mm2)) == true
-# 	else
-#        # @test_throws DimensionMismatch mfs * mfs
-#     end
-# 	mm = m'
-# 	fmm = mfs'
-# 	@test isapprox(fmm, mm)  == true
+		mm = expm(mc)
+		fmm = expm(mfsc)
+		@test isapprox(fmm, mm)  == true
+        mm = lyap(m, m2*m2')
+        fmm = lyap(mfs, m2fs*m2fs')
+        @test isapprox(fmm, mm) == true
+        mm = full(chol(m2*m2'))
+        mm2 = full(chol(map(Mat, m2*m2'))) # Matrix of Mat's
+        fmm = chol(m2fs*m2fs')
+        @test isapprox(fmm, mm) == true
+        @test isapprox(mm, map(first, mm2)) == true
+	else
+       # @test_throws DimensionMismatch mfs * mfs
+    end
+	mm = m'
+	fmm = mfs'
+	@test isapprox(fmm, mm)  == true
 
-# 	mm = mc'
-# 	fmm = mfsc'
-# 	@test isapprox(fmm, mm)  == true
-# 	# in practice the precision is eps(), if m has not a triple eigenvalue
-#     for i in 1:30
-#         m = (rand(0:1,3,3).*randn(3,3) .+ rand(-3:3,3,3)) # some entries are natural numbers to have higher chance of multiple eigenvalues to trigger all branches
-#         @test norm(Matrix(expm(Mat(m))) -  expm(m))/norm(expm(m)) <= 1E-9 == true
-#         m = m + m' # symmetric
-#         @test norm(Matrix(expm(Mat(m))) -  expm(m))/norm(expm(m)) <= 1E-9 == true
-#         m = 1. *rand(-1:1,3,3) # eigenvalues equal with high probability to test worse case
-#         @test norm(Matrix(expm(Mat(m))) -  expm(m))/norm(expm(m)) <= 1E-9 == true
-#         m = m + m'
-#         @test norm(Matrix(expm(Mat(m))) -  expm(m))/norm(expm(m)) <= 1E-9 == true
-#     end
-# end
+	mm = mc'
+	fmm = mfsc'
+	@test isapprox(fmm, mm)  == true
+	# in practice the precision is eps(), if m has not a triple eigenvalue
+    for i in 1:30
+        m = (rand(0:1,3,3).*randn(3,3) .+ rand(-3:3,3,3)) # some entries are natural numbers to have higher chance of multiple eigenvalues to trigger all branches
+        @test norm(Matrix(expm(Mat(m))) -  expm(m))/norm(expm(m)) <= 1E-9
+        m = m + m' # symmetric
+        @test norm(Matrix(expm(Mat(m))) -  expm(m))/norm(expm(m)) <= 1E-9
+        m = 1. *rand(-1:1,3,3) # eigenvalues equal with high probability to test worse case
+        @test norm(Matrix(expm(Mat(m))) -  expm(m))/norm(expm(m)) <= 1E-9
+        m = m + m'
+        @test norm(Matrix(expm(Mat(m))) -  expm(m))/norm(expm(m)) <= 1E-9
+    end
+end
 @test norm(Matrix(expm(Mat(big([0.0 0.0 1.0; -1.0 1.0 0.0; -1.0 0.0 2.0])))) - big([-0.0 0.0  1.0; -0.5  1.0  -0.5; -1.0  0.0  2.0])*e,1) <  10eps(big(1.))
 
 rgb = rand(3)
@@ -1006,6 +982,4 @@ Base.show(io::IO, x::TestType) = print(io, "$(Tuple(x))")  # show for new type
 x = TestType(1, 2)
 @test string(x) == "(1,2)"
 
-
-end
 

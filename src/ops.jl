@@ -103,16 +103,16 @@ end
     T = promote_type(eltype(T1), eltype(T2))
     map(T, a), map(T, b)
 end
-function promote{T1, T2 <: Number}(a::FixedArray{T1}, b::T2)
+@inline function promote{T1, T2 <: Number}(a::FixedArray{T1}, b::T2)
     T = promote_type(T1, T2)
     map(T, a), T(b)
 end
-function promote{T1 <: Number, T2}(a::T1, b::FixedArray{T2})
+@inline function promote{T1 <: Number, T2}(a::T1, b::FixedArray{T2})
     T = promote_type(T1, T2)
     T(a), map(T, b)
 end
 
-function promote_rule{N, T, X<:Number}(::Type{Vec{N,T}}, ::Type{X})
+@inline function promote_rule{N, T, X<:Number}(::Type{Vec{N,T}}, ::Type{X})
     Vec{N, promote_type(T, X)}
 end
 
