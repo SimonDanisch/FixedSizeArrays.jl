@@ -13,9 +13,9 @@ end
 @inline function reduce(f::Functor{2}, a::Mat)
     length(a) == 1 && return a[1,1]
     @inbounds begin
-        red = reduce(f, a._[1])
+        red = reduce(f, Tuple(a)[1])
         for i=2:size(a, 2)
-            red = f(red, reduce(f, a._[i]))
+            red = f(red, reduce(f, Tuple(a)[i]))
         end
     end
     red

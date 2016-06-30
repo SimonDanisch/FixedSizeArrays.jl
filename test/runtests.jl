@@ -7,10 +7,10 @@ using Compat
 import FixedSizeArrays: similar_type
 
 immutable Normal{N, T} <: FixedVector{N, T}
-    _::NTuple{N, T}
+    values::NTuple{N, T}
 end
 immutable D3{N1, N2, N3, T} <: FixedArray{T, 3, Tuple{N1, N2, N3}}
-    _::NTuple{N1, NTuple{N2, NTuple{N3, T}}}
+    values::NTuple{N1, NTuple{N2, NTuple{N3, T}}}
 end
 immutable RGB{T} <: FixedVectorNoTuple{3, T}
     r::T
@@ -20,7 +20,7 @@ end
 
 # subtyping:
 immutable TestType{N,T} <: FixedVector{N,T}
-    _::NTuple{N,T}
+    values::NTuple{N,T}
 end
 
 # Custom FSA with non-parameterized size and eltype
@@ -46,7 +46,7 @@ if VERSION < v"0.5.0-dev+1195"
 else
     compatsqueeze(A) = A
 end
-
+function test()
 facts("FixedSizeArrays") do
 
 include("typeinf.jl")
@@ -1157,7 +1157,7 @@ const unaryOps = (
 
 # vec-vec and vec-scalar
 const binaryOps = (
-    .+, .-,.*, ./, .\, /,
+    .+, .-, .*, ./, .\, /,
     .==, .!=, .<, .<=, .>, .>=, +, -,
     min, max,
 
@@ -1216,13 +1216,18 @@ end
 
 facts("show for subtype") do
 
-    Base.show(io::IO, x::TestType) = print(io, "$(x._)")  # show for new type
+    Base.show(io::IO, x::TestType) = print(io, "$(Tuple(x))")  # show for new type
 
     x = TestType(1, 2)
     @fact string(x) --> "(1,2)"
 end
 
 end
+
+
+end
+
+test()
 
 end
 

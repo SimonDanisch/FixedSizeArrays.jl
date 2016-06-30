@@ -1,30 +1,30 @@
-@inline getindex{T <: FixedVector}(x::T, i::Union{Range, Integer}) = x._[i]
-@inline getindex{T <: FixedVectorNoTuple}(x::T, i::Integer) = getfield(x,i)
+@inline getindex{T <: FixedVector}(x::T, i::Union{Range, Integer}) = Tuple(x)[i]
+@inline getindex{T <: FixedVectorNoTuple}(x::T, i::Integer) = getfield(x, i)
 @inline getindex{N, M, T}(a::Mat{N, M, T}, i::Range, j::Int) = ntuple(IndexFunc(a, j), Val{length(i)})::NTuple{length(i), T}
-@inline getindex{N, M, T}(a::Mat{N, M, T}, i::Int, j::Union{Range, Int}) = a._[j][i]
+@inline getindex{N, M, T}(a::Mat{N, M, T}, i::Int, j::Union{Range, Int}) = Tuple(a)[j][i]
 @inline getindex{N, M, T}(a::Mat{N, M, T}, i::Int) = a[ind2sub((N,M), i)...]
 @inline getindex(A::FixedArray, I::Tuple) = map(IndexFunctor(A), I)
 
 @inline setindex(a::FixedArray, value, index::Int...) = map(SetindexFunctor(a, value, index), typeof(a))
 
 @inline column{N, T}(v::FixedVector{N, T}) = v
-@inline column{R, C, T}(a::Mat{R, C, T}, i::Union{Range, Int}) = a._[i]
+@inline column{R, C, T}(a::Mat{R, C, T}, i::Union{Range, Int}) = Tuple(a)[i]
 
 @inline row{N, T}(v::FixedVector{N, T}) = Mat{1, N, T}(v...)
 @inline row{N, T}(v::FixedVector{N, T}, i::Int) = (v[i],)
 @inline row{R, C, T}(a::Mat{R, C, T}, j::Int) = ntuple(IndexFunc(a, j), Val{C})::NTuple{C, T}
-@inline row{R, T}(a::Mat{R, 1, T}, j::Int) = (a._[1][j],)
-@inline row{R, T}(a::Mat{R, 2, T}, j::Int) = (a._[1][j], a._[2][j])
-@inline row{R, T}(a::Mat{R, 3, T}, j::Int) = (a._[1][j], a._[2][j], a._[3][j])
-@inline row{R, T}(a::Mat{R, 4, T}, j::Int) = (a._[1][j], a._[2][j], a._[3][j], a._[4][j],)
+@inline row{R, T}(a::Mat{R, 1, T}, j::Int) = (Tuple(a)[1][j],)
+@inline row{R, T}(a::Mat{R, 2, T}, j::Int) = (Tuple(a)[1][j], Tuple(a)[2][j])
+@inline row{R, T}(a::Mat{R, 3, T}, j::Int) = (Tuple(a)[1][j], Tuple(a)[2][j], Tuple(a)[3][j])
+@inline row{R, T}(a::Mat{R, 4, T}, j::Int) = (Tuple(a)[1][j], Tuple(a)[2][j], Tuple(a)[3][j], Tuple(a)[4][j],)
 
 
 # the columns of the ctranspose are the complex conjugate rows
 @inline crow{R, C, T}(a::Mat{R, C, T}, j::Int) = ntuple(IndexFunc(a, j)', Val{C})::NTuple{C, T}
-@inline crow{R, T}(a::Mat{R, 1, T}, j::Int) = (a._[1][j]',)
-@inline crow{R, T}(a::Mat{R, 2, T}, j::Int) = (a._[1][j]', a._[2][j]')
-@inline crow{R, T}(a::Mat{R, 3, T}, j::Int) = (a._[1][j]', a._[2][j]', a._[3][j]')
-@inline crow{R, T}(a::Mat{R, 4, T}, j::Int) = (a._[1][j]', a._[2][j]', a._[3][j]', a._[4][j]',)
+@inline crow{R, T}(a::Mat{R, 1, T}, j::Int) = (Tuple(a)[1][j]',)
+@inline crow{R, T}(a::Mat{R, 2, T}, j::Int) = (Tuple(a)[1][j]', Tuple(a)[2][j]')
+@inline crow{R, T}(a::Mat{R, 3, T}, j::Int) = (Tuple(a)[1][j]', Tuple(a)[2][j]', Tuple(a)[3][j]')
+@inline crow{R, T}(a::Mat{R, 4, T}, j::Int) = (Tuple(a)[1][j]', Tuple(a)[2][j]', Tuple(a)[3][j]', Tuple(a)[4][j]',)
 
 
 # Unified slicing along combinations of fixed and variable dimensions

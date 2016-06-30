@@ -16,7 +16,7 @@ end
 
 #conversion
 convert{N}(T::Type{NTuple{N}}, x::Real) = ntuple(ConstFunctor(eltype(T)(x)), Val{N})
-convert{T <: Tuple, FSA <: FixedArray}(::Type{T}, x::FSA) = convert(T, get_tuple(x))
+convert{T <: Tuple, FSA <: FixedArray}(::Type{T}, x::FSA) = convert(T, Tuple(x))
 
 function convert{FSA1 <: FixedArray}(t::Type{FSA1}, f::FixedArray)
     map(ConversionIndexFunctor(f, eltype_or(FSA1, eltype(typeof(f)))), FSA1)

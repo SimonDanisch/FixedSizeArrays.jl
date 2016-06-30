@@ -117,14 +117,14 @@ E.g. Vec4f0(Vec3f0(1), 0)
 @compat @generated function (::Type{FSA}){FSA <: FixedArray, T1 <: FixedArray}(a::T1, b...)
     if isempty(b) # this is the conversion constructor for 2 FSA's
         #easiest way is to just construct from the tuple
-        expr = :(FSA(get_tuple(a)))
+        expr = :(FSA(Tuple(a)))
         if size_or(FSA, nothing) == nothing # no concrete size
             return expr
         else #has a size
             len1 = size(FSA, 1)
             len2 = size(T1, 1)
             if len1 < len2 # we need to shrink
-                return :(FSA(get_tuple(a)[1:$len1]))
+                return :(FSA(Tuple(a)[1:$len1]))
             elseif len1==len2
                 return expr
             else
