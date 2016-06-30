@@ -1208,6 +1208,13 @@ context("mapping operators") do
     end
 end
 
+context("typed round/floor/ceil/trunc") do
+    v = Vec((0.8,1.2,-0.3))
+    @fact floor(Int, v) --> Vec((0,1,-1))
+    @fact ceil( Int, v) --> Vec((1,2,0))
+    @fact trunc(Int, v) --> Vec((0,1,0))
+    @fact round(Int, v) --> Vec((1,1,0))
+end
 
 context("Base.Test") do
     a = rand(2)
