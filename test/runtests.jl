@@ -1039,6 +1039,12 @@ context("Matrix Math") do
         @fact isapprox(mfs * rgbfs, m * rgb) --> true
     end
 
+    context("Outer product  Vec{N} * Mat{1,M}") do
+        v1 = Vec(1,2)
+        v2 = Vec(1,2,3)
+        @fact v1*v2' --> Vector(v1)*Vector(v2)'
+    end
+
 end
 
 
