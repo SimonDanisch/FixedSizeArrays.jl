@@ -384,15 +384,15 @@ end
     (1 <= i <= N+1) || throw(BoundsError())
     @nif $(N+1) d->(i==d) d-> insert(x, Val{d}, item)
 end
-insert(v::Vec, i, val) = Vec(insert(Tuple(v), i, val))
+insert(v::FixedVector, i, val) = construct_similar(typeof(v), insert(Tuple(v), i, val))
 
 for f in (:shift, :unpush)
     eval(quote
-        ($f)(v::Vec) = Vec(($f)(Tuple(v)))
+        ($f)(v::FixedVector) = construct_similar(typeof(v), ($f)(Tuple(v)))
     end)
 end
 for f in (:unshift, :deleteat, :push)
     eval(quote
-        ($f)(v::Vec, val) = Vec(($f)(Tuple(v), val))
+        ($f)(v::FixedVector, val) = construct_similar(typeof(v), ($f)(Tuple(v), val))
     end)
 end

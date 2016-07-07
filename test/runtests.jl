@@ -1219,26 +1219,37 @@ end
 
 context("shift, push...") do
     v = Vec(1,2,3)
+    p = Point(1,2.)
     @fact @inferred(shift(v)       ) --> Vec(2,3)
+    @fact @inferred(shift(p)       ) --> Point(2.)
+
     @fact @inferred(unshift(v, 42) ) --> Vec(42, 1,2,3)
     @fact @inferred(unshift(v, 42.)) --> Vec(42., 1,2,3)
+    @fact @inferred(unshift(p, 42.)) --> Point(42, 1, 2.)
 
     @fact @inferred(push(v, 42)    ) --> Vec(1,2,3, 42)
     @fact @inferred(push(v, 42.)   ) --> Vec(1,2,3, 42.)
+    @fact @inferred(push(p, 42.)   ) --> Point(1,2,42.)
+
     @fact @inferred(unpush(v)      ) --> Vec(1,2)
+    @fact @inferred(unpush(p)      ) --> Point(1.)
 
     @fact @inferred(deleteat(v,1)  ) --> Vec(2,3)
     @fact @inferred(deleteat(v,2)  ) --> Vec(1,3)
     @fact @inferred(deleteat(v,3)  ) --> Vec(1,2)
-    @fact_throws deleteat(v,5) BoundsError
-    @fact_throws deleteat(v,-9) BoundsError
+    @fact @inferred(deleteat(p,2)  ) --> Point(1.)
 
-    @fact @inferred(insert(v, 1, 42)) --> Vec(42,1,2,3)
-    @fact @inferred(insert(v, 2, 42)) --> Vec(1,42,2,3)
-    @fact @inferred(insert(v, 3, 42)) --> Vec(1,2,42,3)
-    @fact @inferred(insert(v, 4, 42)) --> Vec(1,2,3,42)
-    @fact_throws insert(v, 5, 42) BoundsError
-    @fact_throws insert(v, 0, 42) BoundsError
+    @fact_throws BoundsError deleteat(v,5)
+    @fact_throws BoundsError deleteat(v,-9)
+
+    @fact @inferred(insert(v, 1, 42) ) --> Vec(42,1,2,3)
+    @fact @inferred(insert(v, 2, 42) ) --> Vec(1,42,2,3)
+    @fact @inferred(insert(v, 3, 42) ) --> Vec(1,2,42,3)
+    @fact @inferred(insert(v, 4, 42) ) --> Vec(1,2,3,42)
+    @fact @inferred(insert(p, 3, 42.)) --> Point(1,2,42.)
+
+    @fact_throws BoundsError insert(v, 5, 42)
+    @fact_throws BoundsError insert(v, 0, 42)
 end
 
 
