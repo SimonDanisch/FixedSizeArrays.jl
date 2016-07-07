@@ -87,7 +87,7 @@ export setindex
 export eltype_or, size_or, ndims_or
 export @fslice
 export destructure
-
+export push, unpush, shift, unshift, deleteat, insert
 
 
 

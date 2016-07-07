@@ -356,3 +356,43 @@ Base.floor{T}(::Type{T}, A::FixedArray) = map(x->floor(T, x), A)
 Base.ceil{T}( ::Type{T}, A::FixedArray) = map(x->ceil( T, x), A)
 Base.trunc{T}(::Type{T}, A::FixedArray) = map(x->trunc(T, x), A)
 Base.round{T}(::Type{T}, A::FixedArray) = map(x->round(T, x), A)
+
+import Base.Cartesian.@nif
+shift(t::Tuple) = Base.tail(t)
+unshift(t::Tuple, val) = tuple(val, t...)
+push(t::Tuple, val) = tuple(t..., val)
+@generated unpush{N,T}(t::NTuple{N,T}) = begin # is there a better name?
+    Expr(:tuple, [:(t[$i]) for i in 1:N-1]...)
+end
+
+@generated function deleteat{N,T,i}(x::NTuple{N,T}, ::Type{Val{i}})
+    (1 <= i <= N) || throw(BoundsError((x,Val{i})))
+    Expr(:tuple, [:(x[$j]) for j in deleteat!([1:N...], i)]...)
+end
+@generated deleteat{N,T}(x::NTuple{N,T}, i::Int) = quote
+    (1 <= i <= N) || throw(BoundsError(x,i))
+    @nif $N d->(i==d) d-> deleteat(x, Val{d})
+end
+
+@generated insert{N,T,i}(t::NTuple{N,T}, ::Type{Val{i}}, item) = begin
+    (1 <= i <= N+1) || throw(BoundsError())
+    args = Any[:(t[$k]) for k in 1:N]
+    insert!(args, i, :item)
+    Expr(:tuple, args...)
+end
+@generated insert{N,T}(x::NTuple{N,T}, i::Int, item) = quote
+    (1 <= i <= N+1) || throw(BoundsError())
+    @nif $(N+1) d->(i==d) d-> insert(x, Val{d}, item)
+end
+insert(v::Vec, i, val) = Vec(insert(Tuple(v), i, val))
+
+for f in (:shift, :unpush)
+    eval(quote
+        ($f)(v::Vec) = Vec(($f)(Tuple(v)))
+    end)
+end
+for f in (:unshift, :deleteat, :push)
+    eval(quote
+        ($f)(v::Vec, val) = Vec(($f)(Tuple(v), val))
+    end)
+end
