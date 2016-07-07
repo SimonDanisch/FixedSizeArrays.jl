@@ -19,6 +19,54 @@ function Base.promote_array_type{FSA <: FixedArray, T<:Number}(
     FSA
 end
 
+# Concatenation
+
+ext_size(SZ, ind) = (ind <= length(SZ) ? SZ[ind] : 1)
+
+# Generate a nested tuple of array references splatting arrays `name1` and
+# `name2`, such that they concatenate along dimension `catdim`.
+function cat_elements_expr(outsize,catdim,name1,name2,dims1,dims2,inds)
+    if length(outsize) == length(inds)
+        if inds[catdim] <= ext_size(dims1,catdim)
+            name = name1
+            inds = inds[1:length(dims1)]
+        else
+            name = name2
+            inds = [inds...]
+            inds[catdim] -= ext_size(dims1,catdim)
+            inds = inds[1:length(dims2)]
+        end
+        return Expr(:ref, name, inds...)
+    end
+    return Expr(:tuple, [cat_elements_expr(outsize,catdim,name1,name2,dims1,dims2,(i,inds...))
+                         for i=1:outsize[end-length(inds)]]...)
+end
+
+# Concatenate fixed size arrays along dimension `catdim`.  General
+# concatenation fully splats out the input arrays to avoid the splatting
+# penalty.
+@generated function Base.cat{catdim}(::Type{Val{catdim}}, a::FixedArray, b::FixedArray)
+    Sa = size(a)
+    Sb = size(b)
+    SZ = zeros(Int, max(length(Sa),length(Sb),catdim))
+    for d = 1:length(SZ)
+        La = d <= length(Sa) ? Sa[d] : 1
+        Lb = d <= length(Sb) ? Sb[d] : 1
+        if d != catdim && La != Lb
+            throw(DimensionMismatch("mismatch in dimension $d when concatenating $a and $b"))
+        end
+        SZ[d] = (d == catdim) ? La+Lb : La
+    end
+    SZ = (SZ...)
+    elements = cat_elements_expr(SZ, catdim, :a, :b, Sa, Sb, ())
+    quote
+        construct_similar($a, $elements)
+    end
+end
+
+@inline Base.vcat(a::FixedArray, b::FixedArray) = cat(Val{1}, a, b)
+@inline Base.hcat(a::FixedArray, b::FixedArray) = cat(Val{2}, a, b)
+
 
 # operations
 const unaryOps = (:-, :~, :conj, :abs,

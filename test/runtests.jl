@@ -601,6 +601,19 @@ context("Indexing") do
 end
 
 
+context("Concatenation") do
+    @fact vcat(Vec(1,2), Vec(3,4,5))        --> exactly(Vec(1,2,3,4,5))
+    @fact vcat(Vec(1.0,2.0), Vec(3,4,5))    --> exactly(Vec(1.0,2.0,3.0,4.0,5.0))
+    @fact vcat(Vec(1,2)', @fsa [3 4; 5 6])  --> exactly(@fsa [1 2; 3 4; 5 6])
+    @fact vcat(@fsa([3 4; 5 6]), Vec(1,2)') --> exactly(@fsa [3 4; 5 6; 1 2])
+    @fact_throws DimensionMismatch vcat(Vec(1,2), @fsa [3 4])
+    @fact hcat(Vec(1,2), Vec(3,4))          --> exactly(@fsa [1 3; 2 4])
+    @fact hcat(Vec(1,2), Vec(3,4))          --> exactly(@fsa [1 3; 2 4])
+    @fact hcat(Vec(1,2), @fsa [3 4; 5 6])   --> exactly(@fsa [1 3 4; 2 5 6])
+    @fact hcat(@fsa([3 4; 5 6]), Vec(1,2))  --> exactly(@fsa [3 4 1; 5 6 2])
+    @fact_throws DimensionMismatch hcat(Vec(1,2), Vec(3,4,5))
+end
+
 
 context("Ops") do
 	context("Negation") do
