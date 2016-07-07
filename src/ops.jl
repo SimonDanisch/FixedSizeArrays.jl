@@ -361,7 +361,7 @@ import Base.Cartesian.@nif
 shift(t::Tuple) = Base.tail(t)
 unshift(t::Tuple, val) = tuple(val, t...)
 push(t::Tuple, val) = tuple(t..., val)
-@generated unpush{N,T}(t::NTuple{N,T}) = begin # is there a better name?
+@generated function pop{N,T}(t::NTuple{N,T})
     Expr(:tuple, [:(t[$i]) for i in 1:N-1]...)
 end
 
@@ -369,24 +369,28 @@ end
     (1 <= i <= N) || throw(BoundsError((x,Val{i})))
     Expr(:tuple, [:(x[$j]) for j in deleteat!([1:N...], i)]...)
 end
-@generated deleteat{N,T}(x::NTuple{N,T}, i::Int) = quote
-    (1 <= i <= N) || throw(BoundsError(x,i))
-    @nif $N d->(i==d) d-> deleteat(x, Val{d})
+@generated function deleteat{N,T}(x::NTuple{N,T}, i::Int)
+    quote
+        (1 <= i <= N) || throw(BoundsError(x,i))
+        @nif $N d->(i==d) d-> deleteat(x, Val{d})
+    end
 end
 
-@generated insert{N,T,i}(t::NTuple{N,T}, ::Type{Val{i}}, item) = begin
+@generated function insert{N,T,i}(t::NTuple{N,T}, ::Type{Val{i}}, item)
     (1 <= i <= N+1) || throw(BoundsError())
     args = Any[:(t[$k]) for k in 1:N]
     insert!(args, i, :item)
     Expr(:tuple, args...)
 end
-@generated insert{N,T}(x::NTuple{N,T}, i::Int, item) = quote
-    (1 <= i <= N+1) || throw(BoundsError())
-    @nif $(N+1) d->(i==d) d-> insert(x, Val{d}, item)
+@generated function insert{N,T}(x::NTuple{N,T}, i::Int, item)
+    quote
+        (1 <= i <= N+1) || throw(BoundsError())
+        @nif $(N+1) d->(i==d) d-> insert(x, Val{d}, item)
+    end
 end
 insert(v::FixedVector, i, val) = construct_similar(typeof(v), insert(Tuple(v), i, val))
 
-for f in (:shift, :unpush)
+for f in (:shift, :pop)
     eval(quote
         ($f)(v::FixedVector) = construct_similar(typeof(v), ($f)(Tuple(v)))
     end)

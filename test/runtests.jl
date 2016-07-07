@@ -1231,8 +1231,8 @@ context("shift, push...") do
     @fact @inferred(push(v, 42.)   ) --> Vec(1,2,3, 42.)
     @fact @inferred(push(p, 42.)   ) --> Point(1,2,42.)
 
-    @fact @inferred(unpush(v)      ) --> Vec(1,2)
-    @fact @inferred(unpush(p)      ) --> Point(1.)
+    @fact @inferred(pop(v)      ) --> Vec(1,2)
+    @fact @inferred(pop(p)      ) --> Point(1.)
 
     @fact @inferred(deleteat(v,1)  ) --> Vec(2,3)
     @fact @inferred(deleteat(v,2)  ) --> Vec(1,3)
