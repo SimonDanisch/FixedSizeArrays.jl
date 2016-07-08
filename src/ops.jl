@@ -269,8 +269,8 @@ chol!(m::Mat, ::Type{Val{:U}}) = chol!(m, UpperTriangular) # for pre-0.5
 (*){T1, T2, M, N, O, K}(a::FixedMatrix{M, N, T1}, b::FixedMatrix{O, K, T2}) = throw(DimensionMismatch("$N != $O in $(typeof(a)) and $(typeof(b))"))
 (*){T1, T2, M, N, O}(a::FixedMatrix{M, N, T1}, b::FixedVector{O, T2}) = throw(DimensionMismatch("$N != $O in $(typeof(a)) and $(typeof(b))"))
 # vector * (row vector)
-@generated function *{T1, T2, N}(a::FixedVector{N, T1}, b::FixedMatrix{1, N, T2})
-    elements = Expr(:tuple, [Expr(:tuple, [:(a[$i] * b[$j]) for i in 1:N]...) for j in 1:N]...)
+@generated function *{T1, T2, N, M}(a::FixedVector{N, T1}, b::FixedMatrix{1,M,T2})
+    elements = Expr(:tuple, [Expr(:tuple, [:(a[$i] * b[$j]) for i in 1:N]...) for j in 1:M]...)
     :(construct_similar($b, $elements))
 end
 # matrix * vector
