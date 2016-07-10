@@ -11,7 +11,7 @@ import Base.LinAlg._chol!
 # for 0.5 and 0.4 compat, use our own functor type
 abstract Functor{N}
 
-if VERSION <= v"0.5.0"
+if VERSION < v"0.5.0-dev+1949"
     supertype(x) = super(x)
 end
 
@@ -26,20 +26,9 @@ end
 include("core.jl")
 include("functors.jl")
 include("constructors.jl")
-
-# put them here due to #JuliaLang/julia#12814
+# put concrete types here due to #JuliaLang/julia#12814
 # needs to be before indexing and ops, but after constructors
-immutable Mat{Row, Column, T} <: FixedMatrix{Row, Column, T}
-    values::NTuple{Column, NTuple{Row, T}}
-end
-
-# most common FSA types
-immutable Vec{N, T} <: FixedVector{N, T}
-    values::NTuple{N, T}
-end
-immutable Point{N, T} <: FixedVector{N, T}
-    values::NTuple{N, T}
-end
+include("concrete_types.jl")
 
 include("mapreduce.jl")
 include("destructure.jl")
@@ -68,12 +57,11 @@ function show{N,T}(io::IO, v::FixedVector{N,T})
 end
 
 export FixedArray
-export FixedVector
-export FixedMatrix
-export MutableFixedArray
-export MutableFixedVector
-export MutableFixedMatrix
-export Mat, Vec, Point
+export FixedArray1, FixedArray2, FixedArray3, FixedArray4, FixedArray5
+export FixedVector, FixedMatrix
+export FixedVectorNoTuple
+export Vec, Mat, Ar3, Ar4, Point
+
 export @fsa
 export similar_type
 export construct_similar

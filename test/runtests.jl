@@ -9,9 +9,6 @@ import FixedSizeArrays: similar_type
 immutable Normal{N, T} <: FixedVector{N, T}
     values::NTuple{N, T}
 end
-immutable D3{N1, N2, N3, T} <: FixedArray{T, 3, Tuple{N1, N2, N3}}
-    values::NTuple{N1, NTuple{N2, NTuple{N3, T}}}
-end
 immutable RGB{T} <: FixedVectorNoTuple{3, T}
     r::T
     g::T
@@ -71,16 +68,16 @@ end
 
 context("core") do
     context("ndims") do
-        @fact ndims(D3) --> 3
+        @fact ndims(Ar3) --> 3
         @fact ndims(Mat) --> 2
         @fact ndims(Vec) --> 1
         @fact ndims(Vec(1,2,3)) --> 1
 
-        @fact ndims(D3{3,3,3}) --> 3
+        @fact ndims(Ar3{3,3,3}) --> 3
         @fact ndims(Mat{3,3}) --> 2
         @fact ndims(Vec{3}) --> 1
 
-        @fact ndims(D3{3,3,3,Int}) --> 3
+        @fact ndims(Ar3{3,3,3,Int}) --> 3
         @fact ndims(Mat{3,3,Int}) --> 2
         @fact ndims(Vec{3,Int}) --> 1
     end
@@ -265,8 +262,8 @@ context("Constructor ") do
         @fact typeof(rand(Mat4d, -20f0:0.192f0:230f0)) --> Mat4d
         @fact typeof(rand(Mat{4,21,Float32}, -20f0:0.192f0:230f0)) --> Mat{4,21,Float32}
 
-        x = rand(D3{4,4,4, Float32})
-        @fact typeof(x) --> D3{4,4,4, Float32}
+        x = rand(Ar3{4,4,4, Float32})
+        @fact typeof(x) --> Ar3{4,4,4, Float32}
         @fact eltype(x) --> Float32
         @fact size(x) --> (4,4,4)
         @fact typeof(rand(Vec4d, 5,5)) --> Matrix{Vec4d}

@@ -1,44 +1,39 @@
-abstract FixedArray{T, NDim, SIZE}
-abstract MutableFixedArray{T, NDim, SIZE} <: FixedArray{T, NDim, SIZE}
+#-------------------------------------------------------------------------------
+# Abstract type hierarchy
 
-typealias MutableFixedVector{T, CARDINALITY} MutableFixedArray{T, 1, Tuple{CARDINALITY}}
-typealias MutableFixedMatrix{T, M, N}        MutableFixedArray{T, 2, Tuple{M,N}}
+"""
+    FixedArray{T,D}
 
-typealias FixedVector{CARDINALITY, T}        FixedArray{T, 1, Tuple{CARDINALITY,}}
-typealias FixedMatrix{Row, Column, T}        FixedArray{T, 2, Tuple{Row, Column}}
+Super type for all fixed size arrays of eltype `T` and dimension `D`.
 
-abstract FixedVectorNoTuple{CARDINALITY, T} <: FixedVector{CARDINALITY, T}
-export FixedVectorNoTuple
+The extents of the fixed dimensions aren't specified here due to technical
+limitations.  (It'd have to be an `NTuple{Int,D}`, but `TypeVar`s representing
+the extent of the dimensions in `FixedArray` subtypes can't be placed into this
+tuple when subtyping.)
+"""
+abstract FixedArray{T,D}
 
+# Define a subtype of FixedArray for each dimension.  Ideally we'd have the
+# fixed size type parameters in FixedArray itself, but it's not clear how we
+# can actually do this in a good way since type constructors are fairly
+# restricted.
+abstract FixedArray1{N,T}       <: FixedArray{T,1}
+abstract FixedArray2{N,M,T}     <: FixedArray{T,2}
+abstract FixedArray3{N,M,P,T}   <: FixedArray{T,3}
+abstract FixedArray4{N,M,P,Q,T} <: FixedArray{T,4}
+# Is there any point going to more dimensions than MAX_TUPLE_DEPTH?
+abstract FixedArray5{N,M,P,Q,R,T} <: FixedArray{T,5}
 
-_size{T <: Tuple}(::Type{T}) = (T.parameters...)
-_size{N, N2}(::Type{Tuple{N, N2}}) = (N,N2)
-_size{N}(::Type{Tuple{N}}) = (N,)
+typealias FixedVector FixedArray1
+typealias FixedMatrix FixedArray2
 
-eltype{T <: FixedArray}(A::Type{T}) = eltype_or(T, Any)
-eltype{T <: FixedArray,N,SZ}(A::FixedArray{T,N,SZ}) = T
+abstract FixedVectorNoTuple{N,T} <: FixedVector{N,T}
 
+#-------------------------------------------------------------------------------
+# Helper functions
 
-length{T <: FixedArray}(A::Type{T}) = prod(size(T))
-length{T <: FixedArray}(A::T) = length(T)
-
-endof{T <: FixedArray}(A::Type{T}) = length(T)
-endof{T <: FixedArray}(A::T) = endof(T)
-
-
-@generated function ndims{T <: FixedArray}(A::Type{T})
-    :($(fsa_abstract(T).parameters[2]))
-end
-ndims{T <: FixedArray}(A::T) = ndims(T)
-
-
-size{T,N,SZ}(A::Type{FixedArray{T,N,SZ}}) = _size(SZ)
-size{T <: FixedArray}(A::Type{T}) = size_or(T, ())
-size{T <: FixedArray}(A::T) = size(T)
-
-size{T <: FixedArray}(A::Type{T}, d::Integer) = size(T)[d]
-size{T <: FixedArray}(A::T, d::Integer) = size(T, d)
-
+# Helper function: walk up the type tree until FixedArray is reached,
+# propagating any TypeVars in the original type parameters.
 @generated function fsa_abstract{FSA <: FixedArray}(::Type{FSA})
     ff = FSA
     while ff.name.name != :FixedArray
@@ -46,12 +41,26 @@ size{T <: FixedArray}(A::T, d::Integer) = size(T, d)
     end
     :($ff)
 end
+# Walk up the type tree until a subtype of FixedArray with known size is
+# reached.  Propagates TypeVars correctly.
+@generated function fsa_abstract_sized{FSA <: FixedArray}(::Type{FSA})
+    if FSA.name.name == :FixedArray
+        return :(error("FixedArray has no concretely sized supertype"))
+    end
+    T = FSA
+    while supertype(T).name.name != :FixedArray
+       T = supertype(T)
+    end
+    :($T)
+end
+
+# TODO: Deprecate the following?
 @generated function size_or{FSA <: FixedArray}(::Type{FSA}, OR)
-    fsatype = fsa_abstract(FSA)
-    sz = fsatype.parameters[3]
-    isa(sz, TypeVar) && return :(OR)
-    any(x->isa(x, TypeVar), sz.parameters) && return :(OR)
-    :($(_size(sz)))
+    FSA.name.name != :FixedArray || return :(OR)
+    fsatype = fsa_abstract_sized(FSA)
+    sz = (fsatype.parameters[1:end-1]...)
+    any(x->isa(x, TypeVar), sz) && return :(OR)
+    :($sz)
 end
 @generated function eltype_or{FSA <: FixedArray}(::Type{FSA}, OR)
     fsatype = fsa_abstract(FSA)
@@ -66,6 +75,29 @@ end
     :($N)
 end
 
+
+#-------------------------------------------------------------------------------
+# General AbstractArray-like core interface
+Base.eltype{T <: FixedArray}(::Type{T}) = eltype_or(T, Any)
+Base.eltype{T,N}(::FixedArray{T,N}) = T
+
+Base.length{T <: FixedArray}(::Type{T}) = prod(size(T))
+Base.length{T <: FixedArray}(::T) = length(T)
+
+Base.endof{T <: FixedArray}(::Type{T}) = length(T)
+Base.endof{T <: FixedArray}(::T) = endof(T)
+
+Base.ndims{T <: FixedArray}(::Type{T}) = ndims_or(T, nothing)
+Base.ndims{T,N}(::FixedArray{T,N}) = N
+
+Base.size{T <: FixedArray}(::Type{T}) = size_or(T, nothing)
+Base.size{T <: FixedArray}(::T) = size(T)
+
+Base.size{T <: FixedArray}(::Type{T}, d::Integer) = size(T)[d]
+Base.size{T <: FixedArray}(::T, d::Integer) = size(T, d)
+
+
+#-------------------------------------------------------------------------------
 # Iterator
 start(A::FixedArray) = 1
 function next(A::FixedArray, state::Integer)
@@ -74,10 +106,16 @@ function next(A::FixedArray, state::Integer)
 end
 done(A::FixedArray, state::Integer) = length(A) < state
 
-@generated function basetype{T<:FixedArray}(::Type{T})
-    :($(T.name.primary))
+#-------------------------------------------------------------------------------
+# Primary interface to unwrap elements: Tuple(FSA)
+Base.Tuple(A::FixedArray) = getfield(A,1)
+
+@generated function Base.Tuple{N,T}(A::FixedVectorNoTuple{N, T})
+    return Expr(:tuple, ntuple(i->:(A[$i]), N)...)
 end
 
+#-------------------------------------------------------------------------------
+# similar_type implementation
 """
     similar_type(::Type{FSA}, [::Type{T}=eltype(FSA)], [sz=size(FSA)])
 
@@ -89,20 +127,14 @@ spirit as `Base.similar` to store the results of `map()` operations, etc.
 By default, `similar_type` introspects `FSA` to determine whether `T` and `sz`
 can be used; if not a canonical FixedArray container is returned instead.
 """
-@pure function similar_type{T}(::Type{FixedArray}, ::Type{T}, sz::Tuple)
-    if length(sz) == 1
-        return Vec{sz[1],T}
-    elseif length(sz) == 2
-        return Mat{sz[1],sz[2],T}
-    else
-        throw(ArgumentError("No built in FixedArray type is implemented for eltype $T and size $sz"))
-    end
-end
-
 @pure function similar_type{FSA <: FixedArray, T}(::Type{FSA}, ::Type{T}, sz::Tuple)
-    fsa_size = fsa_abstract(FSA).parameters[3].parameters
+    fsa_size = size_or(FSA, nothing)
     if eltype(FSA) == T && fsa_size == sz
         return FSA # Common case optimization
+    end
+    if fsa_size === nothing
+        # Unsized
+        return default_similar_type(T, sz)
     end
 
     # The default implementation for similar_type is follows.  It involves a
@@ -116,66 +148,42 @@ end
     # Propagate the available type parameters of FSA down to the abstract base
     # FixedArray as `TypeVar`s.
     pritype = FSA.name.primary
-    fsatype = fsa_abstract(pritype)
-    T_parameter    = fsatype.parameters[1]
-    ndim_parameter = fsatype.parameters[2]
-    sz_parameter   = fsatype.parameters[3]
-    sz_parameters  = fsatype.parameters[3].parameters
+    abstract_params = fsa_abstract_sized(pritype).parameters
+    sz_parameters  = abstract_params[1:end-1]
+    T_parameter    = abstract_params[end]
 
     # Figure out whether FSA can accommodate the new eltype `T` and size `sz`.
     # If not, delegate to the fallback by default.
-    if !((eltype(FSA) == T          || isa(T_parameter,    TypeVar)) &&
-         (ndims(FSA)  == length(sz) || isa(ndim_parameter, TypeVar)) &&
-         (fsa_size    == sz         || all(i -> (sz[i] == fsa_size[i] || isa(sz_parameters[i],TypeVar)), 1:length(sz))))
-        return similar_type(FixedArray, T, sz)
+    if !((eltype(FSA) == T          || isa(T_parameter, TypeVar)) &&
+         (fsa_size    == sz         || (length(fsa_size) == length(sz) && all(i -> (sz[i] == fsa_size[i] || isa(sz_parameters[i],TypeVar)), 1:length(sz)))))
+        return default_similar_type(T, sz)
     end
 
     # Iterate type parameters, replacing as necessary with T and sz
-    params = collect(FSA.parameters)
+    newparams = collect(FSA.parameters)
     priparams = pritype.parameters
-    for i=1:length(params)
+    for i=1:length(newparams)
         if priparams[i] === T_parameter
-            params[i] = T
-        elseif priparams[i] === ndim_parameter
-            params[i] = length(sz)
-        elseif priparams[i] === sz_parameter
-            params[i] = Tuple{sz...}
+            newparams[i] = T
         else
             for j = 1:length(sz_parameters)
                 if priparams[i] === sz_parameters[j]
-                    params[i] = sz[j]
+                    newparams[i] = sz[j]
                 end
             end
         end
     end
-    pritype{params...}
+    pritype{newparams...}
 end
 
 # similar_type versions with defaulted eltype and size
 @pure similar_type{FSA <: FixedArray, T}(::Type{FSA}, ::Type{T}) = similar_type(FSA, T, size(FSA))
 @pure similar_type{FSA <: FixedArray}(::Type{FSA}, sz::Tuple) = similar_type(FSA, eltype(FSA), sz)
 
-# Deprecated similar() -> similar_type()
-function get_tuple(f::FixedArray)
-    Base.depwarn("get_tuple(f::FixedArray) is deprecated, use Tuple(f) instead", :get_tuple)
-    Tuple(f)
-end
-function similar{FSA <: FixedArray}(::Type{FSA}, args...)
-    Base.depwarn("similar{FSA<:FixedArray}(::Type{FSA}, ...) is deprecated, use similar_type instead", :similar)
-    similar_type(FSA, args...)
-end
-similar{FSA <: FixedArray}(::Type{FSA}, sz::Int...) = similar(FSA, eltype(FSA), sz)
-similar{FSA <: FixedArray,T}(::Type{FSA}, ::Type{T}, sz::Int...) = similar(FSA, T, sz)
 
-@compat @generated function (::Type{T}){T<:Tuple, N, T1}(f::FixedVectorNoTuple{N, T1})
-    return Expr(:tuple, ntuple(i->:(f[$i]), N)...)
-end
-@compat function (::Type{T}){T<:Tuple}(f::FixedArray)
-    getfield(f, 1)
-end
+#-------------------------------------------------------------------------------
+# construct_similar implementation
 
-
-# Infrastructure for construct_similar
 "Compute promoted element type of the potentially nested Tuple type `ty`"
 function promote_type_nested(ty)
     if ty.name.primary === Tuple

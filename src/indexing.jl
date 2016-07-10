@@ -1,8 +1,22 @@
-@inline getindex{T <: FixedVector}(x::T, i::Union{Range, Integer}) = Tuple(x)[i]
-@inline getindex{T <: FixedVectorNoTuple}(x::T, i::Integer) = getfield(x, i)
+# Multidimensional indexing
+@inline Base.getindex(A::FixedArray1, i::Int) = Tuple(A)[i]
+@inline Base.getindex(A::FixedArray2, i::Int, j::Int) = Tuple(A)[j][i]
+@inline Base.getindex(A::FixedArray4, i::Int, j::Int, p::Int, q::Int) = Tuple(A)[q][p][j][i]
+@inline Base.getindex(A::FixedArray5, i::Int, j::Int, p::Int, q::Int, r::Int) = Tuple(A)[r][q][p][j][i]
+
+# Linear indexing
+@inline Base.getindex{N,M}(A::FixedArray2{N,M}, i::Int) = A[ind2sub((N,M), i)...]
+@inline Base.getindex{N,M,P}(A::FixedArray3{N,M,P}, i::Int) = A[ind2sub((N,M,P), i)...]
+@inline Base.getindex{N,M,P,Q}(A::FixedArray4{N,M,P,Q}, i::Int) = A[ind2sub((N,M,P,Q), i)...]
+@inline Base.getindex{N,M,P,Q,R}(A::FixedArray5{N,M,P,Q,R}, i::Int) = A[ind2sub((N,M,P,Q,R), i)...]
+
+@inline Base.getindex(A::FixedVectorNoTuple, i::Int) = getfield(A, i)
+
+# Stuff with Range which should probably be deprecated due to inherent type instability
+@inline getindex{T <: FixedVector}(x::T, i::Range) = Tuple(x)[i]
 @inline getindex{N, M, T}(a::Mat{N, M, T}, i::Range, j::Int) = ntuple(IndexFunc(a, j), Val{length(i)})::NTuple{length(i), T}
-@inline getindex{N, M, T}(a::Mat{N, M, T}, i::Int, j::Union{Range, Int}) = Tuple(a)[j][i]
-@inline getindex{N, M, T}(a::Mat{N, M, T}, i::Int) = a[ind2sub((N,M), i)...]
+@inline getindex{N, M, T}(a::Mat{N, M, T}, i::Int, j::Range) = Tuple(a)[j][i]
+
 @inline getindex(A::FixedArray, I::Tuple) = map(IndexFunctor(A), I)
 
 @inline setindex(a::FixedArray, value, index::Int...) = map(SetindexFunctor(a, value, index), typeof(a))
@@ -27,6 +41,8 @@
 @inline crow{R, T}(a::Mat{R, 4, T}, j::Int) = (Tuple(a)[1][j]', Tuple(a)[2][j]', Tuple(a)[3][j]', Tuple(a)[4][j]',)
 
 
+#-------------------------------------------------------------------------------
+# @fslice implementation
 # Unified slicing along combinations of fixed and variable dimensions
 
 "Get index of a field with `name` in type `T`.  Should this be in Base?"
