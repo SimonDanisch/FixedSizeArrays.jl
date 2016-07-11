@@ -19,12 +19,13 @@ function Base.promote_array_type{FSA <: FixedArray, T<:Number}(
     FSA
 end
 
-# Concatenation
 
-ext_size(SZ, ind) = (ind <= length(SZ) ? SZ[ind] : 1)
+# Concatenation
+ext_size(SZ, ind) = (ind <= length(SZ)) ? SZ[ind] : 1
 
 # Generate a nested tuple of array references splatting arrays `name1` and
 # `name2`, such that they concatenate along dimension `catdim`.
+# function cat_elements_expr(outsize,catdim,names, sizes, inds)
 function cat_elements_expr(outsize,catdim,name1,name2,dims1,dims2,inds)
     if length(outsize) == length(inds)
         if inds[catdim] <= ext_size(dims1,catdim)
@@ -42,30 +43,60 @@ function cat_elements_expr(outsize,catdim,name1,name2,dims1,dims2,inds)
                          for i=1:outsize[end-length(inds)]]...)
 end
 
-# Concatenate fixed size arrays along dimension `catdim`.  General
-# concatenation fully splats out the input arrays to avoid the splatting
-# penalty.
-@generated function Base.cat{catdim}(::Type{Val{catdim}}, a::FixedArray, b::FixedArray)
-    Sa = size(a)
-    Sb = size(b)
-    SZ = zeros(Int, max(length(Sa),length(Sb),catdim))
-    for d = 1:length(SZ)
-        La = d <= length(Sa) ? Sa[d] : 1
-        Lb = d <= length(Sb) ? Sb[d] : 1
-        if d != catdim && La != Lb
-            throw(DimensionMismatch("mismatch in dimension $d when concatenating $a and $b"))
-        end
-        SZ[d] = (d == catdim) ? La+Lb : La
+function catdims(catdim, sizes)
+    newdim = catdim
+    for i=1:length(sizes)
+        newdim = max(newdim, length(sizes[i]))
     end
-    SZ = (SZ...)
-    elements = cat_elements_expr(SZ, catdim, :a, :b, Sa, Sb, ())
+    newsize = zeros(Int, newdim)
+    for d = 1:length(newsize)
+        if d != catdim
+            expected = ext_size(sizes[1],d)
+            for argi = 2:length(sizes)
+                s = ext_size(sizes[argi], d)
+                if s != expected
+                    throw(DimensionMismatch("mismatch in dimension $d (expected $expected got $s for argument $argi)"))
+                end
+            end
+            newsize[d] = expected
+        else
+            s = 0
+            for argi = 1:length(sizes)
+                s += ext_size(sizes[argi], catdim)
+            end
+            newsize[d] = s
+        end
+    end
+    (newsize...)
+end
+
+_size(A) = size(A)
+_size{T<:Number}(x::Type{T}) = ()
+
+# Concatenate fixed size arrays along dimension `catdim`.  Seem to need to
+# fully write out the input arrays to avoid the splatting penalty.
+@generated function fsa_cat{catdim}(::Type{Val{catdim}}, a, b)
+    args = (a,b)
+    sizes = [_size(x) for x in args]
+    newsize = catdims(catdim, sizes)
+    elements = cat_elements_expr(newsize, catdim, :a, :b, sizes[1], sizes[2], ())
+    fsa = args[findfirst(x -> x<:FixedArray, args)]
     quote
-        construct_similar($a, $elements)
+        $(Expr(:meta, :inline))
+        construct_similar($fsa, $elements)
     end
 end
 
-@inline Base.vcat(a::FixedArray, b::FixedArray) = cat(Val{1}, a, b)
-@inline Base.hcat(a::FixedArray, b::FixedArray) = cat(Val{2}, a, b)
+@inline fsa_cat{D}(::Type{Val{D}}, a,b, args...) = fsa_cat(Val{D}, fsa_cat(Val{D},a,b), args...)
+
+@inline Base.cat(D::Int, a::NumOrFSA, b::NumOrFSA, args::NumOrFSA...) = fsa_cat(Val{D}, a, b, args...)
+@inline Base.cat{D}(::Type{Val{D}}, a::NumOrFSA, b::NumOrFSA, args::NumOrFSA...) = fsa_cat(Val{D}, a, b, args::NumOrFSA...)
+
+@inline Base.vcat(a::NumOrFSA, b::NumOrFSA) = fsa_cat(Val{1}, a,b)
+@inline Base.vcat(a::NumOrFSA, b::NumOrFSA, args::NumOrFSA...) = fsa_cat(Val{1}, a,b, args...)
+
+@inline Base.hcat(a::NumOrFSA, b::NumOrFSA) = fsa_cat(Val{2}, a,b)
+@inline Base.hcat(a::NumOrFSA, b::NumOrFSA, args::NumOrFSA...) = fsa_cat(Val{2}, a,b, args...)
 
 
 # operations

@@ -7,6 +7,8 @@ typealias MutableFixedMatrix{T, M, N}        MutableFixedArray{T, 2, Tuple{M,N}}
 typealias FixedVector{CARDINALITY, T}        FixedArray{T, 1, Tuple{CARDINALITY,}}
 typealias FixedMatrix{Row, Column, T}        FixedArray{T, 2, Tuple{Row, Column}}
 
+typealias NumOrFSA Union{Number,FixedArray}
+
 abstract FixedVectorNoTuple{CARDINALITY, T} <: FixedVector{CARDINALITY, T}
 export FixedVectorNoTuple
 
