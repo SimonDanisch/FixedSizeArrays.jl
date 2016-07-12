@@ -60,7 +60,7 @@ export FixedArray
 export FixedArray1, FixedArray2, FixedArray3, FixedArray4, FixedArray5
 export FixedVector, FixedMatrix
 export FixedVectorNoTuple
-export Vec, Mat, Ar3, Ar4, Point
+export Vec, Mat, FArray3, FArray4, Point
 
 export @fsa
 export similar_type
