@@ -65,26 +65,29 @@ via an index.
 
 #### FixedArray concrete types
 
-The package currently provides three concrete FixedArray types
+The package currently provides five concrete FixedArray types
 
-  * `Vec{N,T}` is a length `N` vector of eltype `T`.
-  * `Mat{N,M,T}` is an `N×M` matrix of eltype `T`
+  * `Vec{N,T}` is a length `N` vector of element type `T`.
+  * `Mat{N,M,T}` is an `N×M` matrix of element type `T`
+  * `FArray3{N,M,P,T}` is an `N×M×P` array of element type `T`
+  * `FArray4{N,M,P,Q,T}` is an `N×M×P×Q` array of element type `T`
 
-These two types are intended to behave the same as `Base.Vector` and
-`Base.Matrix`, but with fixed size.  That is, the interface is a convenient
-union of elementwise array-like functionality and vector space / linear algebra
-operations.  Hopefully we'll have more general higher dimensional fixed size
-containers in the future (note that the total number of elements of a higher
-dimensional container quickly grows beyond the size where having a fixed stack
-allocated container really makes sense).
+These four types are intended to behave the same as `Base.Array` but with fixed
+size.  That is, the interface is a convenient union of elementwise array-like
+functionality and vector space / linear algebra operations.  Hopefully we'll
+have more general higher dimensional fixed size containers in the future (note
+that the total number of elements of a higher dimensional container quickly
+grows beyond the size where having a fixed stack allocated container really
+makes sense).
 
-  * `Point{N,T}` is a position type which is structurally identical to `Vec{N,T}`.
+  * `Point{N,T}` is a generic member of an `N`-dimensional Cartesian space with element type `T`.
 
-Semantically `Point{N,T}` should be used to represent position in an
-`N`-dimensional Cartesian space.  The distinction between this and `Vec` is
-particularly relevant when overloading functions which deal with geometric data.
-For instance, a geometric transformation applies differently depending on
-whether you're transforming a *position* (`Point`) versus a *direction* (`Vec`).
+`Point{N,T}` is structurally the same as `Vec{N,T}`, but should be used to
+represent position in an `N`-dimensional Cartesian space.  The distinction
+between this and `Vec` is particularly relevant when overloading functions which
+deal with geometric data.  For instance, a geometric transformation applies
+differently depending on whether you're transforming a *position* (`Point`)
+versus a *direction* (`Vec`).
 
 
 #### User-supplied functions for FixedArray subtypes
