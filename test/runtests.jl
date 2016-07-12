@@ -695,7 +695,7 @@ context("Ops") do
 
         @fact cross(vi,v2) --> Vec3d(-7.0,14.0,-7.0)
         @fact isa(cross(vi,v2),Vec3d)  --> true
-        
+
         a,b = Vec2d(0,1), Vec2d(1,0)
         @fact cross(a,b) --> -1.0
         @fact isa(cross(a,b), Float64) --> true
@@ -1221,6 +1221,43 @@ context("typed round/floor/ceil/trunc") do
     @fact trunc(Int, v) --> Vec((0,1,0))
     @fact round(Int, v) --> Vec((1,1,0))
 end
+
+
+context("shift, push...") do
+    v = Vec(1,2,3)
+    p = Point(1,2.)
+    @fact @inferred(shift(v)       ) --> Vec(2,3)
+    @fact @inferred(shift(p)       ) --> Point(2.)
+
+    @fact @inferred(unshift(v, 42) ) --> Vec(42, 1,2,3)
+    @fact @inferred(unshift(v, 42.)) --> Vec(42., 1,2,3)
+    @fact @inferred(unshift(p, 42.)) --> Point(42, 1, 2.)
+
+    @fact @inferred(push(v, 42)    ) --> Vec(1,2,3, 42)
+    @fact @inferred(push(v, 42.)   ) --> Vec(1,2,3, 42.)
+    @fact @inferred(push(p, 42.)   ) --> Point(1,2,42.)
+
+    @fact @inferred(pop(v)      ) --> Vec(1,2)
+    @fact @inferred(pop(p)      ) --> Point(1.)
+
+    @fact @inferred(deleteat(v,1)  ) --> Vec(2,3)
+    @fact @inferred(deleteat(v,2)  ) --> Vec(1,3)
+    @fact @inferred(deleteat(v,3)  ) --> Vec(1,2)
+    @fact @inferred(deleteat(p,2)  ) --> Point(1.)
+
+    @fact_throws BoundsError deleteat(v,5)
+    @fact_throws BoundsError deleteat(v,-9)
+
+    @fact @inferred(insert(v, 1, 42) ) --> Vec(42,1,2,3)
+    @fact @inferred(insert(v, 2, 42) ) --> Vec(1,42,2,3)
+    @fact @inferred(insert(v, 3, 42) ) --> Vec(1,2,42,3)
+    @fact @inferred(insert(v, 4, 42) ) --> Vec(1,2,3,42)
+    @fact @inferred(insert(p, 3, 42.)) --> Point(1,2,42.)
+
+    @fact_throws BoundsError insert(v, 5, 42)
+    @fact_throws BoundsError insert(v, 0, 42)
+end
+
 
 context("Base.Test") do
     a = rand(2)
