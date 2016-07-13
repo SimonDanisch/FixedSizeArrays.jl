@@ -57,7 +57,7 @@ function show{N,T}(io::IO, v::FixedVector{N,T})
 end
 
 export FixedArray
-export FixedArray1, FixedArray2, FixedArray3, FixedArray4, FixedArray5
+export FixedArray1, FixedArray2, FixedArray3, FixedArray4
 export FixedVector, FixedMatrix
 export FixedVectorNoTuple
 export Vec, Mat, FArray3, FArray4, Point

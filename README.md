@@ -46,21 +46,23 @@ Without FixedSizeArrays, this would end up in a lot of types which would all nee
 
 The package provides several abstract types:
 
-  * `FixedArray{T,NDim,SIZE}` is the abstract base type for all fixed
-    arrays.  `T` and `NDim` mirror the eltype and number of dimension type
-    parameters in `AbstractArray`.  In addition there's a `SIZE` Tuple which
-    defines the extent of each fixed dimension as an integer.
+  * `FixedArray{T,D}` is the abstract base type for all fixed arrays with
+    `T` the element type and `D` the number of dimensions.
+  * The subtypes `FixedArray1{N,T}`, `FixedArray2{N,M,T}`, `FixedArray3{N,M,P,T}`,
+    `FixedArray4{N,M,P,Q,T}`, are abstract base types for arrays of fixed
+    dimensionality, with dimensionalities between 1 and 4.  Higher
+    dimensionalities could be added easily if it made sense.  (Ideally we'd have
+    the fixed size type parameters in FixedArray itself, but it's not clear how we
+    can actually do this in a nice way.)
+  * `FixedVectorNoTuple{N, T}` is the abstract type to use when you'd like to
+    name the fields of a `FixedVector` explicitly rather than accessing them via
+    an index.
 
 There's some convenient type aliases:
 
-  * `FixedVector{N,T}` is a convenient type alias for a one dimensional fixed
-    vector of length `N` and eltype `T`.
-  * `FixedMatrix{N,M,T}` is a convenient type alias for a two dimensional fixed
-    matrix of size `(N,M)` and eltype `T`.
+  * `FixedVector{N,T}` is a type alias for `FixedArray1`.
+  * `FixedMatrix{N,M,T}` is a type alias for `FixedArray2`.
 
-Finally there's an abstract type `FixedVectorNoTuple{N, T}` for use when you'd
-like to name the fields of a `FixedVector` explicitly rather than accessing them
-via an index.
 
 
 #### FixedArray concrete types
