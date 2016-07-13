@@ -275,22 +275,35 @@ chol!(m::Mat, ::Type{Val{:U}}) = chol!(m, UpperTriangular) # for pre-0.5
 end
 # matrix * vector
 @generated function *{T1, T2, M, N}(a::FixedMatrix{M, N, T1}, b::FixedVector{N, T2})
-    elements = Expr(:tuple, [Expr(:call, :+, [:(a[$i,$k]*b[$k]) for k = 1:N]...) for i in 1:M]...)
+    total_terms = M*N
+    if total_terms <= 64
+        # Full unrolling
+        elements = Expr(:tuple, [Expr(:call, :+, [:(a[$i,$k]*b[$k]) for k = 1:N]...) for i in 1:M]...)
+    else
+        # Expand as a bunch of dot products
+        elements = Expr(:tuple, [:(bilindot(Vec(row(a,$i)),b)) for i in 1:M]...)
+    end
     :(construct_similar($b, $elements))
 end
 function *(a::AbstractMatrix, b::FixedVector)
     a*Vector(b)
 end
 @generated function *{T1, T2, M, N}(a::FixedMatrix{M, N, T1}, b::AbstractVector{T2})
-    elements = Expr(:tuple, [Expr(:call, :+, [:(a[$i,$k]*b[$k]) for k = 1:N]...) for i in 1:M]...)
     quote
         length(b) == $N || throw(DimensionMismatch("$b is wrong size - expecting vector of length $N"))
-        @inbounds return Vec($elements)
+        return a*Vec{N,T2}(b)
     end
 end
 # matrix * matrix
-@generated function *{T1, T2, M, N, R}(a::FixedMatrix{M, N, T1}, b::FixedMatrix{N, R, T2})
-    elements = Expr(:tuple, [Expr(:tuple, [Expr(:call, :+, [:(a[$i,$k]*b[$k,$j]) for k = 1:N]...) for i in 1:M]...) for j in 1:R]...)
+@generated function *{T1, T2, M, N, P}(a::FixedMatrix{M, N, T1}, b::FixedMatrix{N, P, T2})
+    total_terms = M*N*P
+    if total_terms <= 64  # 4x4 * 4x4
+        # Full unrolling
+        elements = Expr(:tuple, [Expr(:tuple, [Expr(:call, :+, [:(a[$i,$k]*b[$k,$j]) for k = 1:N]...) for i in 1:M]...) for j in 1:P]...)
+    else
+        # Expand as a bunch of mat*vec expressions
+        elements = Expr(:tuple, [:(Tuple(a*Vec(column(b,$j)))) for j = 1:P]...)
+    end
     :(construct_similar($a, $elements))
 end
 function *(a::AbstractMatrix, b::FixedMatrix)
