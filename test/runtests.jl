@@ -1045,6 +1045,11 @@ context("Matrix Math") do
         @fact v1*v2' --> Vector(v1)*Vector(v2)'
     end
 
+    context("Large matrix multiply") do
+        M = rand(9,9)
+        v = rand(9)
+        @fact isapprox(Mat(M)*Vec(v), M*v) --> true
+    end
 end
 
 
