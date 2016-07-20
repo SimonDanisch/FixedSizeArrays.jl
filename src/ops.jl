@@ -179,12 +179,14 @@ end
     A[9]  * A[2]   * A[7]  * A[16] - A[1] * A[10] * A[7]  * A[16]  -
     A[5]  * A[2]   * A[11] * A[16] + A[1] * A[6]  * A[11] * A[16]
 )
+det(A::FixedMatrix) = det(Matrix(A))
 
 
 trace(A::FixedMatrix{1,1}) = A[1,1]
 trace(A::FixedMatrix{2,2}) = A[1,1] + A[2,2]
 trace(A::FixedMatrix{3,3}) = A[1,1] + A[2,2] + A[3,3]
 trace(A::FixedMatrix{4,4}) = A[1,1] + A[2,2] + A[3,3] + A[4,4]
+trace(A::FixedMatrix) = trace(Matrix(A))
 
 \{m,n,T1,T2}(mat::Mat{m,n,T1}, v::Vec{n,T2}) = inv(mat)*v
 
@@ -213,7 +215,6 @@ end
     )
 end
 
-
 @inline function inv{T}(A::Mat{4, 4, T})
     determinant = det(A)
     @inbounds return Mat{4, 4, T}(
@@ -241,6 +242,7 @@ end
     )
 end
 
+inv(A::FixedMatrix) = typeof(A)(inv(Matrix(A)))
 
 lyap{T}(a::Mat{1, 1, T}, c::Mat{1, 1, T}) = Mat{1,1,T}(lyap(a[1,1],c[1,1]))
 function lyap{T}(a::Mat{2, 2, T}, c::Mat{2, 2, T})

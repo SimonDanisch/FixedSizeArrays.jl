@@ -45,6 +45,12 @@ immutable IndexFunc{T} <: Functor{1}
 end
 @compat (a::IndexFunc{T}){T}(j) = a.arg[a.i,j]
 
+immutable CIndexFunc{T} <: Functor{1}
+    arg::T
+    i::Int
+end
+@compat (a::CIndexFunc{T}){T}(j) = a.arg[a.i,j]'
+
 
 immutable CRowFunctor{M}
     mat::M

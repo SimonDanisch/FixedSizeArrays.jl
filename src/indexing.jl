@@ -20,7 +20,7 @@
 
 
 # the columns of the ctranspose are the complex conjugate rows
-@inline crow{R, C, T}(a::Mat{R, C, T}, j::Int) = ntuple(IndexFunc(a, j)', Val{C})::NTuple{C, T}
+@inline crow{R, C, T}(a::Mat{R, C, T}, j::Int) = ntuple(CIndexFunc(a, j), Val{C})::NTuple{C, T}
 @inline crow{R, T}(a::Mat{R, 1, T}, j::Int) = (Tuple(a)[1][j]',)
 @inline crow{R, T}(a::Mat{R, 2, T}, j::Int) = (Tuple(a)[1][j]', Tuple(a)[2][j]')
 @inline crow{R, T}(a::Mat{R, 3, T}, j::Int) = (Tuple(a)[1][j]', Tuple(a)[2][j]', Tuple(a)[3][j]')
