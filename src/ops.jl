@@ -179,12 +179,14 @@ end
     A[9]  * A[2]   * A[7]  * A[16] - A[1] * A[10] * A[7]  * A[16]  -
     A[5]  * A[2]   * A[11] * A[16] + A[1] * A[6]  * A[11] * A[16]
 )
+det(A::FixedMatrix) = det(Matrix(A))
 
 
 trace(A::FixedMatrix{1,1}) = A[1,1]
 trace(A::FixedMatrix{2,2}) = A[1,1] + A[2,2]
 trace(A::FixedMatrix{3,3}) = A[1,1] + A[2,2] + A[3,3]
 trace(A::FixedMatrix{4,4}) = A[1,1] + A[2,2] + A[3,3] + A[4,4]
+trace(A::FixedMatrix) = trace(Matrix(A))
 
 \{m,n,T1,T2}(mat::Mat{m,n,T1}, v::Vec{n,T2}) = inv(mat)*v
 
@@ -213,7 +215,6 @@ end
     )
 end
 
-
 @inline function inv{T}(A::Mat{4, 4, T})
     determinant = det(A)
     @inbounds return Mat{4, 4, T}(
@@ -241,6 +242,7 @@ end
     )
 end
 
+inv(A::FixedMatrix) = typeof(A)(inv(Matrix(A)))
 
 lyap{T}(a::Mat{1, 1, T}, c::Mat{1, 1, T}) = Mat{1,1,T}(lyap(a[1,1],c[1,1]))
 function lyap{T}(a::Mat{2, 2, T}, c::Mat{2, 2, T})
@@ -275,22 +277,35 @@ chol!(m::Mat, ::Type{Val{:U}}) = chol!(m, UpperTriangular) # for pre-0.5
 end
 # matrix * vector
 @generated function *{T1, T2, M, N}(a::FixedMatrix{M, N, T1}, b::FixedVector{N, T2})
-    elements = Expr(:tuple, [Expr(:call, :+, [:(a[$i,$k]*b[$k]) for k = 1:N]...) for i in 1:M]...)
+    total_terms = M*N
+    if total_terms <= 64
+        # Full unrolling
+        elements = Expr(:tuple, [Expr(:call, :+, [:(a[$i,$k]*b[$k]) for k = 1:N]...) for i in 1:M]...)
+    else
+        # Expand as a bunch of dot products
+        elements = Expr(:tuple, [:(bilindot(Vec(row(a,$i)),b)) for i in 1:M]...)
+    end
     :(construct_similar($b, $elements))
 end
 function *(a::AbstractMatrix, b::FixedVector)
     a*Vector(b)
 end
 @generated function *{T1, T2, M, N}(a::FixedMatrix{M, N, T1}, b::AbstractVector{T2})
-    elements = Expr(:tuple, [Expr(:call, :+, [:(a[$i,$k]*b[$k]) for k = 1:N]...) for i in 1:M]...)
     quote
         length(b) == $N || throw(DimensionMismatch("$b is wrong size - expecting vector of length $N"))
-        @inbounds return Vec($elements)
+        return a*Vec{N,T2}(b)
     end
 end
 # matrix * matrix
-@generated function *{T1, T2, M, N, R}(a::FixedMatrix{M, N, T1}, b::FixedMatrix{N, R, T2})
-    elements = Expr(:tuple, [Expr(:tuple, [Expr(:call, :+, [:(a[$i,$k]*b[$k,$j]) for k = 1:N]...) for i in 1:M]...) for j in 1:R]...)
+@generated function *{T1, T2, M, N, P}(a::FixedMatrix{M, N, T1}, b::FixedMatrix{N, P, T2})
+    total_terms = M*N*P
+    if total_terms <= 64  # 4x4 * 4x4
+        # Full unrolling
+        elements = Expr(:tuple, [Expr(:tuple, [Expr(:call, :+, [:(a[$i,$k]*b[$k,$j]) for k = 1:N]...) for i in 1:M]...) for j in 1:P]...)
+    else
+        # Expand as a bunch of mat*vec expressions
+        elements = Expr(:tuple, [:(Tuple(a*Vec(column(b,$j)))) for j = 1:P]...)
+    end
     :(construct_similar($a, $elements))
 end
 function *(a::AbstractMatrix, b::FixedMatrix)
