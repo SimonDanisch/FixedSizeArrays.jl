@@ -14,10 +14,6 @@ end
 # for 0.5 and 0.4 compat, use our own functor type
 abstract Functor{N}
 
-if VERSION <= v"0.5.0"
-    supertype(x) = super(x)
-end
-
 if VERSION < v"0.5.0-dev+698"
     macro pure(ex)
         esc(ex)
