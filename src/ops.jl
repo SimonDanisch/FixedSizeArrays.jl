@@ -95,6 +95,10 @@ div_func_name, div_func_expr = gen_functor(:/, 2)
     @inline *(x::Number, y::FixedArray) = map($mul_func_name(), x, y)
     @inline *(x::FixedArray, y::Number) = map($mul_func_name(), x, y)
     @inline /(x::FixedArray, y::Number) = map($div_func_name(), x, y)
+    function /(x::Number, y::FixedArray)
+        Base.depwarn("/(x::Number, y::FixedArray) had unclear semantics and will be removed", :/)
+        map($div_func_name(), x, y)
+    end
 end
 
 
