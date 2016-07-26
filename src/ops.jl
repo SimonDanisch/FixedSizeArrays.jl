@@ -46,8 +46,6 @@ const binaryOps = (:.+, :.-,:.*, :./, :.\, :.^,
                    :atan2, :besselj, :bessely, :hankelh1, :hankelh2,
                    :besseli, :besselk, :beta, :lbeta)
 
-const matrixOps = (:*, :/)
-
 const reductions = ((:sum,:+), (:prod,:*), (:minimum,:min), (:maximum,:max))
 
 function gen_functor(func::Symbol, unary::Int)
@@ -88,16 +86,21 @@ for op in binaryOps
     end)
 end
 
-for op in matrixOps
-    functor_name, functor_expr = gen_functor(op, 2)
-    eval(quote
-        $functor_expr
-        @inline $op{T <: Number}(x::T, y::FixedArray{T}) = map($functor_name(), x, y)
-        @inline $op{T1 <: Number, T2}(x::T1, y::FixedArray{T2}) = $op(promote(x, y)...)
-        @inline $op{T <: Number}(x::FixedArray{T}, y::T) = map($functor_name(), x, y)
-        @inline $op{T1, T2 <: Number}(x::FixedArray{T1}, y::T2) = $op(promote(x, y)...)
-    end)
+# Non-dotted * and / of FSAs and scalars
+mul_func_name, mul_func_expr = gen_functor(:*, 2)
+div_func_name, div_func_expr = gen_functor(:/, 2)
+@eval begin
+    $div_func_expr
+    $mul_func_expr
+    @inline *(x::Number, y::FixedArray) = map($mul_func_name(), x, y)
+    @inline *(x::FixedArray, y::Number) = map($mul_func_name(), x, y)
+    @inline /(x::FixedArray, y::Number) = map($div_func_name(), x, y)
+    function /(x::Number, y::FixedArray)
+        Base.depwarn("/(x::Number, y::FixedArray) had unclear semantics and will be removed", :/)
+        map($div_func_name(), x, y)
+    end
 end
+
 
 @inline function promote{T1 <: FixedArray, T2 <: FixedArray}(a::T1, b::T2)
     T = promote_type(eltype(T1), eltype(T2))
