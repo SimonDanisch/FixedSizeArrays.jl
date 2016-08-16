@@ -3,6 +3,13 @@ module FixedSizeArrays
 
 using Compat
 
+if isdefined(Base, :normalize)
+    import Base: normalize
+else
+    import Compat: normalize
+    export normalize
+end
+
 importall Base
 import Base.LinAlg.chol!
 
@@ -78,7 +85,7 @@ export similar_type
 export construct_similar
 
 export unit
-export normalize
+
 export row
 export column
 export MatMulFunctor
