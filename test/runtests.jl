@@ -56,8 +56,7 @@ end
 
 #include("typeinf.jl")
 
-
-@testset "fsa macro" begin
+# @testset "fsa macro" begin
     a = 1
     a1 = @fsa([a,2,3])
     a2 = @fsa([a 2 3])
@@ -72,10 +71,10 @@ end
     @test a4 == Mat(((a,3),(2,4)))
     @test a5 == Mat(((a,4),(2,5),(3,6)))
     @test a6 == Mat(((a,3,5),(2,4,6)))
-end
+# end
 
-@testset "core" begin
-    @testset "ndims" begin
+# @testset "core" begin
+    # @testset "ndims" begin
         @test ndims(D3) == 3
         @test ndims(Mat) == 2
         @test ndims(Vec) == 1
@@ -88,8 +87,8 @@ end
         @test ndims(D3{3,3,3,Int}) == 3
         @test ndims(Mat{3,3,Int}) == 2
         @test ndims(Vec{3,Int}) == 1
-    end
-    @testset "size_or" begin
+    #end
+    # @testset "size_or" begin
         @test size_or(Mat, nothing) == nothing
         @test size_or(Mat{4}, nothing) == nothing
         @test size_or(Mat{4,4}, nothing) == (4,4)
@@ -100,8 +99,8 @@ end
         @test size_or(Vec{4,Float32}, nothing) == (4,)
         @test size_or(FixedArray, nothing) == nothing
 
-    end
-    @testset "eltype_or" begin
+    #end
+    # @testset "eltype_or" begin
         @test eltype_or(Mat, nothing) == nothing
         @test eltype_or(Mat{4}, nothing) == nothing
         @test eltype_or(Mat{4,4}, nothing) == nothing
@@ -113,8 +112,8 @@ end
 
         @test eltype_or(FixedArray, nothing) == nothing
 
-    end
-    @testset "ndims_or" begin
+    #end
+    # @testset "ndims_or" begin
         @test ndims_or(Mat, nothing) == 2
         @test ndims_or(Mat{4}, nothing) == 2
         @test ndims_or(Mat{4,4}, nothing) == 2
@@ -125,9 +124,9 @@ end
         @test ndims_or(Vec{4, Float64}, nothing) == 1
 
         @test ndims_or(FixedArray, nothing) == nothing
-    end
+    #end
 
-    @testset "similar_type" begin
+    # @testset "similar_type" begin
         @test similar_type(Vec{3,Int}, Float32) == Vec{3, Float32}
         @test similar_type(Vec{3}, Float32) == Vec{3, Float32}
         @test similar_type(Vec, Float32, (3,)) == Vec{3, Float32}
@@ -145,9 +144,9 @@ end
         @test similar_type(Coord2D, Float64, (2,)) == Coord2D
         @test similar_type(Coord2D, Int, (2,))     == Vec{2,Int}
         @test similar_type(Coord2D, Float64, (3,)) == Vec{3,Float64}
-    end
+    #end
 
-    @testset "construct_similar" begin
+    # @testset "construct_similar" begin
         @test construct_similar(Vec{3,Int}, (1.0f0,2)) === Vec{2,Float32}(1,2)
         @test construct_similar(Vec{2}, (1,2,3)) === Vec{3,Int}(1,2,3)
         @test construct_similar(Vec, (1.0,2)) === Vec{2,Float64}(1,2)
@@ -157,12 +156,12 @@ end
 
         @test construct_similar(Mat{3,3,Int}, ((1.0f0,2),(1.0,2))) === Mat{2,2,Float64}((1,2),(1,2))
         @test construct_similar(Mat, ((1,2),)) === Mat{2,1,Int}(((1,2),))
-    end
+    #end
 
-end
+#end
 
 
-@testset "Array of FixedArrays" begin
+# @testset "Array of FixedArrays" begin
 
     N = 100
     a = Point{3, Float32}[Point{3, Float32}(0.7132) for i=1:N]
@@ -171,7 +170,7 @@ end
     c = Point{3, Float64}[Point{3, Float64}(typemin(Float64)), a..., Point{3, Float64}(typemax(Float64))]
     d = RGB{Float64}[RGB(typemin(Float64)), b..., RGB(typemax(Float64))]
 
-    @testset "reduce" begin
+    # @testset "reduce" begin
         sa = sum(a)
         ma = mean(a)
         sb = sum(b)
@@ -191,9 +190,9 @@ end
         @test minimum(d) == RGB(typemin(Float64))
 
         @test extrema(c) == (minimum(c), maximum(c))
-    end
+    #end
 
-    @testset "array ops" begin
+    # @testset "array ops" begin
         for op in (.+, .-,.*, ./, .\, +, -)
             @test typeof(op(a, 1f0)) == typeof(a)
             @test typeof(op(1f0, a)) == typeof(a)
@@ -214,8 +213,8 @@ end
             @test a[1] + 1f0 == afd[i]
             @test b[1] + 1f0 == bfd[i]
         end
-    end
-    @testset "Show" begin
+    #end
+    # @testset "Show" begin
         m1 = rand(Mat4d, 2)
         m2 = rand(RGB{Float32}, 2)
         m3 = rand(Vec3f, 2)
@@ -223,13 +222,13 @@ end
         println(m2)
         println(m3)
         showcompact(Point(1,2,3))
-    end
-end
+    #end
+#end
 
 
-@testset "Constructor FixedVectorNoTuple" begin
+# @testset "Constructor FixedVectorNoTuple" begin
     for T=[Float32, Float64, Int, UInt, UInt32, UInt8]
-        @testset "$T" begin
+        # @testset "$T" begin
             r = rand(T)
             x = RGB{Int}[RGB(1) for i=1:10]
             @test RGB{Float32}(["0.222", "9.8822", "29.999"]) == RGB{Float32}(0.222, 9.8822, 29.999)
@@ -253,13 +252,13 @@ end
             @test typeof(RGB(1f0, 2, 3.0))      == RGB{Float64}
             @test typeof(RGB{Int}(1f0, 2, 3.0)) == RGB{Int}
             @test_throws DimensionMismatch RGB((1,2,3), (2,3,4))
-        end
+        #end
     end
-end
+#end
 
 # A little brutal, but hey.... Better redudantant tests, than not enough tests
-@testset "Constructor " begin
-    @testset "Rand" begin
+# @testset "Constructor " begin
+    # @testset "Rand" begin
         #Win32 seems to fail for rand(Vec4d)
         @test typeof(rand(Vec4d)) == Vec4d
         @test typeof(rand(Mat4d)) == Mat4d
@@ -275,15 +274,15 @@ end
         @test eltype(x) == Float32
         @test size(x) == (4,4,4)
         @test typeof(rand(Vec4d, 5,5)) == Matrix{Vec4d}
-    end
-    @testset "Randn" begin
+    #end
+    # @testset "Randn" begin
         @test typeof(randn(Base.Random.GLOBAL_RNG, Vec4d)) == Vec4d
         @test typeof(randn(Vec4d)) == Vec4d
         @test typeof(randn(Mat4d)) == Mat4d
         @test typeof(randn(Mat{4,2, Complex{Float64}})) == Mat{4,2, Complex{Float64}}
         @test typeof(randn(Vec{7, Complex{Float64}})) == Vec{7, Complex{Float64}}
-    end
-    @testset "Zero" begin
+    #end
+    # @testset "Zero" begin
         @test typeof(zero(Vec4d)) == Vec4d
         @test typeof(zero(Mat4d)) == Mat4d
 
@@ -291,20 +290,20 @@ end
         @test typeof(zero(Vec{7, Int})) == Vec{7, Int}
         @test zero(Vec((1,2))) == Vec((0,0))
         @test zero(Vec((1.0,2.0))) == Vec((0.0,0.0))
-    end
+    #end
 
-    @testset "eye" begin
+    # @testset "eye" begin
         @test typeof(eye(Mat4d)) == Mat4d
         @test typeof(eye(Mat{4,2, Int})) == Mat{4,2, Int}
-    end
-    @testset "one" begin
+    #end
+    # @testset "one" begin
         x = one(Mat{4,2, Int})
         @test typeof(one(Mat4d)) == Mat4d
         @test typeof(x) == Mat{4,2, Int}
         @test all(x-> x==1, x) == true
-    end
+    #end
 
-    @testset "unit" begin
+    # @testset "unit" begin
         u4 = unit(Vec4d, 1)
         u7 = unit(Vec{7, Int}, 7)
         @test typeof(u4) == Vec4d
@@ -314,9 +313,9 @@ end
 
         @test u7[end] == 1
         @test u7[1:end-1] == (0,0,0,0,0,0)
-    end
+    #end
     for N=(1,10)
-        @testset "construction, conversion, $N" begin
+        # @testset "construction, conversion, $N" begin
             for VT=[Point, Vec], VT2=[Normal, Vec], ET=[Float32, Int, UInt], ET2=[Float64, UInt, Float32]
                 rand_range  = ET(1):ET(10)
                 rand_range2 = ET2(1):ET2(10)
@@ -386,12 +385,12 @@ end
                 @test VT{N}(ntuple(x->ET(1), N)...) == Vec{N, ET}(1)
             end
         end
-    end
-end
+    #end
+#end
 
 
-@testset "Constructors" begin
-    @testset "FixedVector: unary, from FixedVector" begin
+# @testset "Constructors" begin
+    # @testset "FixedVector: unary, from FixedVector" begin
         @test typeof(Vec3f(1,1,1))     == Vec{3, Float32}
         @test typeof(Vec3f(1,1f0,1))   == Vec{3, Float32}
         @test typeof(Vec3f(1f0,1,1.0)) == Vec{3, Float32}
@@ -407,12 +406,12 @@ end
         @test Vec(Vec3d(1), 1.0)     == Vec4d(1)
         @test Vec(Vec3d(1), 1)         == Vec4d(1)
         @test Vec3d(Vec3f(1.0))     == Vec3d(1.0)
-    end
-end
+    #end
+#end
 
 
-@testset "map" begin
-    @testset "Vec and AbstractVector" begin
+# @testset "map" begin
+    # @testset "Vec and AbstractVector" begin
         # Unary, binary & ternary map with specified output type
         @test map(-, Vec{3,Float64}, Vec(1,2,3)) === Vec{3,Float64}(-1,-2,-3)
         @test map(+, Vec{3,Float64}, [1,2,3], Vec(1,2,3)) === Vec{3,Float64}(2,4,6)
@@ -430,9 +429,9 @@ end
         # Binary map with mixed types
         @test map(>, Vec(0.0,2.0), Vec(1,1)) === Vec{2,Bool}(false,true)
         @test map(+, Vec(0.0,0.0), Vec(1,1)) === Vec{2,Float64}(1.0,1.0)
-    end
+    #end
 
-    @testset "FixedVectorNoTuple" begin
+    # @testset "FixedVectorNoTuple" begin
         # RGB with specified output
         @test map(-, RGB{Float64}, RGB(1.0, 2.0, 3.0)) === RGB{Float64}(-1.0, -2.0, -3.0)
         @test map(-, RGB{Float64}, [1.0, 2.0, 3.0]) === RGB{Float64}(-1.0, -2.0, -3.0)
@@ -442,15 +441,15 @@ end
         @test map(+, RGB(1.0, 2.0, 3.0), [1.0, 2.0, 3.0]) === RGB{Float64}(2.0, 4.0, 6.0)
         @test map(+, [1.0, 2.0, 3.0], RGB(1.0, 2.0, 3.0)) === RGB{Float64}(2.0, 4.0, 6.0)
         @test map(+, RGB{Int}(1, 2, 3), RGB(1.0, 2.0, 3.0)) === RGB{Float64}(2.0, 4.0, 6.0)
-    end
+    #end
 
-    @testset "Mat and AbstractMatrix" begin
+    # @testset "Mat and AbstractMatrix" begin
         @test map(+, Mat{2,2,Int}(((1,2),(3,4))), Mat{2,2,Int}(((1,2),(3,4)))) === Mat{2,2,Int}(((2,4),(6,8)))
         @test map(+, Mat{2,2,Int}(((1,2),(3,4))), [1 3; 2 4]) === Mat{2,2,Int}(((2,4),(6,8)))
         @test map(+, [1 3; 2 4], Mat{2,2,Int}(((1,2),(3,4)))) === Mat{2,2,Int}(((2,4),(6,8)))
-    end
+    #end
 
-    @testset "Size checking" begin
+    # @testset "Size checking" begin
         @test_throws DimensionMismatch map(+, Vec(1,2,3), Vec(1,1))
         @test_throws DimensionMismatch map(+, Vec(1,1), Vec(1,2,3))
         @test_throws DimensionMismatch map(+, Vec(1,2,3), [1,1])
@@ -458,17 +457,17 @@ end
         @test_throws DimensionMismatch map(+, Vec(1,2,3), 1:2)
         @test_throws DimensionMismatch map(+, 1:2, Vec(1,2,3))
         @test_throws DimensionMismatch map(+, Vec(1,2,3), [1 2 3])
-    end
+    #end
 
-    @testset "Broadcast of scalars" begin
+    # @testset "Broadcast of scalars" begin
         # Arguably not the right thing for map(), but neither do we have a full
         # broadcast implementation yet...
         @test map(+, Vec{3,Float64}, Vec(1,2,3), 1.0) === Vec{3,Float64}(2,3,4)
         @test map(+, Vec{3,Float64}, 1.0, Vec(1,2,3)) === Vec{3,Float64}(2,3,4)
         @test map(+, 1.0, Vec(1,2,3)) === Vec{3,Float64}(2,3,4)
         @test map(+, Vec(1,2,3), 1.0) === Vec{3,Float64}(2,3,4)
-    end
-end
+    #end
+#end
 
 
 v2 = Vec(6.0,5.0,4.0)
@@ -479,15 +478,15 @@ v1c = Vec(6.0+3.0im,5.0-2im,4.0+0.0im)
 v2c = v1 + v2*im
 v2c = Vec(1.0 + 6.0im, 2.0 + 5.0im, 3.0 + 4.0im)
 
-@testset "Complex Ops" begin
-    @testset "dot product" begin
+# @testset "Complex Ops" begin
+    # @testset "dot product" begin
         @test dot(v1c,v2c) == dot([6.0+3.0im,5.0-2im,4.0+0.0im], [1.0,2.0,3.0] + [6.0,5.0,4.0]*im)
         @test Vector(transpose(v1c)*v2c) == [6.0+3.0im 5.0-2im 4.0+0.0im]*([1.0,2.0,3.0] + [6.0,5.0,4.0]*im)
         @test Matrix(v2c*transpose(v1c)) == ([1.0,2.0,3.0] + [6.0,5.0,4.0]*im)*[6.0+3.0im 5.0-2im 4.0+0.0im]
-    end
-end
+    #end
+#end
 
-@testset "Destructure" begin
+# @testset "Destructure" begin
     rgb_ref = Int[1 2 3 4;
                2 4 6 8;
                3 6 9 12]
@@ -510,10 +509,10 @@ end
     # destructure() with 2D FSA
     A = [@fsa([i 2*i; 3*i 4*i]) for i=1:2]
     @test destructure(A) == cat(3, [1 2; 3 4], [2 4; 6 8])
-end
+#end
 
-@testset "Indexing" begin
-    @testset "FixedVector" begin
+# @testset "Indexing" begin
+    # @testset "FixedVector" begin
         @test setindex(v1, 88.9, 1) == Vec(88.9,2.0,3.0)
         @test v1[1] == 1.0
         @test v1[2] == 2.0
@@ -527,14 +526,14 @@ end
         @test_throws BoundsError v1[0]
         @test_throws BoundsError v1[4]
         @test row(v1, 1) == (1.0,)
-    end
+    #end
     m = Mat{4,4,Int}(
         (1,2,3,4),
         (5,6,7,8),
         (9,10,11,12),
         (13,14,15,16)
     )
-    @testset "FixedMatrix" begin
+    # @testset "FixedMatrix" begin
         @test setindex(m, 42.0, 2,2) == Mat{4,4,Int}(
             (1,2,3,4),
             (5,42.0,7,8),
@@ -559,10 +558,10 @@ end
 
 
 
-    end
+    #end
 
-    @testset "fslice" begin
-        @testset "getindex" begin
+    # @testset "fslice" begin
+        # @testset "getindex" begin
             rgb = RGB{Int}[RGB(i,2*i,3*i) for i=1:10]
 
             # Plain indexing
@@ -592,54 +591,54 @@ end
             @test compatsqueeze(@fslice(A[1,1,:,1])) == [A[i,1][1,1] for i=1:N]
             @test compatsqueeze(@fslice(A[end,end,end,:])) == [A[end,j][end,end] for j=1:N]
             @test compatsqueeze(@fslice(A[1,[1,end],1,1])) == [A[1,1][1,1], A[1,1][1,end]]
-        end
+        #end
 
-        @testset "setindex" begin
+        # @testset "setindex" begin
             rgb = RGB{Int}[RGB(i,2*i,3*i) for i=1:10]
 
             @fslice rgb[:r,:] = -1
             @fslice rgb[:g,:] .+= 1
             @fslice rgb[3,:] = -3
             @test rgb == RGB{Int}[RGB(-1,2*i+1,-3) for i=1:10]
-        end
-    end
-end
+        #end
+    #end
+#end
 
 
 
-@testset "Ops" begin
-    @testset "Negation" begin
+# @testset "Ops" begin
+    # @testset "Negation" begin
         @test @inferred(-v1) == Vec(-1.0,-2.0,-3.0)
         @test isa(-v1, Vec3d) == true
-    end
+    #end
 
-    @testset "Addition" begin
+    # @testset "Addition" begin
         @test @inferred(v1+v2) == Vec3d(7.0,7.0,7.0)
         @test @inferred(RGB(1,2,3) + RGB(2,2,2)) === RGB{Int}(3,4,5)
         @test @inferred(Coord2D(1,2) + Coord2D(3,4)) === Coord2D(4,6)
-    end
-    @testset "Subtraction" begin
+    #end
+    # @testset "Subtraction" begin
         @test @inferred(v2-v1) == Vec3d(5.0,3.0,1.0)
         @test @inferred(RGB(1,2,3) - RGB(2,2,2)) === RGB{Int}(-1,0,1)
         @test @inferred(Coord2D(1,2) - Coord2D(3,4)) === Coord2D(-2,-2)
-    end
-    @testset "Multiplication" begin
+    #end
+    # @testset "Multiplication" begin
         @test @inferred(v1.*v2) == Vec3d(6.0,10.0,12.0)
-    end
-    @testset "Mixed Type Multiplication" begin
+    #end
+    # @testset "Mixed Type Multiplication" begin
         @test @inferred(vi.*v2) == Vec3d(6.0,10.0,12.0)
-    end
-    @testset "Division" begin
+    #end
+    # @testset "Division" begin
         @test @inferred(v1 ./ v1) == Vec3d(1.0,1.0,1.0)
-    end
+    #end
 
-    @testset "Relational" begin
+    # @testset "Relational" begin
         @test (Vec(1,3) .< Vec(2,2)) === Vec{2,Bool}(true, false)
         @test (RGB(1,2,3) .< RGB(2,2,2)) === RGB{Bool}(true, false, false)
         @test (Coord2D(1,3) .< Coord2D(2,2)) === Vec{2,Bool}(true, false)
-    end
+    #end
 
-    @testset "Scalar" begin
+    # @testset "Scalar" begin
         @test @inferred(1.0 + v1) == Vec3d(2.0,3.0,4.0)
         @test @inferred(1.0 .+ v1) == Vec3d(2.0,3.0,4.0)
         @test @inferred(v1 + 1.0) == Vec3d(2.0,3.0,4.0)
@@ -689,8 +688,8 @@ end
         @test @inferred(0.2f0+a) == Vec{1,Float32}(3.4f0)
         @test @inferred(a*0.2f0) == Vec{1,Float32}(3.2f0*0.2f0)
         @test @inferred(0.2f0*a) == Vec{1,Float32}(3.2f0*0.2f0)
-    end
-    @testset "vector norm+cross product" begin
+    #end
+    # @testset "vector norm+cross product" begin
 
         @test norm(Vec3d(1.0,2.0,2.0)) == 3.0
 
@@ -704,23 +703,23 @@ end
         a,b = Vec2d(0,1), Vec2d(1,0)
         @test cross(a,b) == -1.0
         @test isa(cross(a,b), Float64) == true
-    end
+    #end
 
-    @testset "hypot" begin
+    # @testset "hypot" begin
         a = Vec{2,Int}(1,2)
         b = Vec{2,Float64}(1.,2.)
         @test hypot(a) == 2.23606797749979
         @test hypot(b) == 2.23606797749979
         @test hypot(a) == hypot(b)
-    end
-    @testset "normalize" begin
+    #end
+    # @testset "normalize" begin
         a = Vec(3,4)
         b = Vec(3.,4.)
         @test normalize(a) == Vec(0.6,0.8)
         @test normalize(b) == Vec(0.6,0.8)
-    end
+    #end
 
-    @testset "reduce" begin
+    # @testset "reduce" begin
         a = rand(Vec{7, Float32})
         x = reduce(+, a)
         y = 0f0
@@ -736,35 +735,35 @@ end
             y2 += elem
         end
         @test y2 == x2
-    end
-end
+    #end
+#end
 
 
-@testset "Promotion" begin
+# @testset "Promotion" begin
     @test promote_type(Vec{2,Float64}, Int) == Vec{2,Float64}
-end
+#end
 
 
 # type conversion
-@testset "Conversion 2" begin
+# @testset "Conversion 2" begin
     @test isa(convert(Vec3f,v1), Vec3f)  == true
 
     @test isa(convert(Vector{Float64}, v1), Vector{Float64})  == true
     @test convert(Vector{Float64}, v1) == [1.0,2.0,3.0]
-end
+#end
 
 for T in [UInt, Int, Float32, Float64]
-    @testset "Conversion to Vec{N,$T}" begin
+    # @testset "Conversion to Vec{N,$T}" begin
         X = map(T, (1,2,3,4,5))
 
-        @testset "single value conversion" begin
+        # @testset "single value conversion" begin
             x = X[1]
             for N in 1:4
                 @test convert(Vec{N,T}, x) == Vec{N,T}(repeated(x,N)...)
             end
-        end
+        #end
 
-        @testset "conversion from vararg, tuple & array" begin
+        # @testset "conversion from vararg, tuple & array" begin
             for N in 1:4
                 tup = X[1:N]
                 arr = [tup...]
@@ -775,9 +774,9 @@ for T in [UInt, Int, Float32, Float64]
                 @test convert(Vec, tup) == Vec{N,T}(tup...)
                 @test convert(Vec, arr) == Vec{N,T}(tup...)
             end
-        end
+        #end
 
-        @testset "conversion from too many args should fail" begin
+        # @testset "conversion from too many args should fail" begin
             for N in 1:4
                 tup = X[1:N+1]
                 arr = [tup...]
@@ -785,9 +784,9 @@ for T in [UInt, Int, Float32, Float64]
                 # @fact_throws convert(Vec{N,T}, tup)
                 # @fact_throws convert(Vec{N,T}, arr)
             end
-        end
+        #end
 
-        @testset "conversion from too few args should fail" begin
+        # @testset "conversion from too few args should fail" begin
             for N in 3:5
                 tup = X[1:N-1]
                 arr = [tup...]
@@ -795,8 +794,8 @@ for T in [UInt, Int, Float32, Float64]
                 # @fact_throws convert(Vec{N,T}, tup)
                 # @fact_throws convert(Vec{N,T}, arr)
             end
-        end
-    end
+        #end
+    #end
 end
 
 # matrix operations
@@ -809,7 +808,7 @@ zeromat = Mat2d((0.0,0.0),(0.0,0.0))
 
 
 
-@testset "Matrix" begin
+# @testset "Matrix" begin
     @test map(Float64, zeromat) == zeromat
     @test length(Mat2d) == 4
     @test length(zeromat) == 4
@@ -876,14 +875,14 @@ zeromat = Mat2d((0.0,0.0),(0.0,0.0))
     # type conversion
     #@fact isa(convert(Matrix1x4{Float32},r),Matrix1x4{Float32})
     jm = rand(4,4)
-    im = Mat(jm)
+    _im = Mat(jm)
     for i=1:4*2
-        @test jm[i] == im[i]
+        @test jm[i] == _im[i]
     end
     #im = Matrix4x4(jm)
-    @test isa(im, Mat4d)  == true
+    @test isa(_im, Mat4d)  == true
 
-    jm2 = convert(Array{Float64,2}, im)
+    jm2 = convert(Array{Float64,2}, _im)
     @test isa(jm2, Array{Float64,2})  == true
     @test jm == jm2
 
@@ -907,8 +906,8 @@ zeromat = Mat2d((0.0,0.0),(0.0,0.0))
     b = Mat([1,2,3,4])
     @test b == Mat((1,2,3,4))
     @test b == Mat([1,2,3,4]'')
-end
-@testset "Matrix Math" begin
+#end
+#@testset "Matrix Math" begin
     for i=1:5, j=1:5
         v = rand(j)
         m = rand(i,j)
@@ -926,60 +925,60 @@ end
         mifs = Mat(mi)
         mi2fs = Mat(mi2)
 
-        @testset "Matrix{$i, $j} * Vector{$j}" begin
+        # @testset "Matrix{$i, $j} * Vector{$j}" begin
             vm = m * v
             @test isapprox(@inferred(mfs * vfs), vm)  == true
             @test isapprox(@inferred(Matrix(mfs) * vfs), vm)  == true
             @test isapprox(@inferred(mfs * Vector(vfs)), vm)  == true
-        end
-        @testset "Matrix{$i, $j} * Matrix{$j, $i}" begin
+        #end
+        # @testset "Matrix{$i, $j} * Matrix{$j, $i}" begin
             mm = m * m2'
             @test isapprox(@inferred(mfs * m2fs'), mm)  == true
             @test isapprox(@inferred(Matrix(mfs) * m2fs'), mm)  == true
             @test isapprox(@inferred(mfs * Matrix(m2fs')), mm)  == true
-        end
-        @testset "Matrix{$i, $j}*(2I)" begin
+        #end
+        # @testset "Matrix{$i, $j}*(2I)" begin
             mm = m*(2)
             @test isapprox(@inferred(m*(2I)), mm)  == true
-        end
+        #end
 
         # test different element types
-        @testset "Matrix{$i, $j, T} * Vector{$j, U}" begin
+        # @testset "Matrix{$i, $j, T} * Vector{$j, U}" begin
             vmi = mi * v
             @test isapprox(@inferred(mifs * vfs), vmi)  == true
             vmi = m * vi
             @test isapprox(@inferred(mfs * vifs), vmi)  == true
             # Custom vector types
             @test @inferred(eye(Mat{3,3,Float64}) * RGB{Int}(1,2,3)) === RGB{Float64}(1,2,3)
-        end
-        @testset "Matrix{$i, $j, T} * Matrix{$j, $i, U}" begin
+        #end
+        # @testset "Matrix{$i, $j, T} * Matrix{$j, $i, U}" begin
             mmi = mi * m2'
             @test isapprox(@inferred(mifs * m2fs'), mmi)  == true
             mmi = m * mi2'
             @test isapprox(@inferred(mfs * mi2fs'), mmi)  == true
-        end
+        #end
 
         if i == j
-            @testset "(2*I + I*M)\\v" begin
+            # @testset "(2*I + I*M)\\v" begin
                 mm = (2*I+I*m) \ v
                 @test isapprox(@inferred((2*I+I*mfs) \ vfs), mm)  == true
-            end
-            @testset "det(M)" begin
+            #end
+            # @testset "det(M)" begin
                 mm = det(m)
                 fmm = det(mfs)
                 @test isapprox(fmm, mm)  == true
-            end
-            @testset "trace(M)" begin
+            #end
+            # @testset "trace(M)" begin
                 mm = trace(m)
                 fmm = trace(mfs)
                 @test isapprox(fmm, mm)  == true
-            end
-            @testset "inv(M)" begin
+            #end
+            # @testset "inv(M)" begin
                 mm = inv(m)
                 fmm = inv(mfs)
                 @test isapprox(fmm, mm)  == true
-            end
-            @testset "expm(M)" begin
+            #end
+            # @testset "expm(M)" begin
                 mm = expm(m)
                 fmm = expm(mfs)
                 @test isapprox(fmm, mm)  == true
@@ -987,39 +986,39 @@ end
                 mm = expm(mc)
                 fmm = expm(mfsc)
                 @test isapprox(fmm, mm)  == true
-            end
-            @testset "lyap(M,M2*M2')" begin
+            #end
+            # @testset "lyap(M,M2*M2')" begin
                 mm = lyap(m, m2*m2')
                 fmm = lyap(mfs, m2fs*m2fs')
                 @test isapprox(fmm, mm) == true
-            end
-            @testset "chol(M2*M2')" begin
+            #end
+            # @testset "chol(M2*M2')" begin
                 mm = full(chol(m2*m2'))
                 mm2 = full(chol(map(Mat, m2*m2'))) # Matrix of Mat's
                 fmm = chol(m2fs*m2fs')
                 @test isapprox(fmm, mm) == true
                 @test isapprox(mm, map(first, mm2)) == true
 
-            end
+            #end
 
         else
-            @testset "Matrix{$i, $j} * Matrix{$i, $j}" begin
+            # @testset "Matrix{$i, $j} * Matrix{$i, $j}" begin
                 @test_throws DimensionMismatch mfs * mfs
-            end
+            #end
         end
-        @testset "transpose M" begin
+        # @testset "transpose M" begin
             mm = m'
             fmm = mfs'
             @test isapprox(fmm, mm)  == true
-        end
+        #end
 
-        @testset "ctranspose M" begin
+        # @testset "ctranspose M" begin
             mm = mc'
             fmm = mfsc'
             @test isapprox(fmm, mm)  == true
-        end
+        #end
     end
-    @testset "expm(M::Mat{3,3,Float64})" begin
+    # @testset "expm(M::Mat{3,3,Float64})" begin
         # in practice the precision is eps(), if m has not a triple eigenvalue
         for i in 1:30
             m = (rand(0:1,3,3).*randn(3,3) .+ rand(-3:3,3,3)) # some entries are natural numbers to have higher chance of multiple eigenvalues to trigger all branches
@@ -1031,31 +1030,31 @@ end
             m = m + m'
             @test norm(Matrix(expm(Mat(m))) -  expm(m))/norm(expm(m)) <= 1E-9
         end
-    end
-    @testset "expm(M::Mat{3,3, BigFloat})" begin
+    #end
+    # @testset "expm(M::Mat{3,3, BigFloat})" begin
         @test norm(Matrix(expm(Mat(big([0.0 0.0 1.0; -1.0 1.0 0.0; -1.0 0.0 2.0])))) - big([-0.0 0.0  1.0; -0.5  1.0  -0.5; -1.0  0.0  2.0])*e,1) <  10eps(big(1.))
-    end
+    #end
 
-    @testset "Matrix * FixedVectorNoTuple" begin
+    # @testset "Matrix * FixedVectorNoTuple" begin
         rgb = rand(3)
         m = rand(3,3)
         rgbfs = RGB(rgb)
         mfs = Mat(m)
         @test isapprox(mfs * rgbfs, m * rgb) == true
-    end
+    #end
 
-    @testset "Outer product  Vec{N} * Mat{1,M}" begin
+    # @testset "Outer product  Vec{N} * Mat{1,M}" begin
         v1 = Vec(1,2)
         v2 = Vec(1,2,3)
         @test v1*v2' == Vector(v1)*Vector(v2)'
-    end
+    #end
 
-    @testset "Large matrix multiply" begin
+    # @testset "Large matrix multiply" begin
         M = rand(9,9)
         v = rand(9)
         @test isapprox(Mat(M)*Vec(v), M*v) == true
-    end
-end
+    #end
+#end
 
 
 ac = rand(3)
@@ -1097,14 +1096,14 @@ jfs = dot(afs, gfs)
 kfs = abs(ffs)
 lfs = abs(-ffs)
 
-@testset "Meta" begin
+# @testset "Meta" begin
     sym, expr = FixedSizeArrays.gen_functor(:+, 2)
     @test typeof(sym) == Symbol
     @test typeof(expr) == Expr
-end
+#end
 
-@testset "Vector Math" begin
-    @testset "all" begin
+# @testset "Vector Math" begin
+    # @testset "all" begin
         @test isapprox(acfs, ac)  == true
         @test isapprox(bcfs, bc)  == true
 
@@ -1123,10 +1122,10 @@ end
         @test isapprox(kfs, k) == true
         @test isapprox(lfs, l) == true
         @test isapprox(lfs, lfs) == true
-    end
-end
+    #end
+#end
 
-@testset "Equality" begin
+# @testset "Equality" begin
     @test Vec{3, Int}(1) == Vec{3, Float64}(1)
     @test Vec{2, Int}(1) != Vec{3, Float64}(1)
     @test Vec(1,2,3) == Vec(1.0,2.0,3.0)
@@ -1135,7 +1134,7 @@ end
     @test Mat((1,2),(3,4)) == Mat((1,2),(3,4))
     @test one(Mat{4,1, Float32}) == one(Vec{4, Float32})
     @test isapprox(Vec(1.0,0.0), Vec(1.0,1e-14)) == true
-end
+#end
 #=
 #don't have this yet
 let
@@ -1181,15 +1180,15 @@ const binaryOps = (
 
 
 
-@testset "mapping operators" begin
-    @testset "binary: " begin
+# @testset "mapping operators" begin
+    # @testset "binary: " begin
         test1 = (Vec(1,2,typemax(Int)), Mat((typemin(Int),2,5), (2,3,5), (-2,3,6)), Vec{4, Float32}(0.777))
         test2 = (Vec(1,0,typemax(Int)), Mat((typemin(Int),77,1), (2,typemax(Int),5), (-2,3,6)), Vec{4, Float32}(-23.2929))
         for op in binaryOps
             for i=1:length(test1)
                 v1 = test1[i]
                 v2 = test2[i]
-                @testset "$op with $v1 and $v2" begin
+                # @testset "$op with $v1 and $v2" begin
                     try # really bad tests, but better than nothing...
                         if applicable(op, v1[1], v2[1]) && typeof(op(v1[1], v2[1])) == eltype(v1)
                             r = op(v1, v2)
@@ -1198,15 +1197,15 @@ const binaryOps = (
                             end
                         end
                     end
-                end
+                #end
             end
         end
-    end
-    @testset "unary: " begin
+    #end
+    # @testset "unary: " begin
         test = (Vec(1,2,typemax(Int)), Mat((typemin(Int),2,5), (2,3,5), (-2,3,6)), Vec{4, Float32}(0.777))
         for op in unaryOps
             for t in test
-                @testset "$op with $t" begin
+                # @testset "$op with $t" begin
                     try
                         if applicable(op, t[1]) && typeof(op(t[1])) == eltype(t)
                             v = op(t)
@@ -1215,22 +1214,22 @@ const binaryOps = (
                             end
                         end
                     end
-                end
+                #end
             end
         end
-    end
-end
+    #end
+#end
 
-@testset "typed round/floor/ceil/trunc" begin
+# @testset "typed round/floor/ceil/trunc" begin
     v = Vec((0.8,1.2,-0.3))
     @test floor(Int, v) == Vec((0,1,-1))
     @test ceil( Int, v) == Vec((1,2,0))
     @test trunc(Int, v) == Vec((0,1,0))
     @test round(Int, v) == Vec((1,1,0))
-end
+#end
 
 
-@testset "shift, push..." begin
+# @testset "shift, push..." begin
     v = Vec(1,2,3)
     p = Point(1,2.)
     @test @inferred(shift(v)       ) == Vec(2,3)
@@ -1263,18 +1262,18 @@ end
 
     @test_throws BoundsError insert(v, 5, 42)
     @test_throws BoundsError insert(v, 0, 42)
-end
+#end
 
 
-@testset "Base.Test" begin
+# @testset "Base.Test" begin
     a = rand(2)
     @test Base.Test.@test_approx_eq(a, Vec(a)) == nothing
-end
+#end
 
-@testset "show for subtype" begin
+# @testset "show for subtype" begin
     x = TestType(1, 2)
     @test string(x) == "(1,2)"
-end
+#end
 
 
 end
