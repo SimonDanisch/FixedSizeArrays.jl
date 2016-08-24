@@ -157,8 +157,12 @@ end
 @inline norm{N, T}(a::FixedVector{N, T})     = sqrt(dot(a,a))
 @inline normalize{FSA <: FixedArray}(a::FSA) = a / norm(a)
 
-
-
+function Base.isnan(p::FixedArray)
+    for elem in p
+        isnan(elem) && return true
+    end
+    false
+end
 
 #Matrix
 @inline det{T}(A::FixedMatrix{1, 1, T}) = @inbounds return ( A[1] )

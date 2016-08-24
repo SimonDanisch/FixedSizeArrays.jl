@@ -154,6 +154,18 @@ context("core") do
         @fact construct_similar(Mat, ((1,2),))                     --> exactly(Mat{2,1,Int}(((1,2),)))
     end
 
+    context("nan") do
+        for (p, r) in (
+                (Point{2, Float32}(NaN, 1), true),
+                (Point{2, Float64}(1, NaN), true),
+                (Vec{11, Float64}(NaN), true),
+                (Point{2, Float32}(1, 1), false),
+                (RGB{Float32}(NaN), true),
+            )
+            @fact isnan(p) --> r
+        end
+    end
+
 end
 
 
