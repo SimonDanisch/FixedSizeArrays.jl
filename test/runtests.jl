@@ -160,7 +160,7 @@ context("core") do
                 (Point{2, Float64}(1, NaN), true),
                 (Vec{11, Float64}(NaN), true),
                 (Point{2, Float32}(1, 1), false),
-                (RGB{10, Float32}(NaN), true),
+                (RGB{Float32}(NaN), true),
             )
             @fact isnan(p) --> r
         end
