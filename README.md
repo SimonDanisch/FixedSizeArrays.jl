@@ -30,7 +30,7 @@ rand(Vec{3, Float64})+sin(Vec(0.,2.,2.)) # a lot of array functions are already 
 eye(Mat{3,3,Float32}) * rand(Vec{3, Float32}) # will also "just work"
 a = Vec(1,2,3)[1:2] # returns (1,2)
 ```
-Note that all of the above types are stack allocated and the speed of operations should be fairly fast!
+Note that all of the above types are stack allocated and the speed of operations should be very fast!
 If you find operations to be slow, please file a bug report!
 
 FixedSizeArrays can be used in a lot of different ways.
