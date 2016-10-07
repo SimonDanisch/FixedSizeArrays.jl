@@ -1,30 +1,34 @@
 module FSAtesting
 
-using FixedSizeArrays
+using StaticArrays
 using FactCheck, Base.Test
 using Compat
+using StaticArrays.FixedSizeArrays
 
-import FixedSizeArrays: similar_type
 
-immutable Normal{N, T} <: FixedVector{N, T}
+typealias Vec{N, T} SVector{N, T}
+
+
+immutable Normal{N, T} <: StaticVector{T}
     values::NTuple{N, T}
 end
-immutable D3{N1, N2, N3, T} <: FixedArray{T, 3, Tuple{N1, N2, N3}}
-    values::NTuple{N1, NTuple{N2, NTuple{N3, T}}}
+
+immutable D3{Size, T, N, L} <: StaticArray{T, N}
+    data::NTuple{L,T}
 end
-immutable RGB{T} <: FixedVectorNoTuple{3, T}
+immutable RGB{T} <: FieldVector{T}
     r::T
     g::T
     b::T
 end
 
 # subtyping:
-immutable TestType{N,T} <: FixedVector{N,T}
+immutable TestType{N,T} <: StaticVector{T}
     values::NTuple{N,T}
 end
 
 # Custom FSA with non-parameterized size and eltype
-immutable Coord2D <: FixedVectorNoTuple{2,Float64}
+immutable Coord2D <: FieldVector{Float64}
     x::Float64
     y::Float64
 end
@@ -35,9 +39,9 @@ typealias Vec2d Vec{2, Float64}
 typealias Vec3d Vec{3, Float64}
 typealias Vec4d Vec{4, Float64}
 typealias Vec3f Vec{3, Float32}
-typealias Mat2d Mat{2,2, Float64}
-typealias Mat3d Mat{3,3, Float64}
-typealias Mat4d Mat{4,4, Float64}
+typealias Mat2d SMatrix{2,2, Float64, 4}
+typealias Mat3d SMatrix{3,3, Float64, 9}
+typealias Mat4d SMatrix{4,4, Float64, 16}
 
 # Compatibility hacks for 0.5 APL-style array slicing
 if VERSION < v"0.5.0-dev+1195"
@@ -67,105 +71,6 @@ context("fsa macro") do
     @fact a4 --> Mat(((a,3),(2,4)))
     @fact a5 --> Mat(((a,4),(2,5),(3,6)))
     @fact a6 --> Mat(((a,3,5),(2,4,6)))
-end
-
-context("core") do
-    context("ndims") do
-        @fact ndims(D3) --> 3
-        @fact ndims(Mat) --> 2
-        @fact ndims(Vec) --> 1
-        @fact ndims(Vec(1,2,3)) --> 1
-
-        @fact ndims(D3{3,3,3}) --> 3
-        @fact ndims(Mat{3,3}) --> 2
-        @fact ndims(Vec{3}) --> 1
-
-        @fact ndims(D3{3,3,3,Int}) --> 3
-        @fact ndims(Mat{3,3,Int}) --> 2
-        @fact ndims(Vec{3,Int}) --> 1
-    end
-    context("size_or") do
-        @fact size_or(Mat, nothing) --> nothing
-        @fact size_or(Mat{4}, nothing) --> nothing
-        @fact size_or(Mat{4,4}, nothing) --> (4,4)
-        @fact size_or(Mat{4,4, Float32}, nothing) --> (4,4)
-
-        @fact size_or(Vec, nothing) --> nothing
-        @fact size_or(Vec{4}, nothing) --> (4,)
-        @fact size_or(Vec{4,Float32}, nothing) --> (4,)
-        @fact size_or(FixedArray, nothing) --> nothing
-
-    end
-    context("eltype_or") do
-        @fact eltype_or(Mat, nothing) --> nothing
-        @fact eltype_or(Mat{4}, nothing) --> nothing
-        @fact eltype_or(Mat{4,4}, nothing) --> nothing
-        @fact eltype_or(Mat{4,4, Float32}, nothing) --> Float32
-
-        @fact eltype_or(Vec, nothing) --> nothing
-        @fact eltype_or(Vec{4}, nothing) --> nothing
-        @fact eltype_or(Vec{4,Float32}, nothing) --> Float32
-
-        @fact eltype_or(FixedArray, nothing) --> nothing
-
-    end
-    context("ndims_or") do
-        @fact ndims_or(Mat, nothing) --> 2
-        @fact ndims_or(Mat{4}, nothing) --> 2
-        @fact ndims_or(Mat{4,4}, nothing) --> 2
-        @fact ndims_or(Mat{4,4, Float32}, nothing) --> 2
-
-        @fact ndims_or(Vec, nothing) --> 1
-        @fact ndims_or(Vec{4}, nothing) --> 1
-        @fact ndims_or(Vec{4, Float64}, nothing) --> 1
-
-        @fact ndims_or(FixedArray, nothing) --> nothing
-    end
-
-    context("similar_type") do
-        @fact similar_type(Vec{3,Int}, Float32) --> Vec{3, Float32}
-        @fact similar_type(Vec{3}, Float32) --> Vec{3, Float32}
-        @fact similar_type(Vec, Float32, (3,)) --> Vec{3, Float32}
-        @fact similar_type(Vec, Float32, (1,2)) --> Mat{1,2, Float32}
-
-        @fact similar_type(RGB, Float32) --> RGB{Float32}
-        @fact similar_type(RGB{Float32}, Int) --> RGB{Int}
-        @fact similar_type(RGB{Float32}, Int, (3,)) --> RGB{Int}
-        @fact similar_type(RGB{Float32}, Int, (2,2)) --> Mat{2,2,Int}
-
-        @fact similar_type(Mat{3,3,Int}, Float32) --> Mat{3,3,Float32}
-        @fact similar_type(Mat, Float32, (3,3))   --> Mat{3,3,Float32}
-        @fact similar_type(Mat{2,2,Int}, (3,3))   --> Mat{3,3,Int}
-
-        @fact similar_type(Coord2D, Float64, (2,)) --> Coord2D
-        @fact similar_type(Coord2D, Int, (2,))     --> Vec{2,Int}
-        @fact similar_type(Coord2D, Float64, (3,)) --> Vec{3,Float64}
-    end
-
-    context("construct_similar") do
-        @fact construct_similar(Vec{3,Int}, (1.0f0,2)) --> exactly(Vec{2,Float32}(1,2))
-        @fact construct_similar(Vec{2}, (1,2,3))       --> exactly(Vec{3,Int}(1,2,3))
-        @fact construct_similar(Vec, (1.0,2))          --> exactly(Vec{2,Float64}(1,2))
-
-        @fact construct_similar(RGB, (1,2,3))                --> exactly(RGB{Int}(1,2,3))
-        @fact construct_similar(RGB{Float32}, (1.0,2.0,3.0)) --> exactly(RGB{Float64}(1.0,2.0,3.0))
-
-        @fact construct_similar(Mat{3,3,Int}, ((1.0f0,2),(1.0,2))) --> exactly(Mat{2,2,Float64}((1,2),(1,2)))
-        @fact construct_similar(Mat, ((1,2),))                     --> exactly(Mat{2,1,Int}(((1,2),)))
-    end
-
-    context("nan") do
-        for (p, r) in (
-                (Point{2, Float32}(NaN, 1), true),
-                (Point{2, Float64}(1, NaN), true),
-                (Vec{11, Float64}(NaN), true),
-                (Point{2, Float32}(1, 1), false),
-                (RGB{Float32}(NaN), true),
-            )
-            @fact isnan(p) --> r
-        end
-    end
-
 end
 
 
