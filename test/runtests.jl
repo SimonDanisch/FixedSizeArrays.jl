@@ -1,30 +1,62 @@
 module FSAtesting
 
-using FixedSizeArrays
+using StaticArrays
 using FactCheck, Base.Test
 using Compat
+using StaticArrays.FixedSizeArrays
 
-import FixedSizeArrays: similar_type
 
-immutable Normal{N, T} <: FixedVector{N, T}
+typealias Vec{N, T} SVector{N, T}
+@inline Base.convert{S, T}(::Type{NTuple{S, T}}, x::T) = ntuple(i->x, Val{S})
+@inline Base.convert{S, T1, T2}(::Type{NTuple{S, T1}}, x::T2) = ntuple(i->T1(x), Val{S})
+
+macro sv_constructors(name)
+    quote
+        @inline (::Type{$name}){S}(x::NTuple{S}) = $name{S}(x)
+        @inline (::Type{$name{S}}){S, T}(x::NTuple{S,T}) = $name{S,T}(x)
+        @inline (::Type{$name{S}}){S, T <: Tuple}(x::T) = $name{S,promote_tuple_eltype(T)}(x)
+        @inline (::Type{$name{S}}){S, T}(x::T) = $name{S,T}(x)
+        @inline (::Type{$name{S, T1}}){S, T1, T2}(x::T2) = $name{S,T1}(T1(x))
+
+
+        Base.@pure Base.size{S}(::Type{$name{S}}) = (S, )
+        Base.@pure Base.size{S,T}(::Type{$name{S,T}}) = (S,)
+
+        Base.@propagate_inbounds function Base.getindex(v::$name, i::Integer)
+            v.data[i]
+        end
+        @inline Base.Tuple(v::$name) = v.data
+    end
+end
+
+immutable Normal{N, T} <: StaticVector{T}
     values::NTuple{N, T}
 end
-immutable D3{N1, N2, N3, T} <: FixedArray{T, 3, Tuple{N1, N2, N3}}
-    values::NTuple{N1, NTuple{N2, NTuple{N3, T}}}
+@sv_constructors Normal
+
+immutable D3{Size, T, N, L} <: StaticArray{T, N}
+    data::NTuple{L,T}
 end
-immutable RGB{T} <: FixedVectorNoTuple{3, T}
+@sv_constructors D3
+
+
+immutable RGB{T} <: FieldVector{T}
     r::T
     g::T
     b::T
+    RGB(a::NTuple{3}) = new(a[1],a[2],a[3])
+    RGB(a) = new(T(a),T(a),T(a))
+    RGB(r,g,b) = new(T(r),T(g),T(b))
 end
-
+@inline RGB{T}(a::T) = RGB{T}(a,a,a)
 # subtyping:
-immutable TestType{N,T} <: FixedVector{N,T}
+immutable TestType{N,T} <: StaticVector{T}
     values::NTuple{N,T}
 end
+@sv_constructors TestType
 
 # Custom FSA with non-parameterized size and eltype
-immutable Coord2D <: FixedVectorNoTuple{2,Float64}
+immutable Coord2D <: FieldVector{Float64}
     x::Float64
     y::Float64
 end
@@ -35,9 +67,9 @@ typealias Vec2d Vec{2, Float64}
 typealias Vec3d Vec{3, Float64}
 typealias Vec4d Vec{4, Float64}
 typealias Vec3f Vec{3, Float32}
-typealias Mat2d Mat{2,2, Float64}
-typealias Mat3d Mat{3,3, Float64}
-typealias Mat4d Mat{4,4, Float64}
+typealias Mat2d SMatrix{2,2, Float64, 4}
+typealias Mat3d SMatrix{3,3, Float64, 9}
+typealias Mat4d SMatrix{4,4, Float64, 16}
 
 # Compatibility hacks for 0.5 APL-style array slicing
 if VERSION < v"0.5.0-dev+1195"
@@ -46,191 +78,72 @@ if VERSION < v"0.5.0-dev+1195"
 else
     compatsqueeze(A) = A
 end
-function test()
-facts("FixedSizeArrays") do
-
-include("typeinf.jl")
 
 
-context("fsa macro") do
-    a = 1
-    a1 = @fsa([a,2,3])
-    a2 = @fsa([a 2 3])
-    a3 = @fsa([a;2;3])
-    a4 = @fsa([a 2;3 4])
-    a5 = @fsa([a 2 3;4 5 6])
-    a6 = @fsa([a 2;3 4;5 6])
+N = 100
 
-    @fact a1 --> Vec(a,2,3)
-    @fact a2 --> Mat((a,),(2,),(3,))
-    @fact a3 --> Mat(((a,2,3),))
-    @fact a4 --> Mat(((a,3),(2,4)))
-    @fact a5 --> Mat(((a,4),(2,5),(3,6)))
-    @fact a6 --> Mat(((a,3,5),(2,4,6)))
+
+
+a = Point{3, Float32}[Point{3, Float32}(0.7132) for i=1:N]
+b = RGB{Float32}[RGB{Float32}(52.293, 52.293, 52.293) for i=1:N]
+
+c = Point{3, Float64}[Point{3, Float64}(typemin(Float64)), a..., Point{3, Float64}(typemax(Float64))]
+
+tmi = typemin(Float64); tma = typemax(Float64)
+d = RGB{Float64}[RGB(tmi,tmi,tmi), b..., RGB(tma,tma,tma)]
+
+context("reduce") do
+sa = sum(a)
+ma = mean(a)
+sb = sum(b)
+mb = mean(b)
+for i=1:3
+    @fact sa[i]  --> roughly(Float32(0.7132*N))
+    @fact ma[i]  --> roughly(Float32(0.7132*N)/ N)
+
+    @fact sb[i]  --> roughly(Float32(52.293*N))
+    @fact mb[i]  --> roughly(Float32(52.293*N)/ N)
 end
 
-context("core") do
-    context("ndims") do
-        @fact ndims(D3) --> 3
-        @fact ndims(Mat) --> 2
-        @fact ndims(Vec) --> 1
-        @fact ndims(Vec(1,2,3)) --> 1
+@fact maximum(c) --> Point{3, Float32}(typemax(Float64))
+@fact minimum(c) --> Point{3, Float32}(typemin(Float64))
 
-        @fact ndims(D3{3,3,3}) --> 3
-        @fact ndims(Mat{3,3}) --> 2
-        @fact ndims(Vec{3}) --> 1
+@fact maximum(d) --> RGB(typemax(Float64))
+@fact minimum(d) --> RGB(typemin(Float64))
 
-        @fact ndims(D3{3,3,3,Int}) --> 3
-        @fact ndims(Mat{3,3,Int}) --> 2
-        @fact ndims(Vec{3,Int}) --> 1
-    end
-    context("size_or") do
-        @fact size_or(Mat, nothing) --> nothing
-        @fact size_or(Mat{4}, nothing) --> nothing
-        @fact size_or(Mat{4,4}, nothing) --> (4,4)
-        @fact size_or(Mat{4,4, Float32}, nothing) --> (4,4)
-
-        @fact size_or(Vec, nothing) --> nothing
-        @fact size_or(Vec{4}, nothing) --> (4,)
-        @fact size_or(Vec{4,Float32}, nothing) --> (4,)
-        @fact size_or(FixedArray, nothing) --> nothing
-
-    end
-    context("eltype_or") do
-        @fact eltype_or(Mat, nothing) --> nothing
-        @fact eltype_or(Mat{4}, nothing) --> nothing
-        @fact eltype_or(Mat{4,4}, nothing) --> nothing
-        @fact eltype_or(Mat{4,4, Float32}, nothing) --> Float32
-
-        @fact eltype_or(Vec, nothing) --> nothing
-        @fact eltype_or(Vec{4}, nothing) --> nothing
-        @fact eltype_or(Vec{4,Float32}, nothing) --> Float32
-
-        @fact eltype_or(FixedArray, nothing) --> nothing
-
-    end
-    context("ndims_or") do
-        @fact ndims_or(Mat, nothing) --> 2
-        @fact ndims_or(Mat{4}, nothing) --> 2
-        @fact ndims_or(Mat{4,4}, nothing) --> 2
-        @fact ndims_or(Mat{4,4, Float32}, nothing) --> 2
-
-        @fact ndims_or(Vec, nothing) --> 1
-        @fact ndims_or(Vec{4}, nothing) --> 1
-        @fact ndims_or(Vec{4, Float64}, nothing) --> 1
-
-        @fact ndims_or(FixedArray, nothing) --> nothing
-    end
-
-    context("similar_type") do
-        @fact similar_type(Vec{3,Int}, Float32) --> Vec{3, Float32}
-        @fact similar_type(Vec{3}, Float32) --> Vec{3, Float32}
-        @fact similar_type(Vec, Float32, (3,)) --> Vec{3, Float32}
-        @fact similar_type(Vec, Float32, (1,2)) --> Mat{1,2, Float32}
-
-        @fact similar_type(RGB, Float32) --> RGB{Float32}
-        @fact similar_type(RGB{Float32}, Int) --> RGB{Int}
-        @fact similar_type(RGB{Float32}, Int, (3,)) --> RGB{Int}
-        @fact similar_type(RGB{Float32}, Int, (2,2)) --> Mat{2,2,Int}
-
-        @fact similar_type(Mat{3,3,Int}, Float32) --> Mat{3,3,Float32}
-        @fact similar_type(Mat, Float32, (3,3))   --> Mat{3,3,Float32}
-        @fact similar_type(Mat{2,2,Int}, (3,3))   --> Mat{3,3,Int}
-
-        @fact similar_type(Coord2D, Float64, (2,)) --> Coord2D
-        @fact similar_type(Coord2D, Int, (2,))     --> Vec{2,Int}
-        @fact similar_type(Coord2D, Float64, (3,)) --> Vec{3,Float64}
-    end
-
-    context("construct_similar") do
-        @fact construct_similar(Vec{3,Int}, (1.0f0,2)) --> exactly(Vec{2,Float32}(1,2))
-        @fact construct_similar(Vec{2}, (1,2,3))       --> exactly(Vec{3,Int}(1,2,3))
-        @fact construct_similar(Vec, (1.0,2))          --> exactly(Vec{2,Float64}(1,2))
-
-        @fact construct_similar(RGB, (1,2,3))                --> exactly(RGB{Int}(1,2,3))
-        @fact construct_similar(RGB{Float32}, (1.0,2.0,3.0)) --> exactly(RGB{Float64}(1.0,2.0,3.0))
-
-        @fact construct_similar(Mat{3,3,Int}, ((1.0f0,2),(1.0,2))) --> exactly(Mat{2,2,Float64}((1,2),(1,2)))
-        @fact construct_similar(Mat, ((1,2),))                     --> exactly(Mat{2,1,Int}(((1,2),)))
-    end
-
-    context("nan") do
-        for (p, r) in (
-                (Point{2, Float32}(NaN, 1), true),
-                (Point{2, Float64}(1, NaN), true),
-                (Vec{11, Float64}(NaN), true),
-                (Point{2, Float32}(1, 1), false),
-                (RGB{Float32}(NaN), true),
-            )
-            @fact isnan(p) --> r
-        end
-    end
-
+@fact extrema(c) --> (minimum(c), maximum(c))
 end
 
+context("array ops") do
+for op in (.+, .-,.*, ./, .\, +, -)
+    @fact typeof(op(a, 1f0)) --> typeof(a)
+    @fact typeof(op(1f0, a)) --> typeof(a)
+end
 
-context("Array of FixedArrays") do
-
-    N = 100
-    a = Point{3, Float32}[Point{3, Float32}(0.7132) for i=1:N]
-    b = RGB{Float32}[RGB{Float32}(52.293) for i=1:N]
-
-    c = Point{3, Float64}[Point{3, Float64}(typemin(Float64)), a..., Point{3, Float64}(typemax(Float64))]
-    d = RGB{Float64}[RGB(typemin(Float64)), b..., RGB(typemax(Float64))]
-
-    context("reduce") do
-        sa = sum(a)
-        ma = mean(a)
-        sb = sum(b)
-        mb = mean(b)
-        for i=1:3
-            @fact sa[i]  --> roughly(Float32(0.7132*N))
-            @fact ma[i]  --> roughly(Float32(0.7132*N)/ N)
-
-            @fact sb[i]  --> roughly(Float32(52.293*N))
-            @fact mb[i]  --> roughly(Float32(52.293*N)/ N)
-        end
-
-        @fact maximum(c) --> Point{3, Float32}(typemax(Float64))
-        @fact minimum(c) --> Point{3, Float32}(typemin(Float64))
-
-        @fact maximum(d) --> RGB(typemax(Float64))
-        @fact minimum(d) --> RGB(typemin(Float64))
-
-        @fact extrema(c) --> (minimum(c), maximum(c))
-    end
-
-    context("array ops") do
-        for op in (.+, .-,.*, ./, .\, +, -)
-            @fact typeof(op(a, 1f0)) --> typeof(a)
-            @fact typeof(op(1f0, a)) --> typeof(a)
-        end
-
-        af = a + 1f0
-        bf = b + 1f0
-        aff = a + Point{3, Float32}(1)
-        bff = b + RGB{Float32}(1)
-        afd = a .+ 1f0
-        bfd = b .+ 1f0
-        @inferred(b .* 1f0)
-        for i=1:N
-            @fact a[1] + 1f0 --> af[i]
-            @fact b[1] + 1f0 --> bf[i]
-            @fact a[1] + 1f0 --> aff[i]
-            @fact b[1] + 1f0 --> bff[i]
-            @fact a[1] + 1f0 --> afd[i]
-            @fact b[1] + 1f0 --> bfd[i]
-        end
-    end
-    context("Show") do
-        m1 = rand(Mat4d, 2)
-        m2 = rand(RGB{Float32}, 2)
-        m3 = rand(Vec3f, 2)
-        println(m1)
-        println(m2)
-        println(m3)
-        showcompact(Point(1,2,3))
-    end
+af = a + 1f0
+bf = b + 1f0
+aff = a .+ Scalar(Point{3, Float32}(1))
+bff = b .+ Scalar(RGB{Float32}(1,1,1))
+afd = a .+ 1f0
+bfd = b .+ 1f0
+@inferred(b .* 1f0)
+for i=1:N
+    @fact a[1] + 1f0 --> af[i]
+    @fact b[1] + 1f0 --> bf[i]
+    @fact a[1] + 1f0 --> aff[i]
+    @fact b[1] + 1f0 --> bff[i]
+    @fact a[1] + 1f0 --> afd[i]
+    @fact b[1] + 1f0 --> bfd[i]
+end
+end
+context("Show") do
+m1 = rand(Mat4d, 2)
+m2 = rand(RGB{Float32}, 2)
+m3 = rand(Vec3f, 2)
+println(m1)
+println(m2)
+println(m3)
+showcompact(Point(1,2,3))
 end
 
 
