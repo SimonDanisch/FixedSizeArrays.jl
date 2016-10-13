@@ -7,25 +7,63 @@ using StaticArrays.FixedSizeArrays
 
 
 typealias Vec{N, T} SVector{N, T}
+<<<<<<< HEAD
 
+=======
+@inline Base.convert{S, T}(::Type{NTuple{S, T}}, x::T) = ntuple(i->x, Val{S})
+@inline Base.convert{S, T1, T2}(::Type{NTuple{S, T1}}, x::T2) = ntuple(i->T1(x), Val{S})
+
+macro sv_constructors(name)
+    quote
+        @inline (::Type{$name}){S}(x::NTuple{S}) = $name{S}(x)
+        @inline (::Type{$name{S}}){S, T}(x::NTuple{S,T}) = $name{S,T}(x)
+        @inline (::Type{$name{S}}){S, T <: Tuple}(x::T) = $name{S,promote_tuple_eltype(T)}(x)
+        @inline (::Type{$name{S}}){S, T}(x::T) = $name{S,T}(x)
+        @inline (::Type{$name{S, T1}}){S, T1, T2}(x::T2) = $name{S,T1}(T1(x))
+
+
+        Base.@pure Base.size{S}(::Type{$name{S}}) = (S, )
+        Base.@pure Base.size{S,T}(::Type{$name{S,T}}) = (S,)
+
+        Base.@propagate_inbounds function Base.getindex(v::$name, i::Integer)
+            v.data[i]
+        end
+        @inline Base.Tuple(v::$name) = v.data
+    end
+end
+>>>>>>> master
 
 immutable Normal{N, T} <: StaticVector{T}
     values::NTuple{N, T}
 end
+<<<<<<< HEAD
+=======
+@sv_constructors Normal
+>>>>>>> master
 
 immutable D3{Size, T, N, L} <: StaticArray{T, N}
     data::NTuple{L,T}
 end
+<<<<<<< HEAD
+=======
+@sv_constructors D3
+
+
+>>>>>>> master
 immutable RGB{T} <: FieldVector{T}
     r::T
     g::T
     b::T
+    RGB(a::NTuple{3}) = new(a[1],a[2],a[3])
+    RGB(a) = new(T(a),T(a),T(a))
+    RGB(r,g,b) = new(T(r),T(g),T(b))
 end
-
+@inline RGB{T}(a::T) = RGB{T}(a,a,a)
 # subtyping:
 immutable TestType{N,T} <: StaticVector{T}
     values::NTuple{N,T}
 end
+@sv_constructors TestType
 
 # Custom FSA with non-parameterized size and eltype
 immutable Coord2D <: FieldVector{Float64}
@@ -50,6 +88,7 @@ if VERSION < v"0.5.0-dev+1195"
 else
     compatsqueeze(A) = A
 end
+<<<<<<< HEAD
 function test()
 facts("FixedSizeArrays") do
 
@@ -73,69 +112,74 @@ context("fsa macro") do
     @fact a6 --> Mat(((a,3,5),(2,4,6)))
 end
 
+=======
 
-context("Array of FixedArrays") do
 
-    N = 100
-    a = Point{3, Float32}[Point{3, Float32}(0.7132) for i=1:N]
-    b = RGB{Float32}[RGB{Float32}(52.293) for i=1:N]
+N = 100
 
-    c = Point{3, Float64}[Point{3, Float64}(typemin(Float64)), a..., Point{3, Float64}(typemax(Float64))]
-    d = RGB{Float64}[RGB(typemin(Float64)), b..., RGB(typemax(Float64))]
 
-    context("reduce") do
-        sa = sum(a)
-        ma = mean(a)
-        sb = sum(b)
-        mb = mean(b)
-        for i=1:3
-            @fact sa[i]  --> roughly(Float32(0.7132*N))
-            @fact ma[i]  --> roughly(Float32(0.7132*N)/ N)
 
-            @fact sb[i]  --> roughly(Float32(52.293*N))
-            @fact mb[i]  --> roughly(Float32(52.293*N)/ N)
-        end
+a = Point{3, Float32}[Point{3, Float32}(0.7132) for i=1:N]
+b = RGB{Float32}[RGB{Float32}(52.293, 52.293, 52.293) for i=1:N]
 
-        @fact maximum(c) --> Point{3, Float32}(typemax(Float64))
-        @fact minimum(c) --> Point{3, Float32}(typemin(Float64))
+c = Point{3, Float64}[Point{3, Float64}(typemin(Float64)), a..., Point{3, Float64}(typemax(Float64))]
 
-        @fact maximum(d) --> RGB(typemax(Float64))
-        @fact minimum(d) --> RGB(typemin(Float64))
+tmi = typemin(Float64); tma = typemax(Float64)
+d = RGB{Float64}[RGB(tmi,tmi,tmi), b..., RGB(tma,tma,tma)]
 
-        @fact extrema(c) --> (minimum(c), maximum(c))
-    end
+context("reduce") do
+sa = sum(a)
+ma = mean(a)
+sb = sum(b)
+mb = mean(b)
+for i=1:3
+    @fact sa[i]  --> roughly(Float32(0.7132*N))
+    @fact ma[i]  --> roughly(Float32(0.7132*N)/ N)
 
-    context("array ops") do
-        for op in (.+, .-,.*, ./, .\, +, -)
-            @fact typeof(op(a, 1f0)) --> typeof(a)
-            @fact typeof(op(1f0, a)) --> typeof(a)
-        end
+    @fact sb[i]  --> roughly(Float32(52.293*N))
+    @fact mb[i]  --> roughly(Float32(52.293*N)/ N)
+end
 
-        af = a + 1f0
-        bf = b + 1f0
-        aff = a + Point{3, Float32}(1)
-        bff = b + RGB{Float32}(1)
-        afd = a .+ 1f0
-        bfd = b .+ 1f0
-        @inferred(b .* 1f0)
-        for i=1:N
-            @fact a[1] + 1f0 --> af[i]
-            @fact b[1] + 1f0 --> bf[i]
-            @fact a[1] + 1f0 --> aff[i]
-            @fact b[1] + 1f0 --> bff[i]
-            @fact a[1] + 1f0 --> afd[i]
-            @fact b[1] + 1f0 --> bfd[i]
-        end
-    end
-    context("Show") do
-        m1 = rand(Mat4d, 2)
-        m2 = rand(RGB{Float32}, 2)
-        m3 = rand(Vec3f, 2)
-        println(m1)
-        println(m2)
-        println(m3)
-        showcompact(Point(1,2,3))
-    end
+@fact maximum(c) --> Point{3, Float32}(typemax(Float64))
+@fact minimum(c) --> Point{3, Float32}(typemin(Float64))
+>>>>>>> master
+
+@fact maximum(d) --> RGB(typemax(Float64))
+@fact minimum(d) --> RGB(typemin(Float64))
+
+@fact extrema(c) --> (minimum(c), maximum(c))
+end
+
+context("array ops") do
+for op in (.+, .-,.*, ./, .\, +, -)
+    @fact typeof(op(a, 1f0)) --> typeof(a)
+    @fact typeof(op(1f0, a)) --> typeof(a)
+end
+
+af = a + 1f0
+bf = b + 1f0
+aff = a .+ Scalar(Point{3, Float32}(1))
+bff = b .+ Scalar(RGB{Float32}(1,1,1))
+afd = a .+ 1f0
+bfd = b .+ 1f0
+@inferred(b .* 1f0)
+for i=1:N
+    @fact a[1] + 1f0 --> af[i]
+    @fact b[1] + 1f0 --> bf[i]
+    @fact a[1] + 1f0 --> aff[i]
+    @fact b[1] + 1f0 --> bff[i]
+    @fact a[1] + 1f0 --> afd[i]
+    @fact b[1] + 1f0 --> bfd[i]
+end
+end
+context("Show") do
+m1 = rand(Mat4d, 2)
+m2 = rand(RGB{Float32}, 2)
+m3 = rand(Vec3f, 2)
+println(m1)
+println(m2)
+println(m3)
+showcompact(Point(1,2,3))
 end
 
 
