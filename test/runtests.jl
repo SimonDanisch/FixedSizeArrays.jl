@@ -700,6 +700,9 @@ context("Ops") do
     context("vector norm+cross product") do
 
         @fact norm(Vec3d(1.0,2.0,2.0)) --> 3.0
+        @fact norm(Vec3d(1.0,2.0,2.0),2) --> 3.0
+        @fact norm(Vec3d(1.0,2.0,2.0),Inf) --> 2.0
+        @fact norm(Vec3d(1.0,2.0,2.0),1) --> 5.0
 
         # cross product
         @fact cross(v1,v2) --> Vec3d(-7.0,14.0,-7.0)
