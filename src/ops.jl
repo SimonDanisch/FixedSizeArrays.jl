@@ -157,6 +157,15 @@ end
 @inline norm{N, T}(a::FixedVector{N, T})     = sqrt(dot(a,a))
 @inline normalize{FSA <: FixedArray}(a::FSA) = a / norm(a)
 
+function norm{N, T}(a::FixedVector{N, T}, p)
+    isinf(p) && return maxabs(a)
+    ret = abs(a[1])^p
+    for k = 2:N
+        ret += abs(a[k])^p
+    end
+    ret^(1/p)
+end
+
 function Base.isnan(p::FixedArray)
     for elem in p
         isnan(elem) && return true
