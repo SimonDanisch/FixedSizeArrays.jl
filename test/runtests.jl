@@ -398,23 +398,23 @@ end
 
 
 context("Constructors") do
-	context("FixedVector: unary, from FixedVector") do
-		@fact typeof(Vec3f(1,1,1))     --> Vec{3, Float32}
-		@fact typeof(Vec3f(1,1f0,1))   --> Vec{3, Float32}
+    context("FixedVector: unary, from FixedVector") do
+        @fact typeof(Vec3f(1,1,1))     --> Vec{3, Float32}
+        @fact typeof(Vec3f(1,1f0,1))   --> Vec{3, Float32}
         @fact typeof(Vec3f(1f0,1,1.0)) --> Vec{3, Float32}
-		@fact eltype(Vec3f(1f0,1,1.0)) --> Float32
+        @fact eltype(Vec3f(1f0,1,1.0)) --> Float32
 
-		@fact typeof(Vec3f(1))  	--> Vec{3, Float32}
-		@fact typeof(Vec3f(0))  	--> Vec{3, Float32}
-		@fact Vec3f(1.0) 			--> Vec(1f0,1f0,1f0)
-		@fact Vec3f(1.0f0) 			--> Vec(1f0,1f0,1f0)
-		@fact Vec3f(1.0f0) 			--> Vec3f(1)
-		@fact Vec(1.0, 1.0, 1.0) 	--> Vec3d(1)
-		@fact Vec2d(Vec3d(1)) 		--> Vec(1.0, 1.0)
-		@fact Vec(Vec3d(1), 1.0) 	--> Vec4d(1)
-		@fact Vec(Vec3d(1), 1) 		--> Vec4d(1)
-		@fact Vec3d(Vec3f(1.0)) 	--> Vec3d(1.0)
-	end
+        @fact typeof(Vec3f(1))      --> Vec{3, Float32}
+        @fact typeof(Vec3f(0))      --> Vec{3, Float32}
+        @fact Vec3f(1.0)             --> Vec(1f0,1f0,1f0)
+        @fact Vec3f(1.0f0)             --> Vec(1f0,1f0,1f0)
+        @fact Vec3f(1.0f0)             --> Vec3f(1)
+        @fact Vec(1.0, 1.0, 1.0)     --> Vec3d(1)
+        @fact Vec2d(Vec3d(1))         --> Vec(1.0, 1.0)
+        @fact Vec(Vec3d(1), 1.0)     --> Vec4d(1)
+        @fact Vec(Vec3d(1), 1)         --> Vec4d(1)
+        @fact Vec3d(Vec3f(1.0))     --> Vec3d(1.0)
+    end
 end
 
 
@@ -520,21 +520,21 @@ context("Destructure") do
 end
 
 context("Indexing") do
-	context("FixedVector") do
+    context("FixedVector") do
         @fact setindex(v1, 88.9, 1) --> Vec(88.9,2.0,3.0)
-		@fact v1[1] --> 1.0
-		@fact v1[2] --> 2.0
+        @fact v1[1] --> 1.0
+        @fact v1[2] --> 2.0
         @fact v1[3] --> 3.0
         @fact v1[1:3] --> (1.0, 2.0, 3.0)
         @fact v1[1:2] --> (1.0, 2.0)
         @fact v1[1:1] --> (1.0,)
         @fact v1[(1,2)] --> (1.0,2.0)
         @fact v1[(2,1)] --> (2.0,1.0)
-		@fact_throws BoundsError v1[-1]
-		@fact_throws BoundsError v1[0]
-		@fact_throws BoundsError v1[4]
+        @fact_throws BoundsError v1[-1]
+        @fact_throws BoundsError v1[0]
+        @fact_throws BoundsError v1[4]
         @fact row(v1, 1) --> (1.0,)
-	end
+    end
     m = Mat{4,4,Int}(
         (1,2,3,4),
         (5,6,7,8),
@@ -615,77 +615,80 @@ end
 
 
 context("Ops") do
-	context("Negation") do
-		@fact @inferred(-v1) --> Vec(-1.0,-2.0,-3.0)
-		@fact isa(-v1, Vec3d) --> true
-	end
+    context("revers") do
+        @fact reverse(Vec(1,2,3,4,5)) --> Vec(5,4,3,2,1)
+    end
+    context("Negation") do
+        @fact @inferred(-v1) --> Vec(-1.0,-2.0,-3.0)
+        @fact isa(-v1, Vec3d) --> true
+    end
 
-	context("Addition") do
-		@fact @inferred(v1+v2) --> Vec3d(7.0,7.0,7.0)
-		@fact @inferred(RGB(1,2,3) + RGB(2,2,2)) --> exactly(RGB{Int}(3,4,5))
-		@fact @inferred(Coord2D(1,2) + Coord2D(3,4)) --> exactly(Coord2D(4,6))
-	end
-	context("Subtraction") do
-		@fact @inferred(v2-v1) --> Vec3d(5.0,3.0,1.0)
-		@fact @inferred(RGB(1,2,3) - RGB(2,2,2)) --> exactly(RGB{Int}(-1,0,1))
-		@fact @inferred(Coord2D(1,2) - Coord2D(3,4)) --> exactly(Coord2D(-2,-2))
-	end
-	context("Multiplication") do
-		@fact @inferred(v1.*v2) --> Vec3d(6.0,10.0,12.0)
-	end
+    context("Addition") do
+        @fact @inferred(v1+v2) --> Vec3d(7.0,7.0,7.0)
+        @fact @inferred(RGB(1,2,3) + RGB(2,2,2)) --> exactly(RGB{Int}(3,4,5))
+        @fact @inferred(Coord2D(1,2) + Coord2D(3,4)) --> exactly(Coord2D(4,6))
+    end
+    context("Subtraction") do
+        @fact @inferred(v2-v1) --> Vec3d(5.0,3.0,1.0)
+        @fact @inferred(RGB(1,2,3) - RGB(2,2,2)) --> exactly(RGB{Int}(-1,0,1))
+        @fact @inferred(Coord2D(1,2) - Coord2D(3,4)) --> exactly(Coord2D(-2,-2))
+    end
+    context("Multiplication") do
+        @fact @inferred(v1.*v2) --> Vec3d(6.0,10.0,12.0)
+    end
     context("Mixed Type Multiplication") do
-		@fact @inferred(vi.*v2) --> Vec3d(6.0,10.0,12.0)
-	end
-	context("Division") do
-		@fact @inferred(v1 ./ v1) --> Vec3d(1.0,1.0,1.0)
-	end
+        @fact @inferred(vi.*v2) --> Vec3d(6.0,10.0,12.0)
+    end
+    context("Division") do
+        @fact @inferred(v1 ./ v1) --> Vec3d(1.0,1.0,1.0)
+    end
 
-	context("Relational") do
-	    @fact Vec(1,3) .< Vec(2,2) --> exactly(Vec{2,Bool}(true,false))
-	    @fact RGB(1,2,3) .< RGB(2,2,2) --> exactly(RGB{Bool}(true,false,false))
-	    @fact Coord2D(1,3) .< Coord2D(2,2) --> exactly(Vec{2,Bool}(true,false))
+    context("Relational") do
+        @fact Vec(1,3) .< Vec(2,2) --> exactly(Vec{2,Bool}(true,false))
+        @fact RGB(1,2,3) .< RGB(2,2,2) --> exactly(RGB{Bool}(true,false,false))
+        @fact Coord2D(1,3) .< Coord2D(2,2) --> exactly(Vec{2,Bool}(true,false))
         end
 
-	context("Scalar") do
-		@fact @inferred(1.0 + v1) --> Vec3d(2.0,3.0,4.0)
-		@fact @inferred(1.0 .+ v1) --> Vec3d(2.0,3.0,4.0)
-		@fact @inferred(v1 + 1.0) --> Vec3d(2.0,3.0,4.0)
-		@fact @inferred(v1 .+ 1.0) --> Vec3d(2.0,3.0,4.0)
-		@fact @inferred(1 + v1) --> Vec3d(2.0,3.0,4.0)
-		@fact @inferred(1 .+ v1) --> Vec3d(2.0,3.0,4.0)
-		@fact @inferred(v1 + 1) --> Vec3d(2.0,3.0,4.0)
-		@fact @inferred(v1 .+ 1) --> Vec3d(2.0,3.0,4.0)
+    context("Scalar") do
+        @fact @inferred(1.0 + v1) --> Vec3d(2.0,3.0,4.0)
+        @fact @inferred(1.0 .+ v1) --> Vec3d(2.0,3.0,4.0)
+        @fact @inferred(v1 + 1.0) --> Vec3d(2.0,3.0,4.0)
+        @fact @inferred(v1 .+ 1.0) --> Vec3d(2.0,3.0,4.0)
+        @fact @inferred(1 + v1) --> Vec3d(2.0,3.0,4.0)
+        @fact @inferred(1 .+ v1) --> Vec3d(2.0,3.0,4.0)
+        @fact @inferred(v1 + 1) --> Vec3d(2.0,3.0,4.0)
+        @fact @inferred(v1 .+ 1) --> Vec3d(2.0,3.0,4.0)
 
-		@fact @inferred(v1 - 1.0) --> Vec3d(0.0,1.0,2.0)
-		@fact @inferred(v1 .- 1.0) --> Vec3d(0.0,1.0,2.0)
-		@fact @inferred(1.0 - v1) --> Vec3d(0.0,-1.0,-2.0)
-		@fact @inferred(1.0 .- v1) --> Vec3d(0.0,-1.0,-2.0)
-		@fact @inferred(v1 - 1) --> Vec3d(0.0,1.0,2.0)
-		@fact @inferred(v1 .- 1) --> Vec3d(0.0,1.0,2.0)
-		@fact @inferred(1 - v1) --> Vec3d(0.0,-1.0,-2.0)
-		@fact @inferred(1 .- v1) --> Vec3d(0.0,-1.0,-2.0)
+        @fact @inferred(v1 - 1.0) --> Vec3d(0.0,1.0,2.0)
+        @fact @inferred(v1 .- 1.0) --> Vec3d(0.0,1.0,2.0)
+        @fact @inferred(1.0 - v1) --> Vec3d(0.0,-1.0,-2.0)
+        @fact @inferred(1.0 .- v1) --> Vec3d(0.0,-1.0,-2.0)
+        @fact @inferred(v1 - 1) --> Vec3d(0.0,1.0,2.0)
+        @fact @inferred(v1 .- 1) --> Vec3d(0.0,1.0,2.0)
+        @fact @inferred(1 - v1) --> Vec3d(0.0,-1.0,-2.0)
+        @fact @inferred(1 .- v1) --> Vec3d(0.0,-1.0,-2.0)
 
-		@fact @inferred(2.0 * v1) --> Vec3d(2.0,4.0,6.0)
-		@fact @inferred(2.0 .* v1) --> Vec3d(2.0,4.0,6.0)
-		@fact @inferred(v1 * 2.0) --> Vec3d(2.0,4.0,6.0)
-		@fact @inferred(v1 .* 2.0) --> Vec3d(2.0,4.0,6.0)
-		@fact @inferred(2 * v1) --> Vec3d(2.0,4.0,6.0)
-		@fact @inferred(2 .* v1) --> Vec3d(2.0,4.0,6.0)
-		@fact @inferred(v1 * 2) --> Vec3d(2.0,4.0,6.0)
-		@fact @inferred(v1 .* 2) --> Vec3d(2.0,4.0,6.0)
+        @fact @inferred(2.0 * v1) --> Vec3d(2.0,4.0,6.0)
+        @fact @inferred(2.0 .* v1) --> Vec3d(2.0,4.0,6.0)
+        @fact @inferred(v1 * 2.0) --> Vec3d(2.0,4.0,6.0)
+        @fact @inferred(v1 .* 2.0) --> Vec3d(2.0,4.0,6.0)
+        @fact @inferred(2 * v1) --> Vec3d(2.0,4.0,6.0)
+        @fact @inferred(2 .* v1) --> Vec3d(2.0,4.0,6.0)
+        @fact @inferred(v1 * 2) --> Vec3d(2.0,4.0,6.0)
+        @fact @inferred(v1 .* 2) --> Vec3d(2.0,4.0,6.0)
 
-		@fact @inferred(v1 / 2.0) --> Vec3d(0.5,1.0,1.5)
-		@fact @inferred(v1 ./ 2.0) --> Vec3d(0.5,1.0,1.5)
-		@fact @inferred(v1 / 2) --> Vec3d(0.5,1.0,1.5)
-		@fact @inferred(v1 ./ 2) --> Vec3d(0.5,1.0,1.5)
+        @fact @inferred(v1 / 2.0) --> Vec3d(0.5,1.0,1.5)
+        @fact @inferred(v1 ./ 2.0) --> Vec3d(0.5,1.0,1.5)
+        @fact @inferred(v1 / 2) --> Vec3d(0.5,1.0,1.5)
+        @fact @inferred(v1 ./ 2) --> Vec3d(0.5,1.0,1.5)
 
-		@fact @inferred(12.0 ./ v1) --> Vec3d(12.0,6.0,4.0)
-		@fact @inferred(12 ./ v1) --> Vec3d(12.0,6.0,4.0)
+        @fact @inferred(12.0 ./ v1) --> Vec3d(12.0,6.0,4.0)
+        @fact @inferred(12 ./ v1) --> Vec3d(12.0,6.0,4.0)
 
-		@fact @inferred((v1 .^ 2)) --> Vec3d(1.0,4.0,9.0)
-		@fact @inferred((v1 .^ 2.0)) --> Vec3d(1.0,4.0,9.0)
-		@fact @inferred((2.0 .^ v1)) --> Vec3d(2.0,4.0,8.0)
-		@fact @inferred((2 .^ v1)) --> Vec3d(2.0,4.0,8.0)
+        @fact @inferred((v1 .^ 2)) --> Vec3d(1.0,4.0,9.0)
+        @fact @inferred((v1 .^ 2.0)) --> Vec3d(1.0,4.0,9.0)
+        @fact @inferred((2.0 .^ v1)) --> Vec3d(2.0,4.0,8.0)
+        @fact @inferred((2 .^ v1)) --> Vec3d(2.0,4.0,8.0)
 
                 a = Vec(3.2f0)
                 @fact @inferred(a+0.2) --> Vec1d(3.2f0+0.2)
@@ -696,7 +699,7 @@ context("Ops") do
                 @fact @inferred(0.2f0+a) --> Vec{1,Float32}(3.4f0)
                 @fact @inferred(a*0.2f0) --> Vec{1,Float32}(3.2f0*0.2f0)
                 @fact @inferred(0.2f0*a) --> Vec{1,Float32}(3.2f0*0.2f0)
-	end
+    end
     context("vector norm+cross product") do
 
         @fact norm(Vec3d(1.0,2.0,2.0)) --> 3.0
@@ -842,10 +845,10 @@ context("Matrix") do
     a = c*r
 
     b = Mat(
-    	(1.0,2.0,3.0,4.0),
-    	(2.0,4.0,6.0,8.0),
-    	(3.0,6.0,9.0,12.0),
-    	(4.0,8.0,12.0,16.0)
+        (1.0,2.0,3.0,4.0),
+        (2.0,4.0,6.0,8.0),
+        (3.0,6.0,9.0,12.0),
+        (4.0,8.0,12.0,16.0)
     )
 
     x = Mat(
@@ -874,8 +877,8 @@ context("Matrix") do
     @fact prod(c) --> prod(v)
 
     @fact eye(Mat3d) --> Mat((1.0,0.0,0.0),
-    							(0.0,1.0,0.0),
-    							(0.0,0.0,1.0))
+                                (0.0,1.0,0.0),
+                                (0.0,0.0,1.0))
     #@fact v*eye(Mat4d)*v --> 30.0
     @fact -r --> -1.0*r
     #@fact diag(diagm(v)) --> v
@@ -885,7 +888,7 @@ context("Matrix") do
     jm = rand(4,4)
     im = Mat(jm)
     for i=1:4*2
-    	@fact jm[i] --> im[i]
+        @fact jm[i] --> im[i]
     end
     #im = Matrix4x4(jm)
     @fact isa(im, Mat4d)  --> true
@@ -916,13 +919,13 @@ context("Matrix") do
     @fact b --> Mat([1,2,3,4]'')
 end
 context("Matrix Math") do
-	for i=1:5, j=1:5
-		v = rand(j)
-		m = rand(i,j)
-		m2 = rand(i,j)
-		mc = rand(i,j) + im*rand(i,j)
-		vfs = Vec(v)
-		mfs = Mat(m)
+    for i=1:5, j=1:5
+        v = rand(j)
+        m = rand(i,j)
+        m2 = rand(i,j)
+        mc = rand(i,j) + im*rand(i,j)
+        vfs = Vec(v)
+        mfs = Mat(m)
         m2fs = Mat(m2)
         mfsc = Mat(mc)
 
@@ -933,68 +936,68 @@ context("Matrix Math") do
         mifs = Mat(mi)
         mi2fs = Mat(mi2)
 
-		context("Matrix{$i, $j} * Vector{$j}") do
-			vm = m * v
-			@fact isapprox(@inferred(mfs * vfs), vm)  --> true
+        context("Matrix{$i, $j} * Vector{$j}") do
+            vm = m * v
+            @fact isapprox(@inferred(mfs * vfs), vm)  --> true
             @fact isapprox(@inferred(Matrix(mfs) * vfs), vm)  --> true
             @fact isapprox(@inferred(mfs * Vector(vfs)), vm)  --> true
-		end
+        end
         context("Matrix{$i, $j} * Matrix{$j, $i}") do
-			mm = m * m2'
-			@fact isapprox(@inferred(mfs * m2fs'), mm)  --> true
+            mm = m * m2'
+            @fact isapprox(@inferred(mfs * m2fs'), mm)  --> true
             @fact isapprox(@inferred(Matrix(mfs) * m2fs'), mm)  --> true
             @fact isapprox(@inferred(mfs * Matrix(m2fs')), mm)  --> true
-		end
+        end
         context("Matrix{$i, $j}*(2I)") do
-			mm = m*(2)
-			@fact isapprox(@inferred(m*(2I)), mm)  --> true
-		end
+            mm = m*(2)
+            @fact isapprox(@inferred(m*(2I)), mm)  --> true
+        end
 
-		# test different element types
-		context("Matrix{$i, $j, T} * Vector{$j, U}") do
-			vmi = mi * v
-			@fact isapprox(@inferred(mifs * vfs), vmi)  --> true
-			vmi = m * vi
-			@fact isapprox(@inferred(mfs * vifs), vmi)  --> true
-			# Custom vector types
-			@fact @inferred(eye(Mat{3,3,Float64}) * RGB{Int}(1,2,3)) --> exactly(RGB{Float64}(1,2,3))
-		end
-		context("Matrix{$i, $j, T} * Matrix{$j, $i, U}") do
-			mmi = mi * m2'
-			@fact isapprox(@inferred(mifs * m2fs'), mmi)  --> true
-			mmi = m * mi2'
-			@fact isapprox(@inferred(mfs * mi2fs'), mmi)  --> true
-		end
+        # test different element types
+        context("Matrix{$i, $j, T} * Vector{$j, U}") do
+            vmi = mi * v
+            @fact isapprox(@inferred(mifs * vfs), vmi)  --> true
+            vmi = m * vi
+            @fact isapprox(@inferred(mfs * vifs), vmi)  --> true
+            # Custom vector types
+            @fact @inferred(eye(Mat{3,3,Float64}) * RGB{Int}(1,2,3)) --> exactly(RGB{Float64}(1,2,3))
+        end
+        context("Matrix{$i, $j, T} * Matrix{$j, $i, U}") do
+            mmi = mi * m2'
+            @fact isapprox(@inferred(mifs * m2fs'), mmi)  --> true
+            mmi = m * mi2'
+            @fact isapprox(@inferred(mfs * mi2fs'), mmi)  --> true
+        end
 
-		if i == j
+        if i == j
             context("(2*I + I*M)\\v") do
-			    mm = (2*I+I*m) \ v
-			    @fact isapprox(@inferred((2*I+I*mfs) \ vfs), mm)  --> true
+                mm = (2*I+I*m) \ v
+                @fact isapprox(@inferred((2*I+I*mfs) \ vfs), mm)  --> true
             end
-			context("det(M)") do
-				mm = det(m)
-				fmm = det(mfs)
-				@fact isapprox(fmm, mm)  --> true
-			end
+            context("det(M)") do
+                mm = det(m)
+                fmm = det(mfs)
+                @fact isapprox(fmm, mm)  --> true
+            end
             context("trace(M)") do
-				mm = trace(m)
-				fmm = trace(mfs)
-				@fact isapprox(fmm, mm)  --> true
+                mm = trace(m)
+                fmm = trace(mfs)
+                @fact isapprox(fmm, mm)  --> true
             end
-			context("inv(M)") do
-				mm = inv(m)
-				fmm = inv(mfs)
-				@fact isapprox(fmm, mm)  --> true
-			end
-			context("expm(M)") do
-				mm = expm(m)
-				fmm = expm(mfs)
-				@fact isapprox(fmm, mm)  --> true
+            context("inv(M)") do
+                mm = inv(m)
+                fmm = inv(mfs)
+                @fact isapprox(fmm, mm)  --> true
+            end
+            context("expm(M)") do
+                mm = expm(m)
+                fmm = expm(mfs)
+                @fact isapprox(fmm, mm)  --> true
 
-				mm = expm(mc)
-				fmm = expm(mfsc)
-				@fact isapprox(fmm, mm)  --> true
-			end
+                mm = expm(mc)
+                fmm = expm(mfsc)
+                @fact isapprox(fmm, mm)  --> true
+            end
             context("lyap(M,M2*M2')") do
                 mm = lyap(m, m2*m2')
                 fmm = lyap(mfs, m2fs*m2fs')
@@ -1009,26 +1012,26 @@ context("Matrix Math") do
 
             end
 
-		else
+        else
             context("Matrix{$i, $j} * Matrix{$i, $j}") do
                 @fact_throws DimensionMismatch mfs * mfs
             end
         end
-		context("transpose M") do
-			mm = m'
-			fmm = mfs'
-			@fact isapprox(fmm, mm)  --> true
-		end
+        context("transpose M") do
+            mm = m'
+            fmm = mfs'
+            @fact isapprox(fmm, mm)  --> true
+        end
 
-		context("ctranspose M") do
-			mm = mc'
-			fmm = mfsc'
-			@fact isapprox(fmm, mm)  --> true
-		end
-	end
-	context("expm(M::Mat{3,3,Float64})") do
-    	# in practice the precision is eps(), if m has not a triple eigenvalue
-	    for i in 1:30
+        context("ctranspose M") do
+            mm = mc'
+            fmm = mfsc'
+            @fact isapprox(fmm, mm)  --> true
+        end
+    end
+    context("expm(M::Mat{3,3,Float64})") do
+        # in practice the precision is eps(), if m has not a triple eigenvalue
+        for i in 1:30
             m = (rand(0:1,3,3).*randn(3,3) .+ rand(-3:3,3,3)) # some entries are natural numbers to have higher chance of multiple eigenvalues to trigger all branches
             @fact norm(Matrix(expm(Mat(m))) -  expm(m))/norm(expm(m)) <= 1E-9 --> true
             m = m + m' # symmetric
