@@ -422,3 +422,9 @@ for f in (:unshift, :deleteat, :push)
         ($f)(v::FixedVector, val) = construct_similar(typeof(v), ($f)(Tuple(v), val))
     end)
 end
+
+function reverse{T, N}(x::FixedVector{N, T})
+    map(typeof(x)) do i
+        x[N-i+1]
+    end
+end
