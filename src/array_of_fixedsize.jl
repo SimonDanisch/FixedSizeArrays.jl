@@ -13,11 +13,15 @@ immutable ExtremaFun <: Functor{2} end
 
 @compat (::MaxFunctor)(a, b) = max(a, b)
 @compat (::MinFunctor)(a, b) = min(a, b)
-@compat (::ExtremaFun)(reducevalue, a) = min(reducevalue[1], a), max(reducevalue[2], a)
+@compat (::ExtremaFun)(v0, a) = (min(v0[1], a), max(v0[2], a))
 
 minimum{T <: FixedArray}(a::Vector{T}) = reduce(MinFunctor(), a)
 maximum{T <: FixedArray}(a::Vector{T}) = reduce(MaxFunctor(), a)
-extrema{T <: FixedArray}(a::AbstractVector{T}) = reduce(ExtremaFun(), a)
+function extrema{T <: FixedArray}(a::AbstractVector{T})
+    isempty(a) && return (T(NaN), T(NaN))
+    a1 = first(a)
+    reduce(ExtremaFun(), (a1, a1), a)
+end
 
 
 function isapprox{FSA <: FixedArray, A <: FixedArray}(x::FSA, y::A; rtol::Real=Base.rtoldefault(eltype(x),eltype(y)), atol::Real=0, norm::Function=vecnorm)
