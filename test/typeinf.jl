@@ -57,16 +57,61 @@ function use_operations()
     @ret
 end
 
+
+"""
+    is_inferred(ex)
+
+Test whether type inference has fully inferred all types in the AST `ex`, more
+or less as done in `code_warntype()`.  That is, each AST node should have a
+concrete type (`isleaftype()` should be `true`), except for some special
+cases.
+"""
+function is_inferred(ex::Expr)
+    inferred = true
+    # We don't expect a type for certian `Expr`s - see the show_type deduction
+    # in Base.show_unquoted() which is called from code_warntype()
+    check_type = !(
+        ex.head == :(=) ||
+        ex.head == :boundscheck ||
+        ex.head == :gotoifnot ||
+        ex.head == :return ||
+        (ex.head == :call && (in(ex.args[1], (GlobalRef(Base, :box), TopNode(:box), :throw)) ||
+                             Base.ismodulecall(ex) ||
+                             (ex.typ === Any && Base.is_intrinsic_expr(ex.args[1]))))
+    )
+    if check_type
+        inferred &= isleaftype(ex.typ)
+    end
+    # Avoid traversing some expressions, since we don't care about their types.
+    # It's not quite clear how to detect these reliably, since
+    # Base.show_unquoted() has them in the else part of a large set of elseif
+    # clauses.
+    check_expr_args = !(
+        ex.head == :boundscheck
+    )
+    if check_expr_args
+        for arg in ex.args
+            inferred &= is_inferred(arg)
+        end
+    end
+    return inferred
+end
+
+# Assume AST nodes which aren't Exprs don't have meaningful type information
+is_inferred(nonexpr) = true
+
+
 # This seems to be the easiest way to test,
 # that all variables even if they come from inlining,
 # are inferred as a concrete type.
 # seems like it's hard to turn of inlining when doing coverage, though...
 # so this must be executed locally to test for it.
 context("type inference") do
-    io = IOBuffer()
-    use_operations()
-    code_warntype(io, use_operations, ())
-    str = takebuf_string(io)
-    x = matchall(r"Any", str)
-    @fact length(x) --> 0
+    ct = code_typed(use_operations, ())
+    # Only inspect body of `use_operations()`
+    body = ct[1].args[3]
+
+    for arg in body.args
+        @fact is_inferred(arg) --> true   "Failed type inference:  $arg"
+    end
 end
